@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('ITM', 10);
             $table->string('BC_IN', 20);
             $table->string('BC_OUT', 20)->primary();
-            $table->date('DT_IN');
-            $table->decimal('HRG_P', 10, 2);
+            $table->date('TM');
+            $table->decimal('HRB', 10, 2);
             $table->string('GD', 10);
             $table->timestamps();
         });

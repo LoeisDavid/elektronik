@@ -11,5 +11,5 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['SLS', 'DES', 'HP', 'AL'])]
 class SLS extends Model
 {
-    //
+    
 }

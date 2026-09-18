@@ -10,5 +10,5 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['BC_OUT', 'ITM', 'BC_IN', 'TM', 'HGB', 'GD'])]
 class ITMDT extends Model
 {
-    //
+    
 }

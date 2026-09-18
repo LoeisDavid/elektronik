@@ -11,5 +11,5 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['SPP', 'DES', 'TLP'])]
 class SPP extends Model
 {
-    //
+    
 }

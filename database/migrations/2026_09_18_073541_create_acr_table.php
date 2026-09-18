@@ -16,7 +16,7 @@ return new class extends Migration
             $table->date('DT');
             $table->string('CST', 10);
             $table->string('SLS', 10);
-            $table->double('BRT', 12, 2);
+            $table->decimal('BRT', 16, 2);
             $table->integer('POT_1')->nullable();
             $table->integer('POT_2')->nullable();
             $table->decimal('POT_R', 10, 2)->nullable();
