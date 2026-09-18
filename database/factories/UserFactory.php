@@ -5,17 +5,24 @@ namespace Database\Factories;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
+    protected $model = User::class;
+
     /**
      * The current password being used by the factory.
      */
     protected static ?string $password;
+    protected static int $sequence = 1;
+
+    public static function resetSequence(int $start = 1): void
+    {
+        static::$sequence = $start;
+    }
 
     /**
      * Define the model's default state.
@@ -24,22 +31,16 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $num = static::$sequence++;
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'USERNAME' => sprintf('usr%07d', $num), // 10 chars, fits string(20) and acr.USER string(10)
+            'PASS' => static::$password ??= Hash::make('password123'),
+            'AL' => substr(fake()->address(), 0, 100),
+            'HP' => substr(fake()->phoneNumber(), 0, 25),
+            'DES' => substr(fake()->name(), 0, 100),
+            'ROLE' => fake()->randomElement([1, 2, 3]),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }
