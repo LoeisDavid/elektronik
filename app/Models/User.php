@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Table(key: 'USERNAME', keyType: 'string', incrementing: false)]
+#[Fillable(['USERNAME', 'PASS', 'AL', 'HP', 'DES', 'ROLE'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
