@@ -2,8 +2,30 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-number: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+
+    /* Extracted Design System Palette */
+    --color-primary-blue: #2D8CFF;
+    --color-dark-navy: #1A1F36;
+    --color-heading-dark: #2D3748;
+    --color-body-text: #6B7280;
+    --color-light-bg: #F7F8FC;
+    --color-card-white: #FFFFFF;
+    --color-border-gray: #E2E8F0;
+    --color-accent-pink: #F472B6;
+    --color-accent-purple: #A78BFA;
+    --color-success-green: #34D399;
+    --color-warning-yellow: #FBBF24;
+    --color-light-blue-tint: #DBEAFE;
+    --color-critical-red: #EF4444;
+    --color-canvas-bg: #CECECE;
+    --color-login-card: #DDE5EE;
+}
+
+.font-number {
+    font-family: var(--font-number);
 }
