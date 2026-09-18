@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ktg', function (Blueprint $table) {
-            $table->string('KTG', 10)->primary();
-            $table->string('DES', 40);
+        Schema::create('sls', function (Blueprint $table) {
+            $table->string('SLS', 10)->primary();
+            $table->string('DES', 150);
+            $table->string('HP', 20);
+            $table->string('AL', 100);
             $table->timestamps();
         });
     }
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ktg');
+        Schema::dropIfExists('sls');
     }
 };

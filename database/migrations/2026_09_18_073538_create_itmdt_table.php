@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('itm', function (Blueprint $table) {
+        Schema::create('itmdt', function (Blueprint $table) {
             $table->string('ITM', 10)->primary();
-            $table->string('DES', 150);
-            $table->integer('STOK')->default(0);
-            $table->decimal('HRG', 10, 2)->default(0);
-            $table->string('KTG', 10);
-            $table->string('MRK', 10);
-            $table->string('SPP', 10);
+            $table->string('BC_IN', 20);
+            $table->string('BC_OUT', 20);
+            $table->date('DT_IN');
+            $table->decimal('HRG_P', 10, 2);
+            $table->string('GD', 10);
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('itm');
+        Schema::dropIfExists('itmdt');
     }
 };
