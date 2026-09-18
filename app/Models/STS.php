@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 #[Table('STS', key: 'REC', keyType: 'string', incrementing: false)]
-#[Fillable(['REC', 'REF_NO', 'BC_OUT', 'ITM', 'HGJ', 'ST', 'POT1', 'POT2', 'POTR', 'PPN', 'BRT'])]
+#[Fillable(['REC', 'REF_NO', 'BC_OUT', 'ITM', 'HGJ', 'ST', 'POT_1', 'POT_2', 'POT_R', 'PPN', 'BRT'])]
 class STS extends Model
 {
-    //
+    
 }

@@ -11,5 +11,5 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['KTG', 'DES'])]
 class KTG extends Model
 {
-    //
+    
 }

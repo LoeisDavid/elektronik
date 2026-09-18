@@ -10,5 +10,5 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['MRK', 'DES'])]
 class MRK extends Model
 {
-    //
+    
 }
