@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('itmdt', function (Blueprint $table) {
-            $table->string('ITM', 10)->primary();
+            $table->string('ITM', 10);
             $table->string('BC_IN', 20);
-            $table->string('BC_OUT', 20);
+            $table->string('BC_OUT', 20)->primary();
             $table->date('DT_IN');
             $table->decimal('HRG_P', 10, 2);
             $table->string('GD', 10);

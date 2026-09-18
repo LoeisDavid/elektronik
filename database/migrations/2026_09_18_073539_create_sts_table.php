@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('sts', function (Blueprint $table) {
             $table->string('REC', 3)->primary();
+            $table->string('REF_NO', 3);
             $table->string('BC_OUT', 20);
             $table->string('ITM', 20);
             $table->double('HGJ', 16, 2);
