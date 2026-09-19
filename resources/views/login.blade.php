@@ -30,7 +30,7 @@
                 BACKEND INTEGRATION NOTE:
                 Change action to route('login.post') with method="POST" and add @csrf when hooking up backend auth.
             --}}
-            <form action="{{ route('kasir') }}" method="GET" class="space-y-6">
+            <form action="{{ route('POS.kasir') }}" method="GET" class="space-y-6">
                 
                 {{-- Username Input --}}
                 <div class="space-y-2">

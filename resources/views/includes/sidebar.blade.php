@@ -42,7 +42,7 @@
             >
                 <template x-for="item in ['Kasir', 'Transaksi', 'User', 'Sales', 'Customer', 'Laporan']" :key="item">
                     <a 
-                        :href="item === 'Kasir' ? '{{ route('kasir') }}' : (item === 'Transaksi' ? '{{ route('transaksi') }}' : (item === 'User' ? '{{ route('user') }}' : (item === 'Sales' ? '{{ route('sales') }}' : (item === 'Customer' ? '{{ route('customer') }}' : (item === 'Laporan' ? '{{ route('laporan') }}' : '#')))))"
+                        :href="item === 'Kasir' ? '{{ route('POS.kasir') }}' : (item === 'Transaksi' ? '{{ route('transaksi') }}' : (item === 'User' ? '{{ route('user') }}' : (item === 'Sales' ? '{{ route('sales') }}' : (item === 'Customer' ? '{{ route('customer') }}' : (item === 'Laporan' ? '{{ route('laporan') }}' : '#')))))"
                         @click="activeMenu = item"
                         :class="{
                             'bg-[#1a68ca] font-semibold': activeMenu === item,
