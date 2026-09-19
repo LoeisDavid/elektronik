@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\kasirController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -22,11 +23,6 @@ Route::middleware('auth')->group(function () {
 Route::get('/login', function () {
     return view('login');
 })->name('login');
-
-// Point of Sales / Kasir View
-Route::get('/kasir', function () {
-    return view('kasir');
-})->name('kasir');
 
 // Riwayat Transaksi View
 Route::get('/transaksi', function () {
@@ -53,6 +49,12 @@ Route::get('/laporan', function () {
     return view('laporan');
 })->name('laporan');
 
+Route::prefix('POS')->name('POS.')->group(function () {
+    Route::get('kasir', [kasirController::class, 'index'])->name('kasir');
+    Route::match(['get', 'post'], 'scan', [kasirController::class, 'scan'])->name('scan');
+    Route::post('cart/sync', [kasirController::class, 'syncCart'])->name('cart.sync');
+    Route::post('cart/clear', [kasirController::class, 'clearCart'])->name('cart.clear');
+});
 
 
 
