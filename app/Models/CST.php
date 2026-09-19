@@ -11,5 +11,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['CST', 'DES', 'TLP'])]
 class CST extends Model
 {
+    function acr()
+    {
+        return ACR::where('CST', $this->CST)->get();
+    }
+
     use HasFactory;
 }
