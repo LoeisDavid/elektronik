@@ -11,5 +11,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['GD', 'DES'])]
 class GD extends Model
 {
+    function itmdt()
+    {
+        return ITMDT::where('GD', $this->GD)->get();
+    }
+
     use HasFactory;
 }

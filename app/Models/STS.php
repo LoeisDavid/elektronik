@@ -11,5 +11,19 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['REC', 'REF_NO', 'BC_OUT', 'ITM', 'HGJ', 'ST', 'POT_1', 'POT_2', 'POT_R', 'PPN', 'BRT'])]
 class STS extends Model
 {
+    function acr()
+    {
+        return ACR::where('REF_NO', $this->REF_NO)->first();
+    }
+
+    function itmdt()
+    {
+        return ITMDT::where('BC_OUT', $this->BC_OUT)->first();
+    }
+
+    function itm()
+    {
+        return ITM::where('ITM', $this->ITM)->first();
+    }
     use HasFactory;
 }

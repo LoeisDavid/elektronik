@@ -11,5 +11,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 #[Fillable(['BC_OUT', 'ITM', 'BC_IN', 'TM', 'HRB', 'GD'])]
 class ITMDT extends Model
 {
+    function itm()
+    {
+        return ITM::where('ITM', $this->ITM)->first();
+    }
+
+    function gd()
+    {
+        return GD::where('GD', $this->GD)->first();
+    }
+    
     use HasFactory;
 }
