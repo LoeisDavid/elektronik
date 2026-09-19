@@ -54,6 +54,7 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::match(['get', 'post'], 'scan', [kasirController::class, 'scan'])->name('scan');
     Route::post('cart/sync', [kasirController::class, 'syncCart'])->name('cart.sync');
     Route::post('cart/clear', [kasirController::class, 'clearCart'])->name('cart.clear');
+    Route::post('bayar', [kasirController::class, 'bayar'])->name('bayar');
 });
 
 

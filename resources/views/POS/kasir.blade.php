@@ -10,124 +10,186 @@
 <div class="flex h-full w-full overflow-hidden relative" id="posContainer">
 
     {{-- ===================================================================== --}}
-    {{-- BAGIAN TENGAH: KATALOG PRODUK & PENCARIAN                             --}}
+    {{-- TAMPILAN 1: SUKSES PEMBAYARAN (FULL WIDTH VIEW)                       --}}
     {{-- ===================================================================== --}}
-    <div class="flex-1 flex flex-col h-full overflow-hidden bg-[#CECECE]/60">
-
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- 1. TOOLBAR ATAS (PENCARIAN, FILTER, DAN TOMBOL SCAN BARCODE)      --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div class="p-4 pb-2 flex items-center justify-between gap-3 flex-shrink-0 z-10">
-            
-            {{-- Kiri: Input Pencarian & Tombol Filter --}}
-            <div class="flex items-center gap-2 flex-1 max-w-md">
-                
-                {{-- Input Pencarian Produk --}}
-                <div class="relative flex-1 group">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                        {{-- Icon Search / Kaca Pembesar --}}
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                    </span>
-                    <input
-                        type="text"
-                        id="searchInput"
-                        onkeyup="filterProdukKatalog()"
-                        placeholder="Cari produk"
-                        class="w-full bg-white border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2 text-sm text-[#2D3748] placeholder-gray-400 focus:outline-none focus:border-[#2D8CFF] focus:ring-1 focus:ring-[#2D8CFF] shadow-xs transition-all" />
-                </div>
-
-                {{-- Tombol Filter / Urutkan --}}
-                <button
-                    type="button"
-                    class="h-9 w-9 bg-white border border-[#E2E8F0] hover:bg-gray-50 rounded-lg flex items-center justify-center text-gray-700 shadow-xs cursor-pointer transition-colors"
-                    title="Filter Produk">
-                    {{-- Icon Filter / Corong --}}
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.539.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.378-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                    </svg>
-                </button>
-            </div>
-
-            {{-- Kanan: Tombol Buka Modal Scan Barcode --}}
+    <div id="viewSuccessPayment" class="hidden flex-1 flex-col h-full bg-[#CECECE]/60 p-6 overflow-hidden">
+        {{-- Tombol Kembali ke Kasir --}}
+        <div>
             <button
                 type="button"
-                onclick="bukaModalBarcode()"
-                class="h-9 px-3 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-[#2D3748] rounded-lg flex items-center justify-center shadow-xs cursor-pointer transition-colors"
-                title="Scan Barcode">
-                {{-- Icon Barcode --}}
-                <svg class="w-5 h-5 text-current" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4zm4 0h1v16h-1V4zm2 0h2v16h-2V4zm3 0h1v16h-1V4z" />
-                </svg>
+                onclick="kembaliKeKasir()"
+                class="inline-flex items-center gap-1 text-sm italic font-medium text-[#2D3748] hover:text-black cursor-pointer select-none">
+                <span class="text-base leading-none">‹</span> Kembali ke Kasir
             </button>
         </div>
 
+        {{-- Pesan Sukses Ditengah Layar --}}
+        <div class="flex-1 flex items-center justify-center">
+            <h1 class="text-4xl lg:text-5xl font-semibold text-[#1A1F36] tracking-wide">
+                Pembayaran berhasil
+            </h1>
+        </div>
+    </div>
+
+    {{-- ===================================================================== --}}
+    {{-- BAGIAN TENGAH: KATALOG PRODUK & MODE PEMBAYARAN                       --}}
+    {{-- ===================================================================== --}}
+    <div id="mainCenterSection" class="flex-1 flex flex-col h-full overflow-hidden bg-[#CECECE]/60">
+
         {{-- ----------------------------------------------------------------- --}}
-        {{-- 2. GRID DAFTAR PRODUK (KATALOG - 2 ITEM DUMMY)                   --}}
+        {{-- A. SUB-VIEW 1: KATALOG PRODUK NORMAL                              --}}
         {{-- ----------------------------------------------------------------- --}}
-        <div class="flex-1 overflow-y-auto p-4 pt-1">
-            <div id="catalogGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+        <div id="viewKatalogNormal" class="flex-1 flex flex-col h-full overflow-hidden">
+            {{-- TOOLBAR ATAS (PENCARIAN, FILTER, DAN TOMBOL SCAN BARCODE) --}}
+            <div class="p-4 pb-2 flex items-center justify-between gap-3 flex-shrink-0 z-10">
                 
-                {{-- ================= PRODUK ITEM 1 ================= --}}
-                <div 
-                    onclick="tambahProdukKatalogKeCart('item_airpods', 'AIRPODS01', 'Airpods pro 3', 'Deskripsi', 3400000)"
-                    class="katalog-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer border border-transparent hover:border-[#2D8CFF] transition-all flex flex-col group active:scale-[0.99]"
-                    data-name="airpods pro 3 deskripsi">
-                    {{-- Gambar Produk (Kotak Abu-Abu) --}}
-                    <div class="h-44 bg-[#C5C8CC] relative flex items-center justify-center overflow-hidden p-3">
-                        <img
-                            src="https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&auto=format&fit=crop&q=80"
-                            alt="Airpods pro 3"
-                            class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-200"
-                            onerror="this.src='https://via.placeholder.com/200x200?text=Airpods';" />
+                {{-- Kiri: Input Pencarian & Tombol Filter --}}
+                <div class="flex items-center gap-2 flex-1 max-w-md">
+                    <div class="relative flex-1 group">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            onkeyup="filterProdukKatalog()"
+                            placeholder="Cari produk"
+                            class="w-full bg-white border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2 text-sm text-[#2D3748] placeholder-gray-400 focus:outline-none focus:border-[#2D8CFF] focus:ring-1 focus:ring-[#2D8CFF] shadow-xs transition-all" />
                     </div>
 
-                    {{-- Informasi Produk --}}
-                    <div class="p-3.5 bg-white flex flex-col flex-1 justify-between min-h-[90px]">
-                        <div>
-                            {{-- Nama Produk --}}
-                            <h3 class="font-semibold text-sm text-[#1A1F36] leading-tight truncate">Airpods pro 3</h3>
-                            {{-- Deskripsi Produk --}}
-                            <p class="text-[11px] text-[#6B7280] truncate mt-0.5">Deskripsi</p>
-                        </div>
-                        {{-- Harga Produk --}}
-                        <div class="mt-3 pt-1">
-                            <span class="font-bold text-sm text-[#1A1F36] font-number">Rp 3.400.000</span>
-                        </div>
-                    </div>
+                    <button
+                        type="button"
+                        class="h-9 w-9 bg-white border border-[#E2E8F0] hover:bg-gray-50 rounded-lg flex items-center justify-center text-gray-700 shadow-xs cursor-pointer transition-colors"
+                        title="Filter Produk">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.539.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.378-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                        </svg>
+                    </button>
                 </div>
 
-                {{-- ================= PRODUK ITEM 2 ================= --}}
-                <div 
-                    onclick="tambahProdukKatalogKeCart('item_asus_tuf', 'ASUSTUF01', 'Asus TUF A16', 'RTX 5070 Ryzen 7 260', 3400000)"
-                    class="katalog-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md cursor-pointer border border-transparent hover:border-[#2D8CFF] transition-all flex flex-col group active:scale-[0.99]"
-                    data-name="asus tuf a16 rtx 5070 ryzen 7 260">
-                    {{-- Gambar Produk (Kotak Abu-Abu) --}}
-                    <div class="h-44 bg-[#C5C8CC] relative flex items-center justify-center overflow-hidden p-3">
-                        <img
-                            src="https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=400&auto=format&fit=crop&q=80"
-                            alt="Asus TUF A16"
-                            class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-200"
-                            onerror="this.src='https://via.placeholder.com/200x200?text=Asus+TUF';" />
-                    </div>
-
-                    {{-- Informasi Produk --}}
-                    <div class="p-3.5 bg-white flex flex-col flex-1 justify-between min-h-[90px]">
-                        <div>
-                            {{-- Nama Produk --}}
-                            <h3 class="font-semibold text-sm text-[#1A1F36] leading-tight truncate">Asus TUF A16</h3>
-                            {{-- Deskripsi Produk --}}
-                            <p class="text-[11px] text-[#6B7280] truncate mt-0.5">RTX 5070 Ryzen 7 260</p>
-                        </div>
-                        {{-- Harga Produk --}}
-                        <div class="mt-3 pt-1">
-                            <span class="font-bold text-sm text-[#1A1F36] font-number">Rp 3.400.000</span>
-                        </div>
-                    </div>
-                </div>
-
+                {{-- Kanan: Tombol Buka Modal Scan Barcode --}}
+                <button
+                    type="button"
+                    onclick="bukaModalBarcode()"
+                    class="h-9 px-3 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-[#2D3748] rounded-lg flex items-center justify-center shadow-xs cursor-pointer transition-colors"
+                    title="Scan Barcode">
+                    <svg class="w-5 h-5 text-current" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4zm4 0h1v16h-1V4zm2 0h2v16h-2V4zm3 0h1v16h-1V4z" />
+                    </svg>
+                </button>
             </div>
+        </div>
+
+        {{-- ----------------------------------------------------------------- --}}
+        {{-- B. SUB-VIEW 2: TAMPILAN PROSES TRANSAKSI & PEMBAYARAN             --}}
+        {{-- ----------------------------------------------------------------- --}}
+        <div id="viewPembayaran" class="hidden flex-1 flex-col h-full p-8 overflow-y-auto">
+            
+            {{-- Nominal Total Besar di Atas --}}
+            <div class="text-center pt-6 pb-6">
+                <h1 id="paymentDisplayTotal" class="text-4xl lg:text-5xl font-bold text-[#1A1F36] tracking-tight font-number">
+                    Rp 0
+                </h1>
+            </div>
+
+            {{-- Pilihan Metode Pembayaran: Tunai / Bank --}}
+            <div class="flex items-center justify-center gap-6 mb-8">
+                {{-- Tombol Tunai --}}
+                <button
+                    type="button"
+                    id="btnMethodTunai"
+                    onclick="pilihMetodePembayaran('tunai')"
+                    class="w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]">
+                    Tunai
+                </button>
+
+                {{-- Tombol Bank --}}
+                <button
+                    type="button"
+                    id="btnMethodBank"
+                    onclick="pilihMetodePembayaran('bank')"
+                    class="w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50">
+                    Bank
+                </button>
+            </div>
+
+            {{-- FORM METODE TUNAI --}}
+            <div id="formBayarTunai" class="max-w-md w-full mx-auto space-y-4">
+                {{-- Box Masukkan Nominal --}}
+                <div class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs">
+                    <span class="text-base lg:text-lg font-bold text-[#1A1F36]">Masukkan nominal:</span>
+                    <div class="flex items-center justify-end flex-1 pl-2">
+                        <span class="text-base lg:text-lg font-bold text-[#1A1F36] mr-1">Rp</span>
+                        <input
+                            type="text"
+                            id="inputNominalBayar"
+                            oninput="formatDanHitungTunai(this)"
+                            placeholder="0"
+                            class="w-36 text-right text-base lg:text-lg font-bold text-[#1A1F36] bg-transparent border-none outline-none font-number p-0 focus:ring-0" />
+                    </div>
+                </div>
+
+                {{-- Box Kembalian --}}
+                <div class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs">
+                    <span class="text-base lg:text-lg font-bold text-[#1A1F36]">Kembalian:</span>
+                    <span id="labelKembalian" class="text-base lg:text-lg font-bold text-[#1A1F36] font-number">
+                        Rp 0
+                    </span>
+                </div>
+            </div>
+
+            {{-- FORM METODE BANK --}}
+            <div id="formBayarBank" class="hidden max-w-md w-full mx-auto relative">
+                {{-- Dropdown Trigger Box --}}
+                <div
+                    id="bankDropdownTrigger"
+                    onclick="toggleBankDropdown()"
+                    class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs cursor-pointer hover:bg-gray-50 select-none">
+                    <span id="selectedBankText" class="text-base lg:text-lg font-bold text-[#1A1F36]">
+                        Pilih bank
+                    </span>
+                    <span class="text-sm font-bold text-[#1A1F36] ml-2">V</span>
+                </div>
+
+                {{-- Dropdown List Menu Bank --}}
+                <div
+                    id="bankDropdownMenu"
+                    class="hidden absolute top-full left-0 right-0 mt-2 bg-[#E2E8F0] border border-gray-400 rounded-lg shadow-xl z-30 overflow-hidden divide-y divide-gray-300">
+                    <div
+                        onclick="pilihBank('BNI')"
+                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
+                        <span>BNI</span>
+                        <span id="check-BNI" class="hidden">✓</span>
+                    </div>
+                    <div
+                        onclick="pilihBank('BCA')"
+                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
+                        <span>BCA</span>
+                        <span id="check-BCA" class="hidden">✓</span>
+                    </div>
+                    <div
+                        onclick="pilihBank('BRI')"
+                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
+                        <span>BRI</span>
+                        <span id="check-BRI" class="hidden">✓</span>
+                    </div>
+                    <div
+                        onclick="pilihBank('Seabank')"
+                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
+                        <span>Seabank</span>
+                        <span id="check-Seabank" class="hidden">✓</span>
+                    </div>
+                    <div
+                        onclick="pilihBank('JAGO')"
+                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
+                        <span>JAGO</span>
+                        <span id="check-JAGO" class="hidden">✓</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -135,7 +197,7 @@
     {{-- ===================================================================== --}}
     {{-- BAGIAN KANAN: PANEL ORDER / KERANJANG BELANJA (DARI SESSION & JS)     --}}
     {{-- ===================================================================== --}}
-    <div class="w-80 lg:w-96 flex-shrink-0 bg-white border-l border-[#E2E8F0] flex flex-col h-full shadow-lg z-10">
+    <div id="rightOrderPanel" class="w-80 lg:w-96 flex-shrink-0 bg-white border-l border-[#E2E8F0] flex flex-col h-full shadow-lg z-10">
 
         {{-- ----------------------------------------------------------------- --}}
         {{-- 1. HEADER ORDER & TOMBOL RESET KERANJANG                         --}}
@@ -225,14 +287,32 @@
                 <span id="labelGrandTotal" class="text-xl font-bold text-[#1A1F36] font-number">Rp 0</span>
             </div>
 
-            {{-- Tombol Pembayaran (Full Width Hijau) --}}
-            <div class="pt-3">
+            {{-- Tombol Aksi Mode Normal (Tombol Pembayaran Hijau) --}}
+            <div id="panelActionNormal" class="pt-3">
                 <button
                     type="button"
                     onclick="prosesPembayaran()"
-                    class="w-full bg-[#34D399] hover:bg-[#2ecc71] active:bg-[#27ae60] text-white text-lg font-bold py-3 rounded-none shadow-sm transition-all cursor-pointer flex items-center justify-center tracking-wide">
+                    class="w-full bg-[#327337] hover:bg-[#285e2c] text-white text-lg font-bold py-3 rounded-none shadow-sm transition-all cursor-pointer flex items-center justify-center tracking-wide">
                     Pembayaran
                 </button>
+            </div>
+
+            {{-- Tombol Aksi Mode Pembayaran (Tombol Batal Merah & Konfirmasi Hijau) --}}
+            <div id="panelActionPayment" class="pt-3 hidden">
+                <div class="grid grid-cols-2 gap-0">
+                    <button
+                        type="button"
+                        onclick="batalPembayaran()"
+                        class="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white text-lg font-bold py-3 rounded-none transition-all cursor-pointer flex items-center justify-center tracking-wide">
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        onclick="konfirmasiPembayaran()"
+                        class="w-full bg-[#327337] hover:bg-[#285e2c] text-white text-lg font-bold py-3 rounded-none transition-all cursor-pointer flex items-center justify-center tracking-wide">
+                        Konfirmasi
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -398,9 +478,12 @@
     // 1. DATA KERANJANG DARI SESSION LARAVEL (PERSISTEN SAAT DIREFRESH)
     // -------------------------------------------------------------------------
     let cartData = @json($cart ?? []);
-    let voucherAmount = {{ (float) ($voucher ?? 10000000) }};
-    let discountPercent = {{ (float) ($discountPercent ?? 20) }};
+    let voucherAmount = {{ (float) ($voucher ?? 0) }};
+    let discountPercent = {{ (float) ($discountPercent ?? 0) }};
     let activeItemKeyForDiscount = null;
+    let currentGrandTotal = 0;
+    let activePaymentMethod = 'tunai';
+    let selectedBankName = '';
 
     // Pastikan jika cartData bukan object/array, inisialisasi sebagai object kosong
     if (!cartData || typeof cartData !== 'object') {
@@ -441,12 +524,12 @@
             const itemTotal = priceAfterDiscount * item.qty;
 
             html += `
-                <div class="px-4 py-3.5 bg-white w-full group transition-colors">
+                <div class="px-4 py-3 bg-white w-full group transition-colors border-b border-black">
                     {{-- Baris Atas: Nama Produk, Deskripsi, Tombol Diskon (%) & Hapus (X) --}}
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-baseline gap-1.5 flex-wrap">
-                                <span class="font-semibold text-sm text-[#1A1F36]">${escapeHtml(item.name)}</span>
+                                <span class="font-bold text-sm text-[#1A1F36]">${escapeHtml(item.name)}</span>
                                 <span class="text-xs text-[#6B7280] truncate">${escapeHtml(item.description || '')}</span>
                                 ${itemDiscount > 0 ? `<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Diskon ${itemDiscount}%</span>` : ''}
                             </div>
@@ -464,7 +547,7 @@
                             <button 
                                 type="button" 
                                 onclick="hapusItem('${key}')" 
-                                class="hover:text-red-600 transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-red-50" 
+                                class="hover:text-red-600 transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-red-50 font-bold" 
                                 title="Hapus Item">
                                 X
                             </button>
@@ -472,24 +555,7 @@
                     </div>
 
                     {{-- Baris Bawah: Pengatur Jumlah (Quantity Stepper) & Total Harga Item --}}
-                    <div class="mt-2.5 flex items-center justify-between">
-                        {{-- Stepper Qty: [-] [qty] [+] --}}
-                        <div class="flex items-center gap-1">
-                            <button 
-                                type="button" 
-                                onclick="kurangQty('${key}')" 
-                                class="w-6 h-6 border border-gray-400 rounded flex items-center justify-center text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer">
-                                -
-                            </button>
-                            <span class="w-6 text-center text-sm font-semibold text-[#1A1F36] font-number">${item.qty}</span>
-                            <button 
-                                type="button" 
-                                onclick="tambahQty('${key}')" 
-                                class="w-6 h-6 border border-gray-400 rounded flex items-center justify-center text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer">
-                                +
-                            </button>
-                        </div>
-
+                    <div class="mt-2.5 flex items-center justify-end">
                         {{-- Harga Total Per Item --}}
                         <div class="text-right">
                             <span class="font-bold text-sm text-[#1A1F36] font-number">${formatRupiah(itemTotal)}</span>
@@ -523,13 +589,26 @@
         // Hitung Grand Total (Subtotal - Voucher - Diskon Transaksi)
         let grandTotal = subtotal - voucherAmount - diskonTransaksiNominal;
         if (grandTotal < 0) grandTotal = 0;
+        currentGrandTotal = grandTotal;
 
-        // Perbarui teks di layar
+        // Perbarui teks di layar Order
         document.getElementById('labelSubtotal').innerText = formatRupiah(subtotal);
         document.getElementById('labelVoucher').innerText = formatRupiah(voucherAmount);
         document.getElementById('labelDiskonPersen').innerText = discountPercent + '%';
         document.getElementById('labelDiskonNominal').innerText = '-' + formatRupiah(diskonTransaksiNominal);
         document.getElementById('labelGrandTotal').innerText = formatRupiah(grandTotal);
+
+        // Perbarui teks di layar Pembayaran
+        const paymentDisplay = document.getElementById('paymentDisplayTotal');
+        if (paymentDisplay) {
+            paymentDisplay.innerText = formatRupiah(grandTotal);
+        }
+
+        // Hitung ulang kembalian jika sedang di mode tunai
+        const inputNominal = document.getElementById('inputNominalBayar');
+        if (inputNominal && inputNominal.value) {
+            formatDanHitungTunai(inputNominal);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -750,16 +829,249 @@
     }
 
     // -------------------------------------------------------------------------
-    // 15. PROSES PEMBAYARAN
+    // 15. ALUR TAMPILAN TRANSAKSI & PEMBAYARAN
     // -------------------------------------------------------------------------
+
+    // A. Buka Tampilan Pembayaran saat tombol hijau "Pembayaran" diklik
     function prosesPembayaran() {
         const keys = Object.keys(cartData);
         if (keys.length === 0) {
             alert('Keranjang masih kosong!');
             return;
         }
-        alert('Melanjutkan ke proses pembayaran...');
+
+        // Tampilkan total di header pembayaran
+        document.getElementById('paymentDisplayTotal').innerText = formatRupiah(currentGrandTotal);
+
+        // Ganti panel tengah dari katalog ke pembayaran
+        document.getElementById('viewKatalogNormal').classList.add('hidden');
+        const viewBayar = document.getElementById('viewPembayaran');
+        viewBayar.classList.remove('hidden');
+        viewBayar.classList.add('flex');
+
+        // Ganti tombol aksi di panel kanan (dari Pembayaran ke Batal & Konfirmasi)
+        document.getElementById('panelActionNormal').classList.add('hidden');
+        document.getElementById('panelActionPayment').classList.remove('hidden');
+
+        // Reset ke metode Tunai secara default
+        pilihMetodePembayaran('tunai');
     }
+
+    // B. Batal Pembayaran (Kembali ke Katalog Produk)
+    function batalPembayaran() {
+        // Kembalikan panel tengah ke katalog
+        const viewBayar = document.getElementById('viewPembayaran');
+        viewBayar.classList.remove('flex');
+        viewBayar.classList.add('hidden');
+        document.getElementById('viewKatalogNormal').classList.remove('hidden');
+
+        // Kembalikan tombol aksi di panel kanan
+        document.getElementById('panelActionPayment').classList.add('hidden');
+        document.getElementById('panelActionNormal').classList.remove('hidden');
+
+        // Tutup dropdown bank jika terbuka
+        document.getElementById('bankDropdownMenu').classList.add('hidden');
+    }
+
+    // C. Pilih Metode Pembayaran (Tunai / Bank)
+    function pilihMetodePembayaran(method) {
+        activePaymentMethod = method;
+        const btnTunai = document.getElementById('btnMethodTunai');
+        const btnBank = document.getElementById('btnMethodBank');
+        const formTunai = document.getElementById('formBayarTunai');
+        const formBank = document.getElementById('formBayarBank');
+
+        if (method === 'tunai') {
+            // Style tombol Tunai aktif (Orange)
+            btnTunai.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]";
+            // Style tombol Bank inaktif (Putih)
+            btnBank.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50";
+
+            formTunai.classList.remove('hidden');
+            formBank.classList.add('hidden');
+
+            setTimeout(() => {
+                const inputNominal = document.getElementById('inputNominalBayar');
+                if (inputNominal) inputNominal.focus();
+            }, 100);
+        } else {
+            // Style tombol Bank aktif (Orange)
+            btnBank.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]";
+            // Style tombol Tunai inaktif (Putih)
+            btnTunai.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50";
+
+            formBank.classList.remove('hidden');
+            formTunai.classList.add('hidden');
+        }
+    }
+
+    // D. Format Input Tunai & Hitung Kembalian Otomatis
+    function formatDanHitungTunai(input) {
+        // Ambil hanya angka
+        let rawVal = input.value.replace(/\D/g, '');
+        if (!rawVal) {
+            input.value = '';
+            document.getElementById('labelKembalian').innerText = 'Rp 0';
+            return;
+        }
+
+        let numVal = parseFloat(rawVal) || 0;
+        // Format angka dengan pemisah ribuan titik
+        input.value = numVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+        // Hitung Kembalian
+        let kembalian = numVal - currentGrandTotal;
+        if (kembalian >= 0) {
+            document.getElementById('labelKembalian').innerText = formatRupiah(kembalian);
+        } else {
+            document.getElementById('labelKembalian').innerText = 'Rp 0';
+        }
+    }
+
+    // E. Dropdown Bank
+    function toggleBankDropdown() {
+        const menu = document.getElementById('bankDropdownMenu');
+        menu.classList.toggle('hidden');
+    }
+
+    function pilihBank(bankName) {
+        selectedBankName = bankName;
+        document.getElementById('selectedBankText').innerText = bankName;
+        
+        // Update tanda centang pada menu
+        const bankList = ['BNI', 'BCA', 'BRI', 'Seabank', 'JAGO'];
+        bankList.forEach(b => {
+            const checkEl = document.getElementById('check-' + b);
+            if (checkEl) {
+                if (b === bankName) {
+                    checkEl.classList.remove('hidden');
+                } else {
+                    checkEl.classList.add('hidden');
+                }
+            }
+        });
+
+        // Sembunyikan dropdown
+        document.getElementById('bankDropdownMenu').classList.add('hidden');
+    }
+
+    // F. Konfirmasi Pembayaran (Kirim ke Backend -> Simpan ke Tabel ACR & STS)
+    function konfirmasiPembayaran() {
+        const keys = Object.keys(cartData);
+        if (keys.length === 0) {
+            alert('Keranjang masih kosong!');
+            return;
+        }
+
+        let nominalBayarClean = 0;
+        if (activePaymentMethod === 'tunai') {
+            const inputNominal = document.getElementById('inputNominalBayar');
+            if (inputNominal) {
+                nominalBayarClean = parseFloat(inputNominal.value.replace(/\D/g, '')) || 0;
+            }
+            if (nominalBayarClean < currentGrandTotal) {
+                alert('Nominal pembayaran kurang dari total tagihan!');
+                return;
+            }
+        } else if (activePaymentMethod === 'bank') {
+            if (!selectedBankName) {
+                alert('Silakan pilih bank terlebih dahulu!');
+                return;
+            }
+        }
+
+        // Tampilkan loading cursor pada tombol
+        const btnKonfirmasi = event ? event.currentTarget : null;
+        if (btnKonfirmasi) {
+            btnKonfirmasi.disabled = true;
+            btnKonfirmasi.innerText = 'Memproses...';
+        }
+
+        // Kirim request transaksi ke backend (akan disimpan ke ACR & STS)
+        fetch('{{ route('POS.bayar') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                cart: cartData,
+                voucher: voucherAmount,
+                discount_percent: discountPercent,
+                payment_method: activePaymentMethod,
+                bank_name: selectedBankName,
+                nominal_bayar: nominalBayarClean
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btnKonfirmasi) {
+                btnKonfirmasi.disabled = false;
+                btnKonfirmasi.innerText = 'Konfirmasi';
+            }
+
+            if (data.success) {
+                // Reset state data keranjang di browser
+                cartData = {};
+                voucherAmount = 0;
+                discountPercent = 0;
+                currentGrandTotal = 0;
+
+                // Sembunyikan panel tengah dan panel order kanan
+                document.getElementById('mainCenterSection').classList.add('hidden');
+                document.getElementById('rightOrderPanel').classList.add('hidden');
+
+                // Tampilkan tampilan sukses pembayaran layar penuh
+                const viewSuccess = document.getElementById('viewSuccessPayment');
+                viewSuccess.classList.remove('hidden');
+                viewSuccess.classList.add('flex');
+            } else {
+                alert(data.message || 'Gagal memproses pembayaran!');
+            }
+        })
+        .catch(err => {
+            if (btnKonfirmasi) {
+                btnKonfirmasi.disabled = false;
+                btnKonfirmasi.innerText = 'Konfirmasi';
+            }
+            console.error('Error proses pembayaran:', err);
+            alert('Terjadi kesalahan saat memproses pembayaran.');
+        });
+    }
+
+    // G. Kembali ke Kasir dari Tampilan Berhasil
+    function kembaliKeKasir() {
+        // Sembunyikan tampilan sukses
+        const viewSuccess = document.getElementById('viewSuccessPayment');
+        viewSuccess.classList.remove('flex');
+        viewSuccess.classList.add('hidden');
+
+        // Tampilkan kembali panel tengah & order
+        document.getElementById('mainCenterSection').classList.remove('hidden');
+        document.getElementById('rightOrderPanel').classList.remove('hidden');
+
+        // Reset input dan form
+        const inputNominal = document.getElementById('inputNominalBayar');
+        if (inputNominal) inputNominal.value = '';
+        document.getElementById('labelKembalian').innerText = 'Rp 0';
+        document.getElementById('selectedBankText').innerText = 'Pilih bank';
+        selectedBankName = '';
+
+        // Render ulang keranjang yang sudah kosong
+        renderCart();
+
+        // Kembalikan ke tampilan normal katalog
+        batalPembayaran();
+    }
+
+    // Tutup dropdown bank saat klik di luar
+    document.addEventListener('click', function(e) {
+        const trigger = document.getElementById('bankDropdownTrigger');
+        const menu = document.getElementById('bankDropdownMenu');
+        if (trigger && menu && !trigger.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
 
     // Jalankan render awal saat halaman dimuat
     document.addEventListener('DOMContentLoaded', function() {
