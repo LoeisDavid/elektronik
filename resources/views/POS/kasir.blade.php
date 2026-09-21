@@ -4,38 +4,52 @@
 @section('header_title', 'Point Of Sales')
 
 @section('content')
+
+<!-- Halaman awal sebelum membuka kasir -->
+
 {{-- ========================================================================= --}}
 {{-- KONTEN UTAMA HALAMAN KASIR (POINT OF SALES)                              --}}
 {{-- ========================================================================= --}}
 <div class="flex h-full w-full overflow-hidden relative" id="posContainer">
 
     {{-- ===================================================================== --}}
-    {{-- TAMPILAN 1: SUKSES PEMBAYARAN (FULL WIDTH VIEW)                       --}}
+    {{-- TAMPILAN 0: BUKA KASIR (TAMPIL PERTAMA KALI, SEBELUM KASIR DIBUKA)    --}}
     {{-- ===================================================================== --}}
-    <div id="viewSuccessPayment" class="hidden flex-1 flex-col h-full bg-[#CECECE]/60 p-6 overflow-hidden">
-        {{-- Tombol Kembali ke Kasir --}}
-        <div>
-            <button
-                type="button"
-                onclick="kembaliKeKasir()"
-                class="inline-flex items-center gap-1 text-sm italic font-medium text-[#2D3748] hover:text-black cursor-pointer select-none">
-                <span class="text-base leading-none">‹</span> Kembali ke Kasir
-            </button>
+    <div id="viewBukaKasir" class="flex-1 flex flex-col items-center justify-center h-full bg-[#CECECE]/60 text-center px-6">
+        {{-- Ikon Lingkaran --}}
+        <div class="w-20 h-20 rounded-full border-2 border-[#E2E8F0] bg-white flex items-center justify-center shadow-xs mb-5">
+            <svg class="w-9 h-9 text-[#1A1F36]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
+            </svg>
         </div>
 
-        {{-- Pesan Sukses Ditengah Layar --}}
-        <div class="flex-1 flex items-center justify-center">
-            <h1 class="text-4xl lg:text-5xl font-semibold text-[#1A1F36] tracking-wide">
-                Pembayaran berhasil
-            </h1>
-        </div>
+        {{-- Judul --}}
+        <h1 class="text-2xl font-bold text-[#1A1F36] tracking-tight mb-2">
+            Buka Kasir
+        </h1>
+
+        {{-- Sub Judul --}}
+        <p class="text-sm text-[#6B7280] mb-6 max-w-xs">
+            Silakan buka kasir terlebih dahulu untuk mulai menggunakan POS.
+        </p>
+
+        {{-- Tombol Buka Kasir --}}
+        <button
+            type="button"
+            onclick="bukaKasir()"
+            class="bg-[#327337] hover:bg-[#285e2c] text-white text-sm font-bold px-6 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3" />
+            </svg>
+            Buka Kasir
+        </button>
     </div>
+
 
     {{-- ===================================================================== --}}
     {{-- BAGIAN TENGAH: KATALOG PRODUK & MODE PEMBAYARAN                       --}}
     {{-- ===================================================================== --}}
-    <div id="mainCenterSection" class="flex-1 flex flex-col h-full overflow-hidden bg-[#CECECE]/60">
-
+    <div id="mainCenterSection" class="hidden flex-1 flex-col h-full overflow-hidden bg-[#CECECE]/60">
         {{-- ----------------------------------------------------------------- --}}
         {{-- A. SUB-VIEW 1: KATALOG PRODUK NORMAL                              --}}
         {{-- ----------------------------------------------------------------- --}}
@@ -81,123 +95,12 @@
                 </button>
             </div>
         </div>
-
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- B. SUB-VIEW 2: TAMPILAN PROSES TRANSAKSI & PEMBAYARAN             --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div id="viewPembayaran" class="hidden flex-1 flex-col h-full p-8 overflow-y-auto">
-            
-            {{-- Nominal Total Besar di Atas --}}
-            <div class="text-center pt-6 pb-6">
-                <h1 id="paymentDisplayTotal" class="text-4xl lg:text-5xl font-bold text-[#1A1F36] tracking-tight font-number">
-                    Rp 0
-                </h1>
-            </div>
-
-            {{-- Pilihan Metode Pembayaran: Tunai / Bank --}}
-            <div class="flex items-center justify-center gap-6 mb-8">
-                {{-- Tombol Tunai --}}
-                <button
-                    type="button"
-                    id="btnMethodTunai"
-                    onclick="pilihMetodePembayaran('tunai')"
-                    class="w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]">
-                    Tunai
-                </button>
-
-                {{-- Tombol Bank --}}
-                <button
-                    type="button"
-                    id="btnMethodBank"
-                    onclick="pilihMetodePembayaran('bank')"
-                    class="w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50">
-                    Bank
-                </button>
-            </div>
-
-            {{-- FORM METODE TUNAI --}}
-            <div id="formBayarTunai" class="max-w-md w-full mx-auto space-y-4">
-                {{-- Box Masukkan Nominal --}}
-                <div class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs">
-                    <span class="text-base lg:text-lg font-bold text-[#1A1F36]">Masukkan nominal:</span>
-                    <div class="flex items-center justify-end flex-1 pl-2">
-                        <span class="text-base lg:text-lg font-bold text-[#1A1F36] mr-1">Rp</span>
-                        <input
-                            type="text"
-                            id="inputNominalBayar"
-                            oninput="formatDanHitungTunai(this)"
-                            placeholder="0"
-                            class="w-36 text-right text-base lg:text-lg font-bold text-[#1A1F36] bg-transparent border-none outline-none font-number p-0 focus:ring-0" />
-                    </div>
-                </div>
-
-                {{-- Box Kembalian --}}
-                <div class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs">
-                    <span class="text-base lg:text-lg font-bold text-[#1A1F36]">Kembalian:</span>
-                    <span id="labelKembalian" class="text-base lg:text-lg font-bold text-[#1A1F36] font-number">
-                        Rp 0
-                    </span>
-                </div>
-            </div>
-
-            {{-- FORM METODE BANK --}}
-            <div id="formBayarBank" class="hidden max-w-md w-full mx-auto relative">
-                {{-- Dropdown Trigger Box --}}
-                <div
-                    id="bankDropdownTrigger"
-                    onclick="toggleBankDropdown()"
-                    class="bg-white border-2 border-[#333333] rounded-md px-4 py-3 flex items-center justify-between shadow-xs cursor-pointer hover:bg-gray-50 select-none">
-                    <span id="selectedBankText" class="text-base lg:text-lg font-bold text-[#1A1F36]">
-                        Pilih bank
-                    </span>
-                    <span class="text-sm font-bold text-[#1A1F36] ml-2">V</span>
-                </div>
-
-                {{-- Dropdown List Menu Bank --}}
-                <div
-                    id="bankDropdownMenu"
-                    class="hidden absolute top-full left-0 right-0 mt-2 bg-[#E2E8F0] border border-gray-400 rounded-lg shadow-xl z-30 overflow-hidden divide-y divide-gray-300">
-                    <div
-                        onclick="pilihBank('BNI')"
-                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
-                        <span>BNI</span>
-                        <span id="check-BNI" class="hidden">✓</span>
-                    </div>
-                    <div
-                        onclick="pilihBank('BCA')"
-                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
-                        <span>BCA</span>
-                        <span id="check-BCA" class="hidden">✓</span>
-                    </div>
-                    <div
-                        onclick="pilihBank('BRI')"
-                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
-                        <span>BRI</span>
-                        <span id="check-BRI" class="hidden">✓</span>
-                    </div>
-                    <div
-                        onclick="pilihBank('Seabank')"
-                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
-                        <span>Seabank</span>
-                        <span id="check-Seabank" class="hidden">✓</span>
-                    </div>
-                    <div
-                        onclick="pilihBank('JAGO')"
-                        class="px-4 py-2.5 text-sm font-semibold text-[#1A1F36] hover:bg-[#2D8CFF] hover:text-white cursor-pointer transition-colors flex items-center justify-between">
-                        <span>JAGO</span>
-                        <span id="check-JAGO" class="hidden">✓</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
     </div>
 
     {{-- ===================================================================== --}}
     {{-- BAGIAN KANAN: PANEL ORDER / KERANJANG BELANJA (DARI SESSION & JS)     --}}
     {{-- ===================================================================== --}}
-    <div id="rightOrderPanel" class="w-80 lg:w-96 flex-shrink-0 bg-white border-l border-[#E2E8F0] flex flex-col h-full shadow-lg z-10">
+    <div id="rightOrderPanel" class="hidden w-80 lg:w-96 flex-shrink-0 bg-white border-l border-[#E2E8F0] flex-col h-full shadow-lg z-10">
 
         {{-- ----------------------------------------------------------------- --}}
         {{-- 1. HEADER ORDER & TOMBOL RESET KERANJANG                         --}}
@@ -296,25 +199,6 @@
                     Pembayaran
                 </button>
             </div>
-
-            {{-- Tombol Aksi Mode Pembayaran (Tombol Batal Merah & Konfirmasi Hijau) --}}
-            <div id="panelActionPayment" class="pt-3 hidden">
-                <div class="grid grid-cols-2 gap-0">
-                    <button
-                        type="button"
-                        onclick="batalPembayaran()"
-                        class="w-full bg-[#D32F2F] hover:bg-[#B71C1C] text-white text-lg font-bold py-3 rounded-none transition-all cursor-pointer flex items-center justify-center tracking-wide">
-                        Batal
-                    </button>
-                    <button
-                        type="button"
-                        onclick="konfirmasiPembayaran()"
-                        class="w-full bg-[#327337] hover:bg-[#285e2c] text-white text-lg font-bold py-3 rounded-none transition-all cursor-pointer flex items-center justify-center tracking-wide">
-                        Konfirmasi
-                    </button>
-                </div>
-            </div>
-
         </div>
 
     </div>
@@ -492,6 +376,25 @@
 
     // CSRF Token untuk request AJAX
     const csrfToken = '{{ csrf_token() }}';
+
+    // -------------------------------------------------------------------------
+    // 0. FUNGSI BUKA KASIR (MENAMPILKAN KATALOG & PANEL ORDER PERTAMA KALI)
+    // -------------------------------------------------------------------------
+    function bukaKasir() {
+        // Sembunyikan tampilan awal "Buka Kasir"
+        const viewAwal = document.getElementById('viewBukaKasir');
+        viewAwal.classList.add('hidden');
+        viewAwal.classList.remove('flex');
+
+        // Tampilkan panel tengah (katalog) & panel kanan (order)
+        const mainCenter = document.getElementById('mainCenterSection');
+        mainCenter.classList.remove('hidden');
+        mainCenter.classList.add('flex');
+
+        const rightPanel = document.getElementById('rightOrderPanel');
+        rightPanel.classList.remove('hidden');
+        rightPanel.classList.add('flex');
+    }
 
     // -------------------------------------------------------------------------
     // 2. FUNGSI RENDER TAMPILAN KERANJANG DI PANEL KANAN
@@ -828,51 +731,6 @@
             .replace(/'/g, "&#039;");
     }
 
-    // -------------------------------------------------------------------------
-    // 15. ALUR TAMPILAN TRANSAKSI & PEMBAYARAN
-    // -------------------------------------------------------------------------
-
-    // A. Buka Tampilan Pembayaran saat tombol hijau "Pembayaran" diklik
-    function prosesPembayaran() {
-        const keys = Object.keys(cartData);
-        if (keys.length === 0) {
-            alert('Keranjang masih kosong!');
-            return;
-        }
-
-        // Tampilkan total di header pembayaran
-        document.getElementById('paymentDisplayTotal').innerText = formatRupiah(currentGrandTotal);
-
-        // Ganti panel tengah dari katalog ke pembayaran
-        document.getElementById('viewKatalogNormal').classList.add('hidden');
-        const viewBayar = document.getElementById('viewPembayaran');
-        viewBayar.classList.remove('hidden');
-        viewBayar.classList.add('flex');
-
-        // Ganti tombol aksi di panel kanan (dari Pembayaran ke Batal & Konfirmasi)
-        document.getElementById('panelActionNormal').classList.add('hidden');
-        document.getElementById('panelActionPayment').classList.remove('hidden');
-
-        // Reset ke metode Tunai secara default
-        pilihMetodePembayaran('tunai');
-    }
-
-    // B. Batal Pembayaran (Kembali ke Katalog Produk)
-    function batalPembayaran() {
-        // Kembalikan panel tengah ke katalog
-        const viewBayar = document.getElementById('viewPembayaran');
-        viewBayar.classList.remove('flex');
-        viewBayar.classList.add('hidden');
-        document.getElementById('viewKatalogNormal').classList.remove('hidden');
-
-        // Kembalikan tombol aksi di panel kanan
-        document.getElementById('panelActionPayment').classList.add('hidden');
-        document.getElementById('panelActionNormal').classList.remove('hidden');
-
-        // Tutup dropdown bank jika terbuka
-        document.getElementById('bankDropdownMenu').classList.add('hidden');
-    }
-
     // C. Pilih Metode Pembayaran (Tunai / Bank)
     function pilihMetodePembayaran(method) {
         activePaymentMethod = method;
@@ -926,33 +784,6 @@
         } else {
             document.getElementById('labelKembalian').innerText = 'Rp 0';
         }
-    }
-
-    // E. Dropdown Bank
-    function toggleBankDropdown() {
-        const menu = document.getElementById('bankDropdownMenu');
-        menu.classList.toggle('hidden');
-    }
-
-    function pilihBank(bankName) {
-        selectedBankName = bankName;
-        document.getElementById('selectedBankText').innerText = bankName;
-        
-        // Update tanda centang pada menu
-        const bankList = ['BNI', 'BCA', 'BRI', 'Seabank', 'JAGO'];
-        bankList.forEach(b => {
-            const checkEl = document.getElementById('check-' + b);
-            if (checkEl) {
-                if (b === bankName) {
-                    checkEl.classList.remove('hidden');
-                } else {
-                    checkEl.classList.add('hidden');
-                }
-            }
-        });
-
-        // Sembunyikan dropdown
-        document.getElementById('bankDropdownMenu').classList.add('hidden');
     }
 
     // F. Konfirmasi Pembayaran (Kirim ke Backend -> Simpan ke Tabel ACR & STS)
@@ -1038,40 +869,6 @@
             alert('Terjadi kesalahan saat memproses pembayaran.');
         });
     }
-
-    // G. Kembali ke Kasir dari Tampilan Berhasil
-    function kembaliKeKasir() {
-        // Sembunyikan tampilan sukses
-        const viewSuccess = document.getElementById('viewSuccessPayment');
-        viewSuccess.classList.remove('flex');
-        viewSuccess.classList.add('hidden');
-
-        // Tampilkan kembali panel tengah & order
-        document.getElementById('mainCenterSection').classList.remove('hidden');
-        document.getElementById('rightOrderPanel').classList.remove('hidden');
-
-        // Reset input dan form
-        const inputNominal = document.getElementById('inputNominalBayar');
-        if (inputNominal) inputNominal.value = '';
-        document.getElementById('labelKembalian').innerText = 'Rp 0';
-        document.getElementById('selectedBankText').innerText = 'Pilih bank';
-        selectedBankName = '';
-
-        // Render ulang keranjang yang sudah kosong
-        renderCart();
-
-        // Kembalikan ke tampilan normal katalog
-        batalPembayaran();
-    }
-
-    // Tutup dropdown bank saat klik di luar
-    document.addEventListener('click', function(e) {
-        const trigger = document.getElementById('bankDropdownTrigger');
-        const menu = document.getElementById('bankDropdownMenu');
-        if (trigger && menu && !trigger.contains(e.target) && !menu.contains(e.target)) {
-            menu.classList.add('hidden');
-        }
-    });
 
     // Jalankan render awal saat halaman dimuat
     document.addEventListener('DOMContentLoaded', function() {

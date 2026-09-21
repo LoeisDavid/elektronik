@@ -46,6 +46,11 @@ class kasirController extends Controller
             return redirect()->route('POS.kasir')->with('warning', 'Barcode "' . $code . '" sudah ada di keranjang!');
         }
 
+        // Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
+        if (STS::where('BC_OUT', $code)->exists()) {
+            return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" sudah terjual dan tidak dapat digunakan lagi!');
+        }
+
         // 1. Cek di tabel ITMDT berdasarkan barcode keluar (BC_OUT)
         $itmdt = ITMDT::where('BC_OUT', $code)->first();
         if (!$itmdt) {
