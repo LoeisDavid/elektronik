@@ -55,6 +55,9 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('cart/sync', [kasirController::class, 'syncCart'])->name('cart.sync');
     Route::post('cart/clear', [kasirController::class, 'clearCart'])->name('cart.clear');
     Route::post('bayar', [kasirController::class, 'bayar'])->name('bayar');
+    Route::post('buka-kasir', [kasirController::class, 'bukaKasir'])->name('buka-kasir');
+    Route::post('tutup-kasir', [kasirController::class, 'tutupKasir'])->name('tutup-kasir');
+    Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
 });
 
 

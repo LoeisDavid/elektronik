@@ -9,7 +9,9 @@
     --font-number: 'IBM Plex Sans', ui-sans-serif, sans-serif;
 
     /* Extracted Design System Palette */
-    --color-primary-blue: #2D8CFF;
+    --color-primary-db: #0D1C43;
+    --color-primary-sdb: #22396F;
+    --color-secondary-bw: #F8F8FF;
     --color-dark-navy: #1A1F36;
     --color-heading-dark: #2D3748;
     --color-body-text: #6B7280;

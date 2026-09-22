@@ -1,11 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Point Of Sales - Kasir')
-@section('header_title', 'Point Of Sales')
+@section('title', 'Toko - Elektronik')
+@section('header_title', 'POS')
 
 @section('content')
-
-<!-- Halaman awal sebelum membuka kasir -->
 
 {{-- ========================================================================= --}}
 {{-- KONTEN UTAMA HALAMAN KASIR (POINT OF SALES)                              --}}
@@ -15,16 +13,16 @@
     {{-- ===================================================================== --}}
     {{-- TAMPILAN 0: BUKA KASIR (TAMPIL PERTAMA KALI, SEBELUM KASIR DIBUKA)    --}}
     {{-- ===================================================================== --}}
-    <div id="viewBukaKasir" class="flex-1 flex flex-col items-center justify-center h-full bg-[#CECECE]/60 text-center px-6">
+    <div id="viewBukaKasir" class="{{ !empty($isKasirOpen) ? 'hidden' : 'flex' }} flex-1 flex-col items-center justify-center h-full bg-secondary-bw text-center px-6">
         {{-- Ikon Lingkaran --}}
-        <div class="w-20 h-20 rounded-full border-2 border-[#E2E8F0] bg-white flex items-center justify-center shadow-xs mb-5">
-            <svg class="w-9 h-9 text-[#1A1F36]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <div class="w-20 h-20 rounded-full border-2 border-[#E2E8F0] bg-secondary-bw flex items-center justify-center shadow-xs mb-5">
+            <svg class="w-9 h-9 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
             </svg>
         </div>
 
         {{-- Judul --}}
-        <h1 class="text-2xl font-bold text-[#1A1F36] tracking-tight mb-2">
+        <h1 class="text-2xl font-bold text-black tracking-tight mb-2">
             Buka Kasir
         </h1>
 
@@ -36,8 +34,8 @@
         {{-- Tombol Buka Kasir --}}
         <button
             type="button"
-            onclick="bukaKasir()"
-            class="bg-[#327337] hover:bg-[#285e2c] text-white text-sm font-bold px-6 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-2">
+            onclick="bukaModalBukaKasir()"
+            class="bg-primary-db hover:bg-primary-sdb text-white text-sm font-bold px-6 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3" />
             </svg>
@@ -47,9 +45,9 @@
 
 
     {{-- ===================================================================== --}}
-    {{-- BAGIAN TENGAH: KATALOG PRODUK & MODE PEMBAYARAN                       --}}
+    {{-- BAGIAN TENGAH: KATALOG PRODUK & TOOLBAR                               --}}
     {{-- ===================================================================== --}}
-    <div id="mainCenterSection" class="hidden flex-1 flex-col h-full overflow-hidden bg-[#CECECE]/60">
+    <div id="mainCenterSection" class="{{ !empty($isKasirOpen) ? 'flex' : 'hidden' }} flex-1 flex-col h-full overflow-hidden bg-secondary-bw">
         {{-- ----------------------------------------------------------------- --}}
         {{-- A. SUB-VIEW 1: KATALOG PRODUK NORMAL                              --}}
         {{-- ----------------------------------------------------------------- --}}
@@ -70,7 +68,7 @@
                             id="searchInput"
                             onkeyup="filterProdukKatalog()"
                             placeholder="Cari produk"
-                            class="w-full bg-white border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2 text-sm text-[#2D3748] placeholder-gray-400 focus:outline-none focus:border-[#2D8CFF] focus:ring-1 focus:ring-[#2D8CFF] shadow-xs transition-all" />
+                            class="w-full bg-secondary-bw border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2 text-sm text-[#2D3748] placeholder-gray-400 focus:outline-none focus:border-[#2D8CFF] focus:ring-1 focus:ring-[#2D8CFF] shadow-xs transition-all" />
                     </div>
 
                     <button
@@ -87,118 +85,125 @@
                 <button
                     type="button"
                     onclick="bukaModalBarcode()"
-                    class="h-9 px-3 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-[#2D3748] rounded-lg flex items-center justify-center shadow-xs cursor-pointer transition-colors"
+                    class="h-9 px-3 bg-secondary-bw border border-[#E2E8F0] hover:bg-gray-50 text-[#2D3748] rounded-lg flex items-center justify-center shadow-xs cursor-pointer transition-colors"
                     title="Scan Barcode">
                     <svg class="w-5 h-5 text-current" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4zm4 0h1v16h-1V4zm2 0h2v16h-2V4zm3 0h1v16h-1V4z" />
                     </svg>
                 </button>
             </div>
+
+            {{-- Area Konten Katalog --}}
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center text-gray-500">
+                <div class="max-w-sm space-y-2">
+                    <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-700">Scan Barcode untuk Menambah Produk</h3>
+                    <p class="text-xs text-gray-400">Gunakan tombol Scan Barcode di pojok kanan atas untuk memasukkan barcode fisik unit barang (BC_OUT).</p>
+                </div>
+            </div>
         </div>
     </div>
 
     {{-- ===================================================================== --}}
-    {{-- BAGIAN KANAN: PANEL ORDER / KERANJANG BELANJA (DARI SESSION & JS)     --}}
+    {{-- BAGIAN KANAN: PANEL ORDER / KERANJANG BELANJA                         --}}
     {{-- ===================================================================== --}}
-    <div id="rightOrderPanel" class="hidden w-80 lg:w-96 flex-shrink-0 bg-white border-l border-[#E2E8F0] flex-col h-full shadow-lg z-10">
+    <div id="rightOrderPanel" class="w-80 lg:w-96 bg-white border-l border-black {{ !empty($isKasirOpen) ? 'flex' : 'hidden' }} flex-col h-full z-10">
 
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- 1. HEADER ORDER & TOMBOL RESET KERANJANG                         --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div class="outline outline-1 outline-black border-y border-black p-4 pb-2 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-[#1A1F36] tracking-tight">Order</h2>
+        {{-- 1. HEADER ORDER & TOMBOL DRAFT TRANSAKSI --}}
+        <div class="p-4 py-3 flex items-center justify-between border-y border-black bg-secondary-bw">
+            <h2 class="text-xl font-bold text-black tracking-tight">Order</h2>
             
-            {{-- Tombol Kosongkan Keranjang --}}
+            {{-- Tombol Draft Transaksi --}}
             <button 
                 type="button" 
-                onclick="resetKeranjang()" 
-                class="text-xs font-semibold text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
-                title="Kosongkan Semua Item">
-                Reset
+                onclick="modalDraftTransaksi()" 
+                class="bg-[#1A233A] hover:bg-[#0F1523] text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors cursor-pointer">
+                Draft Transaksi
             </button>
         </div>
 
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- 2. DAFTAR ITEM KERANJANG (DIRENDER OTOMATIS OLEH JAVASCRIPT)      --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div id="cartItemsList" class="flex-1 overflow-y-auto outline outline-1 outline-black border-y border-black px-0 py-0 divide-y divide-black">
-            {{-- Daftar item di-generate secara dinamis oleh fungsi renderCart() --}}
+        {{-- 2. DAFTAR ITEM KERANJANG (DIRENDER OTOMATIS OLEH JAVASCRIPT) --}}
+        <div id="cartItemsList" class="flex-1 overflow-y-auto divide-y divide-gray-200">
+            {{-- Item keranjang di-render via JavaScript --}}
         </div>
 
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- 3. RINGKASAN PEMBAYARAN (SUBTOTAL, VOUCHER, DISKON, TOTAL)         --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div class="border border-black outline outline-1 outline-black p-4 bg-white space-y-2">
-
-            {{-- Subtotal --}}
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-[#2D3748] font-medium">Subtotal</span>
-                <span id="labelSubtotal" class="font-bold text-[#1A1F36] font-number">Rp 0</span>
-            </div>
-
-            {{-- Voucher (Dapat Diedit dengan Mengklik) --}}
-            <div class="flex items-center justify-between text-sm">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#2D3748] font-medium">Voucher</span>
-                    <button
-                        type="button"
-                        onclick="bukaModalVoucher()"
-                        class="text-[11px] text-[#2D8CFF] hover:underline cursor-pointer"
-                        title="Ubah Nominal Voucher">
-                        (edit)
-                    </button>
+        {{-- 3. RINGKASAN PEMBAYARAN & ACTION BUTTONS --}}
+        <div class="border-y border-black bg-white">
+            
+            {{-- Rincian Biaya (Subtotal, Diskon, Metode Pembayaran) --}}
+            <div class="p-4 space-y-2.5">
+                {{-- Subtotal --}}
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-black font-medium">Subtotal</span>
+                    <span id="labelSubtotal" class="font-bold text-black">Rp 0</span>
                 </div>
-                <span 
-                    id="labelVoucher" 
-                    onclick="bukaModalVoucher()"
-                    class="font-bold text-[#1A1F36] font-number cursor-pointer hover:text-[#2D8CFF] transition-colors">
-                    Rp 0
-                </span>
-            </div>
 
-            {{-- Diskon Transaksi (Dapat Diedit dengan Mengklik) --}}
-            <div class="flex flex-col text-sm">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[#2D3748] font-medium">Diskon Transaksi</span>
-                        <button
-                            type="button"
-                            onclick="bukaModalDiskonTransaksi()"
-                            class="text-[11px] text-[#2D8CFF] hover:underline cursor-pointer"
-                            title="Ubah Persen Diskon">
-                            (edit)
-                        </button>
+                {{-- Diskon --}}
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-black font-medium">Diskon</span>
+                    <div onclick="modalDiskonGlobal()" class="flex items-center gap-1 cursor-pointer group">
+                        <span id="labelDiskonGlobal" class="font-bold text-black">Rp 0</span>
+                        <svg class="w-4 h-4 text-gray-500 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
                     </div>
-                    <span 
-                        id="labelDiskonPersen" 
-                        onclick="bukaModalDiskonTransaksi()"
-                        class="font-bold text-[#1A1F36] font-number cursor-pointer hover:text-[#2D8CFF] transition-colors">
-                        0%
-                    </span>
                 </div>
-                <div class="text-right">
-                    <span id="labelDiskonNominal" class="text-xs text-[#6B7280] font-number">-Rp 0</span>
+
+                {{-- Metode Pembayaran --}}
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-black font-medium">Metode Pembayaran</span>
+                    <div onclick="modalMetodePembayaran()" class="flex items-center gap-1 cursor-pointer group">
+                        <span id="metodePembayaran" class="font-bold text-black">Cash</span>
+                        <svg class="w-4 h-4 text-gray-500 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </div>
                 </div>
             </div>
-
-            {{-- Garis Pemisah --}}
-            <hr class="border-[#E2E8F0] my-2" />
 
             {{-- Total Akhir --}}
-            <div class="flex items-center justify-between text-base pt-0.5">
-                <span class="text-xl font-bold text-[#1A1F36]">Total</span>
-                <span id="labelGrandTotal" class="text-xl font-bold text-[#1A1F36] font-number">Rp 0</span>
+            <div class="flex items-center justify-between px-4 py-3 border-t border-black bg-white">
+                <span class="text-2xl font-bold text-black">Total</span>
+                <span id="labelGrandTotal" class="text-2xl font-bold text-black">Rp 0</span>
             </div>
 
-            {{-- Tombol Aksi Mode Normal (Tombol Pembayaran Hijau) --}}
-            <div id="panelActionNormal" class="pt-3">
-                <button
-                    type="button"
+            {{-- Footer Action Buttons (Reload, Reset, Konfirmasi) --}}
+            <div class="flex items-stretch border-y border-black">
+                {{-- Tombol Reload / Refresh --}}
+                <button 
+                    type="button" 
+                    onclick="resetKeranjang()"
+                    class="w-14 h-14 flex items-center justify-center border-r border-black hover:bg-gray-100 text-black transition-colors cursor-pointer"
+                    title="Reload Keranjang">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M20.985 19.644v-4.992m0 0h-4.992m4.992 0L17.2 18.008a9 9 0 11.236-11.282" />
+                    </svg>
+                </button>
+
+                {{-- Tombol Simpan Draft / Arsip --}}
+                <button 
+                    type="button" 
+                    onclick="modalTambahArsip()"
+                    class="w-14 h-14 flex items-center justify-center border-r border-gray-300 hover:bg-gray-100 text-black transition-colors cursor-pointer"
+                    title="Simpan Draft">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125v4.125m3-4.125v4.125M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                </button>
+
+                {{-- Tombol Utama Konfirmasi --}}
+                <button 
+                    type="button" 
                     onclick="prosesPembayaran()"
-                    class="w-full bg-[#327337] hover:bg-[#285e2c] text-white text-lg font-bold py-3 rounded-none shadow-sm transition-all cursor-pointer flex items-center justify-center tracking-wide">
-                    Pembayaran
+                    class="flex-1 bg-primary-db hover:bg-primary-sdb text-white font-bold text-xl transition-colors cursor-pointer flex items-center justify-center">
+                    Konfirmasi
                 </button>
             </div>
+
         </div>
 
     </div>
@@ -214,7 +219,7 @@
         <div class="w-full max-w-sm bg-[#F7F8FC] rounded-2xl p-5 shadow-2xl space-y-4 border border-[#E2E8F0]">
             
             {{-- Judul Modal --}}
-            <h3 class="text-xl font-bold text-[#1A1F36] tracking-tight">Scan Barcode</h3>
+            <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode</h3>
 
             {{-- Area Kamera Scanner (Kotak Abu-Abu Gelap) --}}
             <div class="w-full h-52 bg-[#596172] rounded-xl relative overflow-hidden flex flex-col items-center justify-center text-white shadow-inner">
@@ -223,7 +228,7 @@
                 <span class="text-xs text-white/70 mt-2 font-medium">Arahkan barcode ke kamera</span>
             </div>
 
-            {{-- Form Input Manual Kode Barcode (Mengirim POST ke Backend, Refresh & Simpan ke Session) --}}
+            {{-- Form Input Manual Kode Barcode --}}
             <form action="{{ route('POS.scan') }}" method="POST">
                 @csrf
                 <div class="flex items-center gap-2">
@@ -233,7 +238,7 @@
                         id="inputManualBarcode"
                         placeholder="Atau ketik kode manual..."
                         required
-                        class="flex-1 bg-white border border-[#2D3748] rounded-lg px-3.5 py-2.5 text-sm text-[#1A1F36] placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
+                        class="flex-1 bg-secondary-bw border border-[#2D3748] rounded-lg px-3.5 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
                     
                     <button
                         type="submit"
@@ -248,108 +253,531 @@
                 <button
                     type="button"
                     onclick="tutupModalBarcode()"
-                    class="w-full bg-white hover:bg-gray-50 active:bg-gray-100 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-[#1A1F36] transition-colors cursor-pointer">
+                    class="w-full bg-secondary-bw hover:bg-gray-50 active:bg-gray-100 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-black transition-colors cursor-pointer">
                     Batal
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- ===================================================================== --}}
-    {{-- MODAL 2: UBAH DISKON ITEM (%)                                         --}}
-    {{-- ===================================================================== --}}
+    <!-- Modal Draft Transaksi -->
+    <div
+        id="modalDraftTransaksi"
+        onclick="tutupModalDraftKlikLuar(event)"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        
+        <!-- Card Modal -->
+        <div 
+            onclick="event.stopPropagation()"
+            class="w-full max-w-md bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-[#1A1F36] tracking-tight">Draft Transaksi</h3>
+                <button type="button" onclick="tutupModalDraftTransaksi()" class="text-gray-400 hover:text-black">✕</button>
+            </div>
+
+            <!-- Container List Draft -->
+            <div id="listDraftContainer" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Diisi via JavaScript dari localStorage -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Diskon Per Item -->
     <div
         id="modalDiskonItem"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        <div class="w-full max-w-sm bg-[#F7F8FC] rounded-2xl p-6 shadow-2xl space-y-4 border border-[#E2E8F0]">
-            <h3 class="text-xl font-bold text-[#1A1F36] tracking-tight">Masukkan Diskon Item (%)</h3>
-            <input
-                type="number"
-                id="inputDiskonItem"
-                min="0"
-                max="100"
-                placeholder="Contoh: 10"
-                class="w-full bg-white border border-[#2D3748] rounded-lg px-4 py-2.5 text-sm text-[#1A1F36] outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
-            <div class="space-y-2 pt-2">
-                <button
-                    type="button"
-                    onclick="simpanDiskonItem()"
-                    class="w-full bg-[#2D8CFF] hover:bg-blue-600 text-white rounded-lg py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer">
-                    Terapkan Diskon
-                </button>
+        <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <h3 class="text-xl font-bold text-black tracking-tight">Diskon Per Item</h3>
+
+            <!-- Form Input -->
+            <div class="space-y-3">
+                <!-- Input Diskon (%) -->
+                <div>
+                    <label for="inputDiskonItem" class="block text-sm font-semibold text-black mb-1">
+                        Diskon (%)
+                    </label>
+                    <input
+                        type="number"
+                        id="inputDiskonItem"
+                        min="0"
+                        max="100"
+                        placeholder="Contoh: 20"
+                        class="w-full bg-white border border-gray-300 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium focus:border-black" />
+                </div>
+
+                <!-- Input Voucher Nominal (Rp) -->
+                <div>
+                    <label for="inputVoucherItem" class="block text-sm font-semibold text-black mb-1">
+                        Voucher (Rp)
+                    </label>
+                    <input
+                        type="number"
+                        id="inputVoucherItem"
+                        min="0"
+                        step="1000"
+                        placeholder="Contoh: 20000"
+                        class="w-full bg-white border border-gray-300 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium focus:border-black" />
+                </div>
+            </div>
+
+            <!-- Tombol Aksi (Batal & Terapkan) -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
                 <button
                     type="button"
                     onclick="tutupModalDiskonItem()"
-                    class="w-full bg-white hover:bg-gray-50 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-[#1A1F36] transition-colors cursor-pointer">
+                    class="w-full bg-white border border-gray-300 hover:bg-gray-100 text-black rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
                     Batal
                 </button>
+                <button
+                    type="button"
+                    onclick="simpanDiskonItem()"
+                    class="w-full bg-primary-db hover:bg-primary-sdb text-white rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                    Terapkan
+                </button>
             </div>
-        </div>
-    </div>
 
-    {{-- ===================================================================== --}}
-    {{-- MODAL 3: UBAH VOUCHER (NOMINAL RP)                                    --}}
-    {{-- ===================================================================== --}}
-    <div
-        id="modalVoucher"
-        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        <div class="w-full max-w-sm bg-[#F7F8FC] rounded-2xl p-6 shadow-2xl space-y-4 border border-[#E2E8F0]">
-            <h3 class="text-xl font-bold text-[#1A1F36] tracking-tight">Masukkan Nominal Voucher</h3>
-            <input
-                type="number"
-                id="inputVoucher"
-                min="0"
-                step="1000"
-                placeholder="Contoh: 10000000"
-                class="w-full bg-white border border-[#2D3748] rounded-lg px-4 py-2.5 text-sm text-[#1A1F36] outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
-            <div class="space-y-2 pt-2">
-                <button
-                    type="button"
-                    onclick="simpanVoucher()"
-                    class="w-full bg-[#2D8CFF] hover:bg-blue-600 text-white rounded-lg py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer">
-                    Terapkan Voucher
-                </button>
-                <button
-                    type="button"
-                    onclick="tutupModalVoucher()"
-                    class="w-full bg-white hover:bg-gray-50 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-[#1A1F36] transition-colors cursor-pointer">
-                    Batal
-                </button>
-            </div>
         </div>
     </div>
+    <!-- end: Modal Diskon Per Item -->
 
-    {{-- ===================================================================== --}}
-    {{-- MODAL 4: UBAH DISKON TRANSAKSI (%)                                    --}}
-    {{-- ===================================================================== --}}
+    <!-- Modal Buka Kasir -->
     <div
-        id="modalDiskonTransaksi"
+        id="modalBukaKasir"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        <div class="w-full max-w-sm bg-[#F7F8FC] rounded-2xl p-6 shadow-2xl space-y-4 border border-[#E2E8F0]">
-            <h3 class="text-xl font-bold text-[#1A1F36] tracking-tight">Diskon Transaksi (%)</h3>
-            <input
-                type="number"
-                id="inputDiskonTransaksi"
-                min="0"
-                max="100"
-                placeholder="Contoh: 20"
-                class="w-full bg-white border border-[#2D3748] rounded-lg px-4 py-2.5 text-sm text-[#1A1F36] outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
-            <div class="space-y-2 pt-2">
+        <div class="w-full max-w-md bg-secondary-bw rounded-2xl p-6 shadow-2xl space-y-4 border border-black">
+            
+            <!-- Header: Judul & Tanggal -->
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-black tracking-tight">Pembukaan kasir</h3>
+                <span class="text-gray-500 font-medium text-sm">{{ now()->format('d F Y') }}</span>
+            </div>
+
+            <!-- Form Input -->
+            <div class="space-y-4 pt-2">
+                <!-- Kas Opening -->
+                <div>
+                    <label for="kasOpening" class="block text-sm font-semibold text-black mb-1">
+                        Kas opening:
+                    </label>
+                    <div class="relative">
+                        <input
+                            type="number"
+                            id="kasOpening"
+                            placeholder="Masukkan nominal"
+                            class="w-full bg-white border rounded-lg px-3 py-2.5 text-sm text-black outline-none pr-8 font-medium" />
+                        <!-- Tombol Clear / X -->
+                        <button 
+                            type="button" 
+                            onclick="document.getElementById('kasOpening').value = ''"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold hover:text-black">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Catatan Opening -->
+                <div>
+                    <label for="catatanOpening" class="block text-sm font-semibold text-black mb-1">
+                        Catatan opening:
+                    </label>
+                    <textarea
+                        id="catatanOpening"
+                        rows="3"
+                        placeholder="Tambahkan catatan opening jika ada..."
+                        class="w-full bg-white border rounded-lg p-3 text-sm text-black outline-none resize-none font-medium"></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3 pt-4">
                 <button
                     type="button"
-                    onclick="simpanDiskonTransaksi()"
-                    class="w-full bg-[#2D8CFF] hover:bg-blue-600 text-white rounded-lg py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer">
-                    Terapkan Diskon Transaksi
+                    id="btnEksekusiBukaKasir"
+                    onclick="simpanBukaKasir()"
+                    class="bg-primary-db hover:bg-primary-sdb text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer">
+                    Buka kasir
                 </button>
                 <button
                     type="button"
-                    onclick="tutupModalDiskonTransaksi()"
-                    class="w-full bg-white hover:bg-gray-50 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-[#1A1F36] transition-colors cursor-pointer">
+                    onclick="tutupModalBukaKasir()"
+                    class="bg-white border font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer">
                     Batal
                 </button>
             </div>
+
         </div>
     </div>
+    <!-- end: Modal Buka Kasir -->
+
+    <!-- Modal Diskon Global -->
+    <div
+        id="modalDiskonGlobal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        <div class="w-full max-w-sm bg-secondary-bw rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <h3 class="text-xl font-bold text-black tracking-tight">Diskon Global</h3>
+
+            <!-- Form Input -->
+            <div class="space-y-3">
+                <!-- Input Diskon (%) -->
+                <div>
+                    <label for="inputDiskon" class="block text-sm font-semibold text-black mb-1">
+                        Diskon (%)
+                    </label>
+                    <input
+                        type="number"
+                        id="inputDiskon"
+                        min="0"
+                        max="100"
+                        placeholder="0%"
+                        class="w-full bg-white placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium border" />
+                </div>
+
+                <!-- Input Voucher (Rp) -->
+                <div>
+                    <label for="inputVoucher" class="block text-sm font-semibold text-black mb-1">
+                        Voucher (Rp)
+                    </label>
+                    <input
+                        type="number"
+                        id="inputVoucher"
+                        min="0"
+                        step="1000"
+                        placeholder="Rp 100.000"
+                        class="w-full bg-white placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium border" />
+                </div>
+            </div>
+
+            <!-- Tombol Aksi (Batal & Terapkan) -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button
+                    type="button"
+                    onclick="tutupModalDiskonGlobal()"
+                    class="w-full border bg-white text-black rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                    Batal
+                </button>
+                <button
+                    type="button"
+                    onclick="simpanDiskonGlobal()"
+                    class="w-full bg-primary-db hover:bg-primary-sdb text-white rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                    Terapkan
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- end: Modal Diskon Global -->
+
+    <!-- Modal Metode Pembayaran -->
+    <div
+        id="modalMetodePembayaran"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        
+        <!-- Card Modal -->
+        <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <h3 class="text-lg font-bold text-[#1A1F36] tracking-tight">Metode Pembayaran</h3>
+
+            <!-- Opsi Pembayaran Non Tunai -->
+            <div class="space-y-2">
+                <span class="block text-sm font-semibold text-black">Non Tunai</span>
+                <div class="space-y-2">
+                    <button
+                        type="button"
+                        onclick="pilihMetodePembayaran('BNI')"
+                        class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                        BNI
+                    </button>
+                    <button
+                        type="button"
+                        onclick="pilihMetodePembayaran('BCA')"
+                        class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                        BCA
+                    </button>
+                    <button
+                        type="button"
+                        onclick="pilihMetodePembayaran('BRI')"
+                        class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                        BRI
+                    </button>
+                    <button
+                        type="button"
+                        onclick="pilihMetodePembayaran('Seabank')"
+                        class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                        Seabank
+                    </button>
+                    <button
+                        type="button"
+                        onclick="pilihMetodePembayaran('JAGO')"
+                        class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                        JAGO
+                    </button>
+                </div>
+            </div>
+
+            <!-- Opsi Pembayaran Tunai -->
+            <div class="space-y-2 pt-1">
+                <span class="block text-sm font-semibold text-black">Tunai</span>
+                <button
+                    type="button"
+                    onclick="pilihMetodePembayaran('Cash')"
+                    class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                    Cash
+                </button>
+            </div>
+
+            <!-- Tombol Batal -->
+            <div class="pt-1">
+                <button
+                    type="button"
+                    onclick="modalTutupMetodePembayaran()"
+                    class="w-full bg-white border border-gray-800 hover:bg-gray-100 active:bg-gray-200 text-black font-semibold py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                    Batal
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- end: Modal Metode Pembayaran -->
+
+    <!-- Modal Tambah Arsip / Simpan Draft -->
+    <div
+        id="modalTambahArsip"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        
+        <!-- Card Modal -->
+        <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <h3 class="text-lg font-bold text-[#1A1F36] tracking-tight">Simpan sebagai draft?</h3>
+
+            <!-- Form Input -->
+            <div class="space-y-4">
+                <!-- Input Pelanggan -->
+                <div>
+                    <label for="inputPelangganDraft" class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                        Pelanggan
+                    </label>
+                    <input
+                        type="text"
+                        id="inputPelangganDraft"
+                        list="listPelangganDraft"
+                        placeholder="Cari Pelanggan"
+                        class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-[#1A1F36] placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
+                    <datalist id="listPelangganDraft">
+                        @foreach($customers ?? [] as $cst)
+                            <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+
+                <!-- Input Sales -->
+                <div>
+                    <label for="inputSalesDraft" class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                        Sales
+                    </label>
+                    <input
+                        type="text"
+                        id="inputSalesDraft"
+                        list="listSalesDraft"
+                        placeholder="Cari Sales"
+                        class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-[#1A1F36] placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
+                    <datalist id="listSalesDraft">
+                        @foreach($salesList ?? [] as $sls)
+                            <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+
+                <!-- Tombol Aksi (Batal & Konfirmasi Simpan Draft) -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button
+                        type="button"
+                        onclick="tutupModalTambahArsip()"
+                        class="w-full bg-white border border-gray-800 hover:bg-gray-100 active:bg-gray-200 text-[#1A1F36] rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        onclick="simpanDraftTransaksi()"
+                        class="w-full bg-primary-db hover:bg-primary-sdb active:bg-black text-white rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                        Konfirmasi
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- end: Modal Tambah Arsip -->
+
+    <!-- Modal Tutup Kasir / Transaksi -->
+    <div
+        id="modalTutupKasir"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        
+        <!-- Card Modal -->
+        <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            
+            <!-- Judul Modal -->
+            <h3 class="text-lg font-bold text-[#1A1F36] tracking-tight">Menutup Kasir</h3>
+
+            <!-- Ringkasan Rincian Kasir -->
+            <div class="space-y-2.5 text-sm text-[#1A1F36]">
+                <!-- Kas -->
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Kas</span>
+                    <span id="labelTutupKas" class="font-bold">Rp 0</span>
+                </div>
+
+                <!-- Saldo Awal -->
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Saldo Awal</span>
+                    <span id="labelTutupSaldoAwal" class="font-semibold">Rp 0</span>
+                </div>
+
+                <!-- Penjualan Tunai -->
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Penjualan Tunai</span>
+                    <span id="labelTutupPenjualanTunai" class="font-semibold">Rp 0</span>
+                </div>
+
+                <!-- Penjualan Non-Tunai -->
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Penjualan Non-Tunai</span>
+                    <span id="labelTutupPenjualanNonTunai" class="font-semibold">Rp 0</span>
+                </div>
+
+                <!-- Mutasi Keluar -->
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Mutasi Keluar</span>
+                    <span id="labelTutupMutasiKeluar" class="font-semibold">Rp 0</span>
+                </div>
+
+                <!-- Saldo Akhir -->
+                <div class="flex justify-between items-center pt-1 border-t border-gray-200">
+                    <span class="font-medium">Saldo Akhir</span>
+                    <span id="labelTutupSaldoAkhir" class="font-bold">Rp 0</span>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi (Batal & Tutup) -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button
+                    type="button"
+                    onclick="tutupModalTutupKasir()"
+                    class="w-full bg-white border border-gray-800 hover:bg-gray-100 active:bg-gray-200 text-[#1A1F36] rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                    Batal
+                </button>
+                <button
+                    type="button"
+                    id="btnEksekusiTutupKasir"
+                    onclick="prosesTutupKasir()"
+                    class="w-full bg-[#0F1D3A] hover:bg-[#0A1428] active:bg-black text-white rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- end: Modal Tutup Kasir / Transaksi -->
+
+    <!-- ===================================================================== -->
+    <!-- MODAL KONFIRMASI PEMBAYARAN (NT & T) SESUAI DESAIN MOCKUP             -->
+    <!-- ===================================================================== -->
+    <div
+        id="modalKonfirmasiPembayaran"
+        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        
+        <!-- Card Modal -->
+        <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-100">
+            
+            <!-- Judul & Subtitle -->
+            <div>
+                <h3 class="text-xl font-bold text-black tracking-tight">Konfirmasi Pembayaran</h3>
+                <p id="konfirmasiSubtitle" class="text-sm text-gray-700 mt-1 font-normal leading-relaxed">
+                    Selesaikan transaksi sebesar Rp 0, untuk 0 item?
+                </p>
+            </div>
+
+            <!-- Form Konfirmasi -->
+            <div class="space-y-3.5 pt-1">
+                <!-- Field 1: Uang Diterima (HANYA TAMPIL JIKA METODE TUNAI) -->
+                <div id="wrapperUangDiterima" class="space-y-1">
+                    <label for="inputUangDiterima" class="block text-sm font-semibold text-black">
+                        Uang Diterima
+                    </label>
+                    <input
+                        type="text"
+                        id="inputUangDiterima"
+                        oninput="formatDanHitungUangDiterima(this)"
+                        placeholder="Rp 0"
+                        class="w-full bg-white border border-[#CBD5E1] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:border-[#101D36] focus:ring-1 focus:ring-[#101D36] font-medium" />
+                </div>
+
+                <!-- Field 2: Pelanggan -->
+                <div class="space-y-1">
+                    <label for="inputPelangganKonfirmasi" class="block text-sm font-semibold text-black">
+                        Pelanggan
+                    </label>
+                    <input
+                        type="text"
+                        id="inputPelangganKonfirmasi"
+                        list="listPelanggan"
+                        placeholder="Cari Pelanggan"
+                        class="w-full bg-white border border-[#CBD5E1] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:border-[#101D36] focus:ring-1 focus:ring-[#101D36] font-medium" />
+                    <datalist id="listPelanggan">
+                        @foreach($customers ?? [] as $cst)
+                            <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+
+                <!-- Field 3: Sales -->
+                <div class="space-y-1">
+                    <label for="inputSalesKonfirmasi" class="block text-sm font-semibold text-black">
+                        Sales
+                    </label>
+                    <input
+                        type="text"
+                        id="inputSalesKonfirmasi"
+                        list="listSales"
+                        placeholder="Cari Sales"
+                        class="w-full bg-white border border-[#CBD5E1] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:border-[#101D36] focus:ring-1 focus:ring-[#101D36] font-medium" />
+                    <datalist id="listSales">
+                        @foreach($salesList ?? [] as $sls)
+                            <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
+                        @endforeach
+                    </datalist>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi (Batal & Konfirmasi) -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button
+                    type="button"
+                    onclick="tutupModalKonfirmasiPembayaran()"
+                    class="w-full bg-white border border-[#CBD5E1] hover:bg-gray-50 active:bg-gray-100 text-black rounded-xl py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer">
+                    Batal
+                </button>
+                <button
+                    type="button"
+                    id="btnEksekusiBayar"
+                    onclick="eksekusiPembayaranFinal()"
+                    class="w-full bg-[#101D36] hover:bg-[#0A1324] active:bg-black text-white rounded-xl py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer shadow-sm">
+                    Konfirmasi
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- end: Modal Konfirmasi Pembayaran -->
 
 </div>
 
@@ -359,14 +787,15 @@
 @push('scripts')
 <script>
     // -------------------------------------------------------------------------
-    // 1. DATA KERANJANG DARI SESSION LARAVEL (PERSISTEN SAAT DIREFRESH)
+    // 1. DATA KERANJANG & STATE DARI SESSION LARAVEL
     // -------------------------------------------------------------------------
     let cartData = @json($cart ?? []);
     let voucherAmount = {{ (float) ($voucher ?? 0) }};
     let discountPercent = {{ (float) ($discountPercent ?? 0) }};
+    let isKasirOpen = {{ !empty($isKasirOpen) ? 'true' : 'false' }};
     let activeItemKeyForDiscount = null;
     let currentGrandTotal = 0;
-    let activePaymentMethod = 'tunai';
+    let activePaymentMethod = 'Cash';
     let selectedBankName = '';
 
     // Pastikan jika cartData bukan object/array, inisialisasi sebagai object kosong
@@ -378,26 +807,215 @@
     const csrfToken = '{{ csrf_token() }}';
 
     // -------------------------------------------------------------------------
-    // 0. FUNGSI BUKA KASIR (MENAMPILKAN KATALOG & PANEL ORDER PERTAMA KALI)
+    // 2. FUNGSI BUKA & TUTUP KASIR (SHIFT MANAGEMENT)
     // -------------------------------------------------------------------------
-    function bukaKasir() {
-        // Sembunyikan tampilan awal "Buka Kasir"
-        const viewAwal = document.getElementById('viewBukaKasir');
-        viewAwal.classList.add('hidden');
-        viewAwal.classList.remove('flex');
 
-        // Tampilkan panel tengah (katalog) & panel kanan (order)
-        const mainCenter = document.getElementById('mainCenterSection');
-        mainCenter.classList.remove('hidden');
-        mainCenter.classList.add('flex');
+    // Buka Modal Buka Kasir
+    function bukaModalBukaKasir() {
+        const modal = document.getElementById('modalBukaKasir');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                const inp = document.getElementById('kasOpening');
+                if (inp) inp.focus();
+            }, 100);
+        }
+    }
 
-        const rightPanel = document.getElementById('rightOrderPanel');
-        rightPanel.classList.remove('hidden');
-        rightPanel.classList.add('flex');
+    // Tutup Modal Buka Kasir
+    function tutupModalBukaKasir() {
+        const modal = document.getElementById('modalBukaKasir');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    // Simpan Buka Kasir via Backend
+    function simpanBukaKasir() {
+        const kasOpening = document.getElementById('kasOpening').value;
+        const catatanOpening = document.getElementById('catatanOpening').value;
+
+        if (kasOpening === '' || parseFloat(kasOpening) < 0) {
+            alert('Silakan masukkan nominal Kas Opening yang valid!');
+            return;
+        }
+
+        const btn = document.getElementById('btnEksekusiBukaKasir');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Membuka...';
+        }
+
+        fetch('{{ route('POS.buka-kasir') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                kas_opening: kasOpening,
+                catatan_opening: catatanOpening
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Buka kasir';
+            }
+
+            if (data.success) {
+                isKasirOpen = true;
+
+                // Sembunyikan tampilan awal "Buka Kasir"
+                const viewAwal = document.getElementById('viewBukaKasir');
+                if (viewAwal) {
+                    viewAwal.classList.add('hidden');
+                    viewAwal.classList.remove('flex');
+                }
+
+                // Tampilkan panel tengah (katalog) & panel kanan (order)
+                const mainCenter = document.getElementById('mainCenterSection');
+                if (mainCenter) {
+                    mainCenter.classList.remove('hidden');
+                    mainCenter.classList.add('flex');
+                }
+
+                const rightPanel = document.getElementById('rightOrderPanel');
+                if (rightPanel) {
+                    rightPanel.classList.remove('hidden');
+                    rightPanel.classList.add('flex');
+                }
+
+                // Tampilkan tombol Tutup Kasir di Header
+                const btnHeader = document.getElementById('btnHeaderTutupKasir');
+                if (btnHeader) {
+                    btnHeader.classList.remove('hidden');
+                }
+
+                tutupModalBukaKasir();
+                renderCart();
+            } else {
+                alert(data.message || 'Gagal membuka kasir!');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Buka kasir';
+            }
+            console.error('Error buka kasir:', err);
+            alert('Terjadi kesalahan saat membuka kasir.');
+        });
+    }
+
+    // Buka Modal Tutup Kasir & Muat Data Kas
+    function modalTutupKasir() {
+        fetch('{{ route('POS.kas-status') }}')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.kas) {
+                    document.getElementById('labelTutupKas').innerText = formatRupiah(data.kas.total_kas);
+                    document.getElementById('labelTutupSaldoAwal').innerText = formatRupiah(data.kas.saldo_awal);
+                    document.getElementById('labelTutupPenjualanTunai').innerText = formatRupiah(data.kas.penjualan_tunai);
+                    document.getElementById('labelTutupPenjualanNonTunai').innerText = formatRupiah(data.kas.penjualan_non_tunai);
+                    document.getElementById('labelTutupMutasiKeluar').innerText = formatRupiah(data.kas.mutasi_keluar);
+                    document.getElementById('labelTutupSaldoAkhir').innerText = formatRupiah(data.kas.saldo_akhir);
+                }
+            })
+            .catch(err => console.error('Error load kas status:', err));
+
+        const modal = document.getElementById('modalTutupKasir');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    // Tutup Modal Tutup Kasir
+    function tutupModalTutupKasir() {
+        const modal = document.getElementById('modalTutupKasir');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Proses Tutup Kasir via Backend
+    function prosesTutupKasir() {
+        const btn = document.getElementById('btnEksekusiTutupKasir');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Menutup...';
+        }
+
+        fetch('{{ route('POS.tutup-kasir') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Tutup';
+            }
+
+            if (data.success) {
+                isKasirOpen = false;
+                cartData = {};
+                voucherAmount = 0;
+                discountPercent = 0;
+                currentGrandTotal = 0;
+
+                // Tampilkan tampilan awal "Buka Kasir"
+                const viewAwal = document.getElementById('viewBukaKasir');
+                if (viewAwal) {
+                    viewAwal.classList.remove('hidden');
+                    viewAwal.classList.add('flex');
+                }
+
+                // Sembunyikan panel kasir aktif
+                const mainCenter = document.getElementById('mainCenterSection');
+                if (mainCenter) {
+                    mainCenter.classList.add('hidden');
+                    mainCenter.classList.remove('flex');
+                }
+
+                const rightPanel = document.getElementById('rightOrderPanel');
+                if (rightPanel) {
+                    rightPanel.classList.add('hidden');
+                    rightPanel.classList.remove('flex');
+                }
+
+                // Sembunyikan tombol Tutup Kasir di Header
+                const btnHeader = document.getElementById('btnHeaderTutupKasir');
+                if (btnHeader) {
+                    btnHeader.classList.add('hidden');
+                }
+
+                tutupModalTutupKasir();
+                alert('Kasir berhasil ditutup.');
+            } else {
+                alert(data.message || 'Gagal menutup kasir!');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Tutup';
+            }
+            console.error('Error tutup kasir:', err);
+            alert('Terjadi kesalahan saat menutup kasir.');
+        });
     }
 
     // -------------------------------------------------------------------------
-    // 2. FUNGSI RENDER TAMPILAN KERANJANG DI PANEL KANAN
+    // 3. FUNGSI RENDER TAMPILAN KERANJANG DI PANEL KANAN
     // -------------------------------------------------------------------------
     function renderCart() {
         const container = document.getElementById('cartItemsList');
@@ -410,7 +1028,7 @@
             container.innerHTML = `
                 <div class="p-8 text-center text-gray-900">
                     <p class="text-sm font-medium">Keranjang masih kosong</p>
-                    <p class="text-xs mt-1">Scan barcode atau pilih produk di sebelah kiri</p>
+                    <p class="text-xs mt-1 text-gray-500">Scan barcode unit produk untuk memulai</p>
                 </div>
             `;
             hitungRingkasan();
@@ -422,46 +1040,69 @@
         // Looping setiap item di dalam cartData
         keys.forEach(key => {
             const item = cartData[key];
-            const itemDiscount = item.discount || 0;
-            const priceAfterDiscount = item.price - (item.price * (itemDiscount / 100));
-            const itemTotal = priceAfterDiscount * item.qty;
+            const itemDiscountPct = parseFloat(item.discount) || 0;
+            const itemDiscountVoucher = parseFloat(item.discount_voucher) || 0;
+            const itemPrice = parseFloat(item.price) || 0;
+            const qty = parseInt(item.qty) || 1;
+
+            const discFromPct = itemPrice * (itemDiscountPct / 100);
+            const priceAfterDiscount = Math.max(0, itemPrice - discFromPct - itemDiscountVoucher);
+            const itemTotal = priceAfterDiscount * qty;
 
             html += `
-                <div class="px-4 py-3 bg-white w-full group transition-colors border-b border-black">
+                <div class="px-4 py-3 bg-secondary-bw w-full group transition-colors border-b border-black">
                     {{-- Baris Atas: Nama Produk, Deskripsi, Tombol Diskon (%) & Hapus (X) --}}
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-baseline gap-1.5 flex-wrap">
-                                <span class="font-bold text-sm text-[#1A1F36]">${escapeHtml(item.name)}</span>
+                                <span class="font-bold text-sm text-black">${escapeHtml(item.name)}</span>
                                 <span class="text-xs text-[#6B7280] truncate">${escapeHtml(item.description || '')}</span>
-                                ${itemDiscount > 0 ? `<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Diskon ${itemDiscount}%</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <span class="text-[11px] text-gray-500">Barcode: ${escapeHtml(item.code || key)}</span>
+                                ${itemDiscountPct > 0 ? `<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Diskon ${itemDiscountPct}%</span>` : ''}
+                                ${itemDiscountVoucher > 0 ? `<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Pot. ${formatRupiah(itemDiscountVoucher)}</span>` : ''}
                             </div>
                         </div>
                         
-                        {{-- Tombol Aksi: Diskon Item (%) dan Hapus Item (X) --}}
+                        {{-- Tombol Aksi: Diskon Item (% dan Rp) dan Hapus Item --}}
                         <div class="flex items-center gap-2 flex-shrink-0 text-xs font-semibold text-gray-600">
                             <button 
                                 type="button" 
-                                onclick="bukaModalDiskonItem('${key}')" 
+                                onclick="modalDiskonItem('${key}')" 
                                 class="hover:text-black transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-gray-100" 
                                 title="Beri Diskon Item">
-                                %
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24">
+                                    <path d="M0 0h24v24H0z" fill="none" />
+                                    <g fill="none">
+                                        <path d="m11.878 22.02l-9.9-9.899l9.9-9.9l9.192.708l.707 9.192z" />
+                                        <path d="M14 7.17A2 2 0 1 1 16.828 10A2 2 0 0 1 14 7.17" />
+                                        <path stroke="currentColor" stroke-width="2" d="m11.878 22.02l-9.9-9.899l9.9-9.9l9.192.708l.707 9.192z" />
+                                        <path stroke="currentColor" stroke-width="2" d="M14 7.17A2 2 0 1 1 16.828 10A2 2 0 0 1 14 7.17Z" />
+                                    </g>
+                                </svg>
                             </button>
                             <button 
                                 type="button" 
                                 onclick="hapusItem('${key}')" 
                                 class="hover:text-red-600 transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-red-50 font-bold" 
                                 title="Hapus Item">
-                                X
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24">
+                                    <path d="M0 0h24v24H0z" fill="none" />
+                                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16l-1.58 14.22A2 2 0 0 1 16.432 22H7.568a2 2 0 0 1-1.988-1.78zm3.345-2.853A2 2 0 0 1 9.154 2h5.692a2 2 0 0 1 1.81 1.147L18 6H6zM2 6h20m-12 5v5m4-5v5" />
+                                </svg>
                             </button>
                         </div>
                     </div>
 
-                    {{-- Baris Bawah: Pengatur Jumlah (Quantity Stepper) & Total Harga Item --}}
-                    <div class="mt-2.5 flex items-center justify-end">
-                        {{-- Harga Total Per Item --}}
+                    {{-- Baris Bawah: Detail Harga --}}
+                    <div class="mt-2 flex items-center justify-between text-xs">
+                        <div class="text-gray-500">
+                            ${(itemDiscountPct > 0 || itemDiscountVoucher > 0) ? `<span class="line-through text-gray-400 mr-1">${formatRupiah(itemPrice)}</span>` : ''}
+                            <span>${formatRupiah(priceAfterDiscount)}</span>
+                        </div>
                         <div class="text-right">
-                            <span class="font-bold text-sm text-[#1A1F36] font-number">${formatRupiah(itemTotal)}</span>
+                            <span class="font-bold text-sm text-black font-number">${formatRupiah(itemTotal)}</span>
                         </div>
                     </div>
                 </div>
@@ -473,7 +1114,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // 3. FUNGSI PERHITUNGAN TOTAL, VOUCHER, DAN DISKON TRANSAKSI
+    // 4. FUNGSI PERHITUNGAN TOTAL, VOUCHER, DAN DISKON TRANSAKSI
     // -------------------------------------------------------------------------
     function hitungRingkasan() {
         let subtotal = 0;
@@ -481,64 +1122,46 @@
         // Hitung total seluruh item
         Object.keys(cartData).forEach(key => {
             const item = cartData[key];
-            const itemDiscount = item.discount || 0;
-            const priceAfterDiscount = item.price - (item.price * (itemDiscount / 100));
-            subtotal += priceAfterDiscount * item.qty;
+            const itemDiscountPct = parseFloat(item.discount) || 0;
+            const itemDiscountVoucher = parseFloat(item.discount_voucher) || 0;
+            const itemPrice = parseFloat(item.price) || 0;
+            const qty = parseInt(item.qty) || 1;
+
+            const discFromPct = itemPrice * (itemDiscountPct / 100);
+            const priceAfterDiscount = Math.max(0, itemPrice - discFromPct - itemDiscountVoucher);
+            subtotal += (priceAfterDiscount * qty);
         });
 
-        // Hitung diskon transaksi
+        // Hitung diskon transaksi global
         const diskonTransaksiNominal = subtotal * (discountPercent / 100);
 
-        // Hitung Grand Total (Subtotal - Voucher - Diskon Transaksi)
-        let grandTotal = subtotal - voucherAmount - diskonTransaksiNominal;
-        if (grandTotal < 0) grandTotal = 0;
+        // Hitung Grand Total (Subtotal - Voucher Global - Diskon Transaksi Global)
+        let grandTotal = Math.max(0, subtotal - voucherAmount - diskonTransaksiNominal);
         currentGrandTotal = grandTotal;
 
         // Perbarui teks di layar Order
-        document.getElementById('labelSubtotal').innerText = formatRupiah(subtotal);
-        document.getElementById('labelVoucher').innerText = formatRupiah(voucherAmount);
-        document.getElementById('labelDiskonPersen').innerText = discountPercent + '%';
-        document.getElementById('labelDiskonNominal').innerText = '-' + formatRupiah(diskonTransaksiNominal);
-        document.getElementById('labelGrandTotal').innerText = formatRupiah(grandTotal);
+        const elSubtotal = document.getElementById('labelSubtotal');
+        if (elSubtotal) elSubtotal.innerText = formatRupiah(subtotal);
 
-        // Perbarui teks di layar Pembayaran
-        const paymentDisplay = document.getElementById('paymentDisplayTotal');
-        if (paymentDisplay) {
-            paymentDisplay.innerText = formatRupiah(grandTotal);
-        }
-
-        // Hitung ulang kembalian jika sedang di mode tunai
-        const inputNominal = document.getElementById('inputNominalBayar');
-        if (inputNominal && inputNominal.value) {
-            formatDanHitungTunai(inputNominal);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // 4. FUNGSI TAMBAH DAN KURANG QUANTITY
-    // -------------------------------------------------------------------------
-    function tambahQty(key) {
-        if (cartData[key]) {
-            cartData[key].qty += 1;
-            renderCart();
-            simpanKeSession();
-        }
-    }
-
-    function kurangQty(key) {
-        if (cartData[key]) {
-            if (cartData[key].qty > 1) {
-                cartData[key].qty -= 1;
+        const elDiskonGlobal = document.getElementById('labelDiskonGlobal');
+        if (elDiskonGlobal) {
+            const totalPotonganGlobal = diskonTransaksiNominal + voucherAmount;
+            if (totalPotonganGlobal > 0) {
+                elDiskonGlobal.innerText = '-' + formatRupiah(totalPotonganGlobal);
             } else {
-                delete cartData[key];
+                elDiskonGlobal.innerText = 'Rp 0';
             }
-            renderCart();
-            simpanKeSession();
         }
+
+        const elGrandTotal = document.getElementById('labelGrandTotal');
+        if (elGrandTotal) elGrandTotal.innerText = formatRupiah(grandTotal);
+
+        const elMetode = document.getElementById('metodePembayaran');
+        if (elMetode) elMetode.innerText = activePaymentMethod;
     }
 
     // -------------------------------------------------------------------------
-    // 5. FUNGSI HAPUS ITEM DARI KERANJANG
+    // 5. FUNGSI HAPUS DAN RESET KERANJANG
     // -------------------------------------------------------------------------
     function hapusItem(key) {
         if (cartData[key]) {
@@ -548,40 +1171,19 @@
         }
     }
 
-    // -------------------------------------------------------------------------
-    // 6. FUNGSI KOSONGKAN KERANJANG (RESET)
-    // -------------------------------------------------------------------------
     function resetKeranjang() {
+        if (Object.keys(cartData).length === 0) return;
         if (confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
             cartData = {};
+            voucherAmount = 0;
+            discountPercent = 0;
             renderCart();
             simpanKeSession();
         }
     }
 
     // -------------------------------------------------------------------------
-    // 7. FUNGSI TAMBAH PRODUK DARI KATALOG TENGAH KE KERANJANG
-    // -------------------------------------------------------------------------
-    function tambahProdukKatalogKeCart(id, code, name, description, price) {
-        if (cartData[id]) {
-            cartData[id].qty += 1;
-        } else {
-            cartData[id] = {
-                id: id,
-                code: code,
-                name: name,
-                description: description,
-                price: parseFloat(price),
-                qty: 1,
-                discount: 0
-            };
-        }
-        renderCart();
-        simpanKeSession();
-    }
-
-    // -------------------------------------------------------------------------
-    // 8. SINKRONISASI DATA KERANJANG KE LARAVEL SESSION (AGAR TIDAK HILANG)
+    // 6. SINKRONISASI DATA KERANJANG KE LARAVEL SESSION
     // -------------------------------------------------------------------------
     function simpanKeSession() {
         fetch('{{ route('POS.cart.sync') }}', {
@@ -599,48 +1201,63 @@
     }
 
     // -------------------------------------------------------------------------
-    // 9. FUNGSI MODAL SCAN BARCODE
+    // 7. FUNGSI MODAL SCAN BARCODE
     // -------------------------------------------------------------------------
     function bukaModalBarcode() {
         const modal = document.getElementById('modalBarcode');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(() => {
-            const input = document.getElementById('inputManualBarcode');
-            if (input) input.focus();
-        }, 100);
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                const input = document.getElementById('inputManualBarcode');
+                if (input) input.focus();
+            }, 100);
+        }
     }
 
     function tutupModalBarcode() {
         const modal = document.getElementById('modalBarcode');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     }
 
     // -------------------------------------------------------------------------
-    // 10. FUNGSI MODAL DISKON ITEM (%)
+    // 8. FUNGSI DISKON PER ITEM
     // -------------------------------------------------------------------------
-    function bukaModalDiskonItem(key) {
+    function modalDiskonItem(key) {
         activeItemKeyForDiscount = key;
-        const currentDiscount = cartData[key] ? (cartData[key].discount || 0) : 0;
-        document.getElementById('inputDiskonItem').value = currentDiscount;
+        const currentDiscountPct = cartData[key] ? (cartData[key].discount || 0) : 0;
+        const currentDiscountVch = cartData[key] ? (cartData[key].discount_voucher || 0) : 0;
+
+        document.getElementById('inputDiskonItem').value = currentDiscountPct || '';
+        document.getElementById('inputVoucherItem').value = currentDiscountVch || '';
+
         const modal = document.getElementById('modalDiskonItem');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.getElementById('inputDiskonItem').focus();
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('inputDiskonItem').focus();
+        }
     }
 
     function tutupModalDiskonItem() {
         const modal = document.getElementById('modalDiskonItem');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
         activeItemKeyForDiscount = null;
     }
 
     function simpanDiskonItem() {
-        const val = parseFloat(document.getElementById('inputDiskonItem').value) || 0;
+        const pct = parseFloat(document.getElementById('inputDiskonItem').value) || 0;
+        const vch = parseFloat(document.getElementById('inputVoucherItem').value) || 0;
+
         if (activeItemKeyForDiscount && cartData[activeItemKeyForDiscount]) {
-            cartData[activeItemKeyForDiscount].discount = Math.min(100, Math.max(0, val));
+            cartData[activeItemKeyForDiscount].discount = Math.min(100, Math.max(0, pct));
+            cartData[activeItemKeyForDiscount].discount_voucher = Math.max(0, vch);
             renderCart();
             simpanKeSession();
         }
@@ -648,177 +1265,167 @@
     }
 
     // -------------------------------------------------------------------------
-    // 11. FUNGSI MODAL VOUCHER (NOMINAL RP)
+    // 9. FUNGSI DISKON GLOBAL
     // -------------------------------------------------------------------------
-    function bukaModalVoucher() {
-        document.getElementById('inputVoucher').value = voucherAmount;
-        const modal = document.getElementById('modalVoucher');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.getElementById('inputVoucher').focus();
+    function modalDiskonGlobal() {
+        document.getElementById('inputDiskon').value = discountPercent || '';
+        document.getElementById('inputVoucher').value = voucherAmount || '';
+
+        const modal = document.getElementById('modalDiskonGlobal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('inputDiskon').focus();
+        }
     }
 
-    function tutupModalVoucher() {
-        const modal = document.getElementById('modalVoucher');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
+    function tutupModalDiskonGlobal() {
+        const modal = document.getElementById('modalDiskonGlobal');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     }
 
-    function simpanVoucher() {
-        const val = parseFloat(document.getElementById('inputVoucher').value) || 0;
-        voucherAmount = Math.max(0, val);
+    function simpanDiskonGlobal() {
+        const rawDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
+        discountPercent = Math.min(100, Math.max(0, rawDiskon));
+
+        const rawVoucher = parseFloat(document.getElementById('inputVoucher').value) || 0;
+        voucherAmount = Math.max(0, rawVoucher);
+
         renderCart();
         simpanKeSession();
-        tutupModalVoucher();
+        tutupModalDiskonGlobal();
     }
 
     // -------------------------------------------------------------------------
-    // 12. FUNGSI MODAL DISKON TRANSAKSI (%)
+    // 10. FUNGSI METODE PEMBAYARAN
     // -------------------------------------------------------------------------
-    function bukaModalDiskonTransaksi() {
-        document.getElementById('inputDiskonTransaksi').value = discountPercent;
-        const modal = document.getElementById('modalDiskonTransaksi');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.getElementById('inputDiskonTransaksi').focus();
+    function modalMetodePembayaran() {
+        const modal = document.getElementById('modalMetodePembayaran');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
     }
 
-    function tutupModalDiskonTransaksi() {
-        const modal = document.getElementById('modalDiskonTransaksi');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
+    function modalTutupMetodePembayaran() {
+        const modal = document.getElementById('modalMetodePembayaran');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     }
 
-    function simpanDiskonTransaksi() {
-        const val = parseFloat(document.getElementById('inputDiskonTransaksi').value) || 0;
-        discountPercent = Math.min(100, Math.max(0, val));
-        renderCart();
-        simpanKeSession();
-        tutupModalDiskonTransaksi();
-    }
-
-    // -------------------------------------------------------------------------
-    // 13. FILTER PENCARIAN KATALOG
-    // -------------------------------------------------------------------------
-    function filterProdukKatalog() {
-        const q = document.getElementById('searchInput').value.toLowerCase().trim();
-        const items = document.querySelectorAll('.katalog-item');
-        items.forEach(item => {
-            const name = item.getAttribute('data-name') || '';
-            if (name.includes(q)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
-
-    // -------------------------------------------------------------------------
-    // 14. HELPER FORMAT RUPIAH
-    // -------------------------------------------------------------------------
-    function formatRupiah(number) {
-        return 'Rp ' + Math.round(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    // Helper sanitasi teks HTML
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    // C. Pilih Metode Pembayaran (Tunai / Bank)
     function pilihMetodePembayaran(method) {
         activePaymentMethod = method;
-        const btnTunai = document.getElementById('btnMethodTunai');
-        const btnBank = document.getElementById('btnMethodBank');
-        const formTunai = document.getElementById('formBayarTunai');
-        const formBank = document.getElementById('formBayarBank');
-
-        if (method === 'tunai') {
-            // Style tombol Tunai aktif (Orange)
-            btnTunai.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]";
-            // Style tombol Bank inaktif (Putih)
-            btnBank.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50";
-
-            formTunai.classList.remove('hidden');
-            formBank.classList.add('hidden');
-
-            setTimeout(() => {
-                const inputNominal = document.getElementById('inputNominalBayar');
-                if (inputNominal) inputNominal.focus();
-            }, 100);
+        if (['BNI', 'BCA', 'BRI', 'Seabank', 'JAGO'].includes(method)) {
+            selectedBankName = method;
         } else {
-            // Style tombol Bank aktif (Orange)
-            btnBank.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-[#F38300] text-white border-[#E07400]";
-            // Style tombol Tunai inaktif (Putih)
-            btnTunai.className = "w-36 py-2 rounded-md font-bold text-base shadow-sm border transition-all cursor-pointer bg-white text-[#1A1F36] border-gray-400 hover:bg-gray-50";
-
-            formBank.classList.remove('hidden');
-            formTunai.classList.add('hidden');
+            selectedBankName = '';
         }
+
+        const elMetode = document.getElementById('metodePembayaran');
+        if (elMetode) elMetode.innerText = method;
+
+        modalTutupMetodePembayaran();
     }
 
-    // D. Format Input Tunai & Hitung Kembalian Otomatis
-    function formatDanHitungTunai(input) {
-        // Ambil hanya angka
-        let rawVal = input.value.replace(/\D/g, '');
-        if (!rawVal) {
-            input.value = '';
-            document.getElementById('labelKembalian').innerText = 'Rp 0';
-            return;
-        }
+    // -------------------------------------------------------------------------
+    // 11. FUNGSI MODAL KONFIRMASI PEMBAYARAN (NT & T) SESUAI DESAIN
+    // -------------------------------------------------------------------------
 
-        let numVal = parseFloat(rawVal) || 0;
-        // Format angka dengan pemisah ribuan titik
-        input.value = numVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-        // Hitung Kembalian
-        let kembalian = numVal - currentGrandTotal;
-        if (kembalian >= 0) {
-            document.getElementById('labelKembalian').innerText = formatRupiah(kembalian);
-        } else {
-            document.getElementById('labelKembalian').innerText = 'Rp 0';
-        }
-    }
-
-    // F. Konfirmasi Pembayaran (Kirim ke Backend -> Simpan ke Tabel ACR & STS)
-    function konfirmasiPembayaran() {
+    // Buka Modal Konfirmasi Pembayaran saat tombol Konfirmasi di Order diklik
+    function prosesPembayaran() {
         const keys = Object.keys(cartData);
         if (keys.length === 0) {
             alert('Keranjang masih kosong!');
             return;
         }
 
-        let nominalBayarClean = 0;
-        if (activePaymentMethod === 'tunai') {
-            const inputNominal = document.getElementById('inputNominalBayar');
-            if (inputNominal) {
-                nominalBayarClean = parseFloat(inputNominal.value.replace(/\D/g, '')) || 0;
+        // Hitung total item qty
+        let totalItems = 0;
+        keys.forEach(k => {
+            totalItems += (parseInt(cartData[k].qty) || 1);
+        });
+
+        // Update Subtitle: "Selesaikan transaksi sebesar Rp [Total], untuk [X] item?"
+        const subtitleEl = document.getElementById('konfirmasiSubtitle');
+        if (subtitleEl) {
+            subtitleEl.innerText = `Selesaikan transaksi sebesar ${formatRupiah(currentGrandTotal)}, untuk ${totalItems} item?`;
+        }
+
+        // Cek Metode Pembayaran (Tunai vs Non-Tunai)
+        const wrapperUangDiterima = document.getElementById('wrapperUangDiterima');
+        const inputUangDiterima = document.getElementById('inputUangDiterima');
+
+        const isTunai = (activePaymentMethod.toLowerCase() === 'cash' || activePaymentMethod.toLowerCase() === 'tunai');
+
+        if (isTunai) {
+            // Tampilkan field Uang Diterima (Konfirmasi Pembayaran T)
+            if (wrapperUangDiterima) wrapperUangDiterima.classList.remove('hidden');
+            if (inputUangDiterima) {
+                inputUangDiterima.value = formatRupiah(currentGrandTotal);
+            }
+        } else {
+            // Sembunyikan field Uang Diterima (Konfirmasi Pembayaran NT)
+            if (wrapperUangDiterima) wrapperUangDiterima.classList.add('hidden');
+        }
+
+        // Buka Modal Konfirmasi
+        const modal = document.getElementById('modalKonfirmasiPembayaran');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    // Tutup Modal Konfirmasi Pembayaran
+    function tutupModalKonfirmasiPembayaran() {
+        const modal = document.getElementById('modalKonfirmasiPembayaran');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Format input uang diterima pada modal konfirmasi tunai
+    function formatDanHitungUangDiterima(input) {
+        let rawVal = input.value.replace(/\D/g, '');
+        if (!rawVal) {
+            input.value = '';
+            return;
+        }
+        let numVal = parseFloat(rawVal) || 0;
+        input.value = formatRupiah(numVal);
+    }
+
+    // Eksekusi Simpan Transaksi Pembayaran ke Database
+    function eksekusiPembayaranFinal() {
+        const isTunai = (activePaymentMethod.toLowerCase() === 'cash' || activePaymentMethod.toLowerCase() === 'tunai');
+        let nominalBayarClean = currentGrandTotal;
+
+        if (isTunai) {
+            const inputUang = document.getElementById('inputUangDiterima');
+            if (inputUang && inputUang.value) {
+                nominalBayarClean = parseFloat(inputUang.value.replace(/\D/g, '')) || 0;
             }
             if (nominalBayarClean < currentGrandTotal) {
-                alert('Nominal pembayaran kurang dari total tagihan!');
-                return;
-            }
-        } else if (activePaymentMethod === 'bank') {
-            if (!selectedBankName) {
-                alert('Silakan pilih bank terlebih dahulu!');
+                alert('Uang yang diterima kurang dari total transaksi!');
                 return;
             }
         }
 
-        // Tampilkan loading cursor pada tombol
-        const btnKonfirmasi = event ? event.currentTarget : null;
-        if (btnKonfirmasi) {
-            btnKonfirmasi.disabled = true;
-            btnKonfirmasi.innerText = 'Memproses...';
+        const pelangganVal = document.getElementById('inputPelangganKonfirmasi')?.value || '';
+        const salesVal = document.getElementById('inputSalesKonfirmasi')?.value || '';
+
+        const btn = document.getElementById('btnEksekusiBayar');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Memproses...';
         }
 
-        // Kirim request transaksi ke backend (akan disimpan ke ACR & STS)
         fetch('{{ route('POS.bayar') }}', {
             method: 'POST',
             headers: {
@@ -831,48 +1438,214 @@
                 discount_percent: discountPercent,
                 payment_method: activePaymentMethod,
                 bank_name: selectedBankName,
-                nominal_bayar: nominalBayarClean
+                nominal_bayar: nominalBayarClean,
+                pelanggan: pelangganVal,
+                sales: salesVal
             })
         })
         .then(res => res.json())
         .then(data => {
-            if (btnKonfirmasi) {
-                btnKonfirmasi.disabled = false;
-                btnKonfirmasi.innerText = 'Konfirmasi';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Konfirmasi';
             }
 
             if (data.success) {
-                // Reset state data keranjang di browser
+                // Reset keranjang
                 cartData = {};
                 voucherAmount = 0;
                 discountPercent = 0;
                 currentGrandTotal = 0;
 
-                // Sembunyikan panel tengah dan panel order kanan
-                document.getElementById('mainCenterSection').classList.add('hidden');
-                document.getElementById('rightOrderPanel').classList.add('hidden');
+                tutupModalKonfirmasiPembayaran();
+                renderCart();
 
-                // Tampilkan tampilan sukses pembayaran layar penuh
-                const viewSuccess = document.getElementById('viewSuccessPayment');
-                viewSuccess.classList.remove('hidden');
-                viewSuccess.classList.add('flex');
+                let pesanSukses = `Pembayaran berhasil disimpan!\nNomor Faktur: ${data.ref_no}\nTotal: ${formatRupiah(data.grand_total)}`;
+                if (data.kembalian > 0) {
+                    pesanSukses += `\nKembalian: ${formatRupiah(data.kembalian)}`;
+                }
+                alert(pesanSukses);
             } else {
                 alert(data.message || 'Gagal memproses pembayaran!');
             }
         })
         .catch(err => {
-            if (btnKonfirmasi) {
-                btnKonfirmasi.disabled = false;
-                btnKonfirmasi.innerText = 'Konfirmasi';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Konfirmasi';
             }
             console.error('Error proses pembayaran:', err);
             alert('Terjadi kesalahan saat memproses pembayaran.');
         });
     }
 
-    // Jalankan render awal saat halaman dimuat
+    // -------------------------------------------------------------------------
+    // 12. FUNGSI DRAFT TRANSAKSI (LOCAL STORAGE)
+    // -------------------------------------------------------------------------
+    function modalTambahArsip() {
+        if (Object.keys(cartData).length === 0) {
+            alert('Keranjang masih kosong, tidak ada yang dapat disimpan ke draft!');
+            return;
+        }
+        const modal = document.getElementById('modalTambahArsip');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function tutupModalTambahArsip() {
+        const modal = document.getElementById('modalTambahArsip');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+
+    function simpanDraftTransaksi() {
+        const pelanggan = document.getElementById('inputPelangganDraft')?.value || 'Pelanggan Umum';
+        const sales = document.getElementById('inputSalesDraft')?.value || 'Sales Default';
+
+        let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+        drafts.push({
+            id: Date.now(),
+            pelanggan: pelanggan,
+            sales: sales,
+            cart: JSON.parse(JSON.stringify(cartData)),
+            voucher: voucherAmount,
+            discount_percent: discountPercent,
+            time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+        });
+
+        localStorage.setItem('pos_drafts', JSON.stringify(drafts));
+        tutupModalTambahArsip();
+        alert('Draft transaksi berhasil disimpan!');
+    }
+
+    function modalDraftTransaksi() {
+        renderDraftList();
+        const modal = document.getElementById('modalDraftTransaksi');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function tutupModalDraftTransaksi() {
+        const modal = document.getElementById('modalDraftTransaksi');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+
+    function tutupModalDraftKlikLuar(event) {
+        if (event.target.id === 'modalDraftTransaksi') {
+            tutupModalDraftTransaksi();
+        }
+    }
+
+    function renderDraftList() {
+        const container = document.getElementById('listDraftContainer');
+        if (!container) return;
+
+        const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+        if (drafts.length === 0) {
+            container.innerHTML = `
+                <div class="p-6 text-center text-gray-500 text-sm">
+                    Belum ada draft transaksi yang disimpan.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        drafts.forEach((d, idx) => {
+            html += `
+                <div class="flex items-center justify-between p-3.5 bg-white border border-gray-800 rounded-xl">
+                    <div>
+                        <h4 class="font-bold text-[#1A1F36] text-sm">${escapeHtml(d.pelanggan)}</h4>
+                        <span class="text-xs text-gray-400 font-medium">${escapeHtml(d.time)}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onclick="hapusDraft(${idx})"
+                            class="px-3 py-1.5 bg-white border border-gray-800 hover:bg-gray-100 text-[#1A1F36] rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                            Hapus
+                        </button>
+                        <button
+                            type="button"
+                            onclick="muatDraft(${idx})"
+                            class="px-4 py-1.5 bg-[#0F1D3A] hover:bg-[#0A1428] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                            Muat
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function muatDraft(index) {
+        let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+        if (drafts[index]) {
+            cartData = drafts[index].cart || {};
+            voucherAmount = drafts[index].voucher || 0;
+            discountPercent = drafts[index].discount_percent || 0;
+            renderCart();
+            simpanKeSession();
+            tutupModalDraftTransaksi();
+        }
+    }
+
+    function hapusDraft(index) {
+        let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+        drafts.splice(index, 1);
+        localStorage.setItem('pos_drafts', JSON.stringify(drafts));
+        renderDraftList();
+    }
+
+    // ESC Keyboard Shortcut
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            tutupModalDraftTransaksi();
+            tutupModalBarcode();
+            tutupModalDiskonItem();
+            tutupModalDiskonGlobal();
+            modalTutupMetodePembayaran();
+            tutupModalTambahArsip();
+            tutupModalTutupKasir();
+            tutupModalKonfirmasiPembayaran();
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // 13. FILTER PENCARIAN & HELPER
+    // -------------------------------------------------------------------------
+    function filterProdukKatalog() {
+        // Implementasi pencarian lokal jika katalog produk dirender
+    }
+
+    function formatRupiah(number) {
+        return 'Rp ' + Math.round(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Inisialisasi awal saat DOM siap
     document.addEventListener('DOMContentLoaded', function() {
-        renderCart();
+        if (isKasirOpen) {
+            renderCart();
+        }
     });
 </script>
 @endpush
