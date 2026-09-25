@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-[#CECECE]/60 p-4 md:p-6 select-none">
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none">
 
     {{-- ========================================================= --}}
     {{-- TOOLBAR --}}
@@ -17,7 +17,7 @@
         <div class="flex items-center gap-2">
 
             <div class="relative w-64 md:w-80">
-
+                <form action="{{ route('POS.sales') }}" method="GET">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
                     <svg
                         class="w-5 h-5 stroke-[2.5]"
@@ -32,13 +32,14 @@
                         />
                     </svg>
                 </span>
-
                 <input
                     type="text"
                     placeholder="Cari sales"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-[#1A1F36] placeholder-gray-500 focus:outline-none focus:border-[#172554] focus:ring-1 focus:ring-[#172554] shadow-xs"
+                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db shadow-xs"
+                    value="{{ request('keyword') }}"
+                    name="keyword"
                 >
-
+                </form>
             </div>
 
 
@@ -63,7 +64,7 @@
         <button
             type="button"
             onclick="openTambahModal()"
-            class="h-9.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all shadow-xs cursor-pointer"
+            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all shadow-xs cursor-pointer"
         >
             <span class="text-lg leading-none font-bold">+</span>
             <span>Tambah sales</span>
@@ -84,14 +85,14 @@
 
                 {{-- HEADER --}}
                 <thead>
-                    <tr class="bg-[#142854] text-white text-xs font-semibold">
+                    <tr class="bg-primary-db text-white text-xs font-semibold">
 
                         <th class="py-2.5 px-4 font-semibold">
-                            SLS Sales
+                            Kode Sales
                         </th>
 
                         <th class="py-2.5 px-4 font-semibold">
-                            DES Sales
+                            Nama Sales
                         </th>
 
                         <th class="py-2.5 px-4 font-semibold">
@@ -111,9 +112,9 @@
 
 
                 {{-- BODY --}}
-                <tbody class="divide-y divide-gray-200 text-sm text-[#1A1F36]">
+                <tbody class="divide-y divide-gray-200 text-sm text-black">
 
-                    @forelse ($sales as $sale)
+                    @forelse ($data as $sale)
 
                         <tr class="hover:bg-gray-50/80 transition-colors">
 
@@ -150,11 +151,11 @@
                                     <button
                                         type="button"
                                         onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-[#172554] rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                                         title="Aksi Sales"
                                     >
                                         <svg
-                                            class="w-4 h-4 text-[#172554]"
+                                            class="w-4 h-4 text-primary-db"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -178,7 +179,7 @@
                                         <button
                                             type="button"
                                             onclick="openEditModal(
-                                                this.dataset.SLS,
+                                                this.dataset.sls,
                                                 this.dataset.des,
                                                 this.dataset.hp,
                                                 this.dataset.al
@@ -212,7 +213,7 @@
                                         {{-- HAPUS --}}
                                         <form
                                             method="POST"
-                                            action="{{ url('/sales/' . $sale->SLS) }}"
+                                            action="{{ route('POS.sales.destroy', ['id' => $sale->SLS]) }}"
                                         >
 
                                             @csrf
@@ -278,25 +279,25 @@
         {{-- FOOTER + PAGINATION --}}
         {{-- ========================================================= --}}
 
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db">
 
             {{-- INFO DATA --}}
             <div class="whitespace-nowrap">
 
                 Menampilkan
-                {{ $sales->firstItem() ?? 0 }}
+                {{ $data->firstItem() ?? 0 }}
                 -
-                {{ $sales->lastItem() ?? 0 }}
+                {{ $data->lastItem() ?? 0 }}
                 dari
-                {{ $sales->total() ?? 0 }}
-                sales
+                {{ $data->total() ?? 0 }}
+                data
 
             </div>
 
 
             @php
-                $current = $sales->currentPage();
-                $last = $sales->lastPage();
+                $current = $data->currentPage();
+                $last = $data->lastPage();
             @endphp
 
 
@@ -304,7 +305,7 @@
             <div class="flex items-center gap-1">
 
                 {{-- PREVIOUS --}}
-                @if ($sales->onFirstPage())
+                @if ($data->onFirstPage())
 
                     <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
                         ‹
@@ -313,8 +314,8 @@
                 @else
 
                     <a
-                        href="{{ $sales->previousPageUrl() }}"
-                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
+                        href="{{ $data->previousPageUrl() }}"
+                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-primary-db hover:bg-gray-100"
                     >
                         ‹
                     </a>
@@ -324,11 +325,11 @@
 
                 {{-- PAGE 1 --}}
                 <a
-                    href="{{ $sales->url(1) }}"
+                    href="{{ $data->url(1) }}"
                     class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                     {{ $current == 1
-                        ? 'bg-[#142854] text-white border-[#142854]'
-                        : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                        ? 'bg-primary-db text-white border-primary-db'
+                        : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                 >
                     1
                 </a>
@@ -340,21 +341,21 @@
                     @if ($current <= 2)
 
                         <a
-                            href="{{ $sales->url(2) }}"
+                            href="{{ $data->url(2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-primary-db text-white border-primary-db'
+                                : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                         >
                             2
                         </a>
 
                         <a
-                            href="{{ $sales->url(3) }}"
+                            href="{{ $data->url(3) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 3
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-primary-db text-white border-primary-db'
+                                : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                         >
                             3
                         </a>
@@ -363,26 +364,26 @@
                     {{-- CURRENT DI AKHIR --}}
                     @elseif ($current >= $last - 1)
 
-                        <span class="px-1 text-[#142854]">
+                        <span class="px-1 text-primary-db">
                             ...
                         </span>
 
                         <a
-                            href="{{ $sales->url($last - 2) }}"
+                            href="{{ $data->url($last - 2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-primary-db text-white border-primary-db'
+                                : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                         >
                             {{ $last - 2 }}
                         </a>
 
                         <a
-                            href="{{ $sales->url($last - 1) }}"
+                            href="{{ $data->url($last - 1) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 1
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-primary-db text-white border-primary-db'
+                                : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                         >
                             {{ $last - 1 }}
                         </a>
@@ -391,27 +392,27 @@
                     {{-- CURRENT DI TENGAH --}}
                     @else
 
-                        <span class="px-1 text-[#142854]">
+                        <span class="px-1 text-primary-db">
                             ...
                         </span>
 
                         <a
-                            href="{{ $sales->url($current - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            href="{{ $data->url($current - 1) }}"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100"
                         >
                             {{ $current - 1 }}
                         </a>
 
                         <a
-                            href="{{ $sales->url($current) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854]"
+                            href="{{ $data->url($current) }}"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-primary-db text-white border-primary-db"
                         >
                             {{ $current }}
                         </a>
 
                         <a
-                            href="{{ $sales->url($current + 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            href="{{ $data->url($current + 1) }}"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100"
                         >
                             {{ $current + 1 }}
                         </a>
@@ -422,7 +423,7 @@
                     {{-- DOTS --}}
                     @if ($current <= $last - 2)
 
-                        <span class="px-1 text-[#142854]">
+                        <span class="px-1 text-primary-db">
                             ...
                         </span>
 
@@ -431,11 +432,11 @@
 
                     {{-- LAST --}}
                     <a
-                        href="{{ $sales->url($last) }}"
+                        href="{{ $data->url($last) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == $last
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                            ? 'bg-primary-db text-white border-primary-db'
+                            : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                     >
                         {{ $last }}
                     </a>
@@ -444,21 +445,21 @@
                 @elseif ($last == 3)
 
                     <a
-                        href="{{ $sales->url(2) }}"
+                        href="{{ $data->url(2) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == 2
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                            ? 'bg-primary-db text-white border-primary-db'
+                            : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                     >
                         2
                     </a>
 
                     <a
-                        href="{{ $sales->url(3) }}"
+                        href="{{ $data->url(3) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == 3
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                            ? 'bg-primary-db text-white border-primary-db'
+                            : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                     >
                         3
                     </a>
@@ -467,11 +468,11 @@
                 @elseif ($last == 2)
 
                     <a
-                        href="{{ $sales->url(2) }}"
+                        href="{{ $data->url(2) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == 2
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                            ? 'bg-primary-db text-white border-primary-db'
+                            : 'bg-white text-primary-db border-[#A8B1C1] hover:bg-gray-100' }}"
                     >
                         2
                     </a>
@@ -480,11 +481,11 @@
 
 
                 {{-- NEXT --}}
-                @if ($sales->hasMorePages())
+                @if ($data->hasMorePages())
 
                     <a
-                        href="{{ $sales->nextPageUrl() }}"
-                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
+                        href="{{ $data->nextPageUrl() }}"
+                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-primary-db hover:bg-gray-100"
                     >
                         ›
                     </a>
@@ -520,17 +521,17 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-[#F8FAFC] border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-[#1A1F36]"
+            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
         >
 
-            <h2 class="text-2xl font-bold text-[#1A1F36] tracking-tight mb-5">
+            <h2 class="text-2xl font-bold text-black tracking-tight mb-5">
                 Tambah Sales
             </h2>
 
 
             <form
                 method="POST"
-                action="{{ url('/sales') }}"
+                action="{{ route('POS.sales.store') }}"
                 class="space-y-4"
             >
 
@@ -540,8 +541,8 @@
                 {{-- SLS --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
-                        SLS Sales
+                    <label class="block text-sm font-semibold text-black mb-1">
+                        Kode Sales
                     </label>
 
                     <input
@@ -549,7 +550,7 @@
                         name="SLS"
                         placeholder="Contoh: SLS004"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -558,15 +559,15 @@
                 {{-- DES --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
-                        DES Sales
+                    <label class="block text-sm font-semibold text-black mb-1">
+                        Nama Sales
                     </label>
 
                     <input
                         type="text"
                         name="DES"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -575,7 +576,7 @@
                 {{-- HP --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                    <label class="block text-sm font-semibold text-black mb-1">
                         Nomor HP
                     </label>
 
@@ -583,7 +584,7 @@
                         type="text"
                         name="HP"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -592,7 +593,7 @@
                 {{-- AL --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                    <label class="block text-sm font-semibold text-black mb-1">
                         Alamat
                     </label>
 
@@ -600,7 +601,7 @@
                         type="text"
                         name="AL"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -612,14 +613,14 @@
                     <button
                         type="button"
                         onclick="closeTambahModal()"
-                        class="flex-1 py-2.5 px-4 bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl text-sm font-semibold text-[#1A1F36] hover:bg-gray-100 transition-colors cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold text-black hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                         Batal
                     </button>
 
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] active:bg-[#0f172a] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-xs"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-xs"
                     >
                         Simpan
                     </button>
@@ -649,10 +650,10 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-[#F8FAFC] border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-[#1A1F36]"
+            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
         >
 
-            <h2 class="text-2xl font-bold text-[#1A1F36] tracking-tight mb-5">
+            <h2 class="text-2xl font-bold text-black tracking-tight mb-5">
                 Edit Sales
             </h2>
 
@@ -670,8 +671,8 @@
                 {{-- SLS --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
-                        SLS Sales
+                    <label class="block text-sm font-semibold text-black mb-1">
+                        Kode Sales
                     </label>
 
                     <input
@@ -679,7 +680,7 @@
                         type="text"
                         name="SLS"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -688,8 +689,8 @@
                 {{-- DES --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
-                        DES Sales
+                    <label class="block text-sm font-semibold text-black mb-1">
+                        Nama Sales
                     </label>
 
                     <input
@@ -697,7 +698,7 @@
                         type="text"
                         name="DES"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -706,7 +707,7 @@
                 {{-- HP --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                    <label class="block text-sm font-semibold text-black mb-1">
                         Nomor HP
                     </label>
 
@@ -715,7 +716,7 @@
                         type="text"
                         name="HP"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -724,7 +725,7 @@
                 {{-- AL --}}
                 <div>
 
-                    <label class="block text-sm font-semibold text-[#1A1F36] mb-1">
+                    <label class="block text-sm font-semibold text-black mb-1">
                         Alamat
                     </label>
 
@@ -733,7 +734,7 @@
                         type="text"
                         name="AL"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm text-[#1A1F36] focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554] transition-all"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
                     >
 
                 </div>
@@ -745,14 +746,14 @@
                     <button
                         type="button"
                         onclick="closeEditModal()"
-                        class="flex-1 py-2.5 px-4 bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl text-sm font-semibold text-[#1A1F36] hover:bg-gray-100 transition-colors cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold text-black hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                         Batal
                     </button>
 
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] active:bg-[#0f172a] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-xs"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-xs"
                     >
                         Simpan
                     </button>
@@ -858,8 +859,9 @@
         document.getElementById('editAL').value = AL;
 
 
-        document.getElementById('editSalesForm').action =
-            "{{ url('/sales') }}/" + encodeURIComponent(SLS);
+        // Set URL action secara dinamis menggantikan placeholder ':id'
+        const updateUrl = "{{ route('POS.sales.update', ':id') }}".replace(':id', encodeURIComponent(SLS));
+        document.getElementById('editSalesForm').action = updateUrl;
 
 
         document.querySelectorAll('.action-menu').forEach(function(menu) {

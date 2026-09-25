@@ -12,22 +12,22 @@ class SLSController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->search;
+        $keyword = $request->keyword;
 
-        $sales = SLS::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('sls', 'like', '%' . $search . '%')
-                        ->orWhere('DES', 'like', '%' . $search . '%')
-                        ->orWhere('HP', 'like', '%' . $search . '%')
-                        ->orWhere('AL', 'like', '%' . $search . '%');
+        $data = SLS::query()
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('sls', 'like', '%' . $keyword . '%')
+                        ->orWhere('DES', 'like', '%' . $keyword . '%')
+                        ->orWhere('HP', 'like', '%' . $keyword . '%')
+                        ->orWhere('AL', 'like', '%' . $keyword . '%');
                 });
             })
             ->orderBy('sls')
             ->paginate(10)
             ->withQueryString();
 
-        return view('data.sales', compact('sales'));
+        return view('POS.sales', compact('data'));
     }
 
 
@@ -37,7 +37,7 @@ class SLSController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sls' => 'required|string|max:10|unique:sales,sls',
+            'SLS' => 'required|string|max:10|unique:sls,SLS',
             'DES' => 'required|string|max:150',
             'HP'  => 'required|string|max:20',
             'AL'  => 'required|string|max:100',
@@ -46,7 +46,7 @@ class SLSController extends Controller
         SLS::create($validated);
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil ditambahkan.');
     }
 
@@ -67,10 +67,13 @@ class SLSController extends Controller
      */
     public function update(Request $request, $sls)
     {
-        $sales = SLS::where('sls', $sls)->firstOrFail();
+        // Decode parameter ID untuk mengantisipasi karakter khusus
+        $decodedId = urldecode($sls);
+
+        $sales = SLS::where('sls', $decodedId)->firstOrFail();
 
         $validated = $request->validate([
-            'sls' => 'required|string|max:10|unique:sales,sls,' . $sales->sls . ',sls',
+            'SLS' => 'required|string|max:10|unique:sls,SLS,' . $sales->SLS . ',sls',
             'DES' => 'required|string|max:150',
             'HP'  => 'required|string|max:20',
             'AL'  => 'required|string|max:100',
@@ -79,7 +82,7 @@ class SLSController extends Controller
         $sales->update($validated);
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil diubah.');
     }
 
@@ -94,7 +97,7 @@ class SLSController extends Controller
         $sales->delete();
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil dihapus.');
     }
 }
