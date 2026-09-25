@@ -12,20 +12,29 @@ class SLSController extends Controller
      */
     public function index(Request $request)
     {
-        $keyword = $request->keyword;
+        $query = SLS::query();
 
-        $data = SLS::query()
-            ->when($keyword, function ($query) use ($keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->where('sls', 'like', '%' . $keyword . '%')
-                        ->orWhere('DES', 'like', '%' . $keyword . '%')
-                        ->orWhere('HP', 'like', '%' . $keyword . '%')
-                        ->orWhere('AL', 'like', '%' . $keyword . '%');
-                });
-            })
-            ->orderBy('sls')
-            ->paginate(10)
-            ->withQueryString();
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('SLS', 'LIKE', "%{$search}%");
+        }
+
+        $sort = $request->filled('sort');
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
 
         return view('POS.sales', compact('data'));
     }

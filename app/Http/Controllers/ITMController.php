@@ -4,20 +4,54 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ITM;
+use App\Models\KTG;
+use App\Models\MRK;
+use App\Models\SPP;
 
 class ITMController extends Controller
 {
      // halaman index untuk menampilkan semua data item
-    public function index()
+    public function index(Request $request)
     {
-        $data = ITM::all();
-        return view('data.item', compact('data'));
+        $query = ITM::query();
+
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('ITM', 'LIKE', "%{$search}%")
+                  ->orWhere('KTG', 'LIKE', "%{$search}%")
+                  ->orWhere('MRK', 'LIKE', "%{$search}%")
+                  ->orWhere('SPP', 'LIKE', "%{$search}%")
+                  ->orWhere('HRG', 'LIKE', "%{$search}%")
+                  ->orWhere('STOK', 'LIKE', "%{$search}%");
+        }
+
+        $sort = $request->filled('sort');
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
+        $MRK = MRK::all();
+        $KTG = KTG::all();
+        $SPP = SPP::all();
+
+        return view('Inventory.item', compact('data', 'MRK', 'KTG', 'SPP'));
     }
 
     // halaman create untuk menampilkan form tambah data item
     public function create()
     {
-        return view('item.create');
+        return view('Inventory.item.create');
     }
 
     public function store(Request $request)
@@ -34,14 +68,14 @@ class ITMController extends Controller
 
         ITM::create($validated);
 
-        return redirect()->route('item.index')->with('success', 'Data item berhasil ditambahkan.');
+        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil ditambahkan.');
     }
 
     // halaman edit untuk menampilkan form edit data item
     public function edit($itm)
     {
         $itm = ITM::findOrFail($itm);
-        return view('item.edit', compact('itm'));
+        return view('Inventory.item.edit', compact('itm'));
     }
 
     public function update(Request $request, $itm)
@@ -59,7 +93,7 @@ class ITMController extends Controller
         $itm = ITM::findOrFail($itm);
         $itm->update($validated);
 
-        return redirect()->route('item.index')->with('success', 'Data item berhasil diperbarui.');
+        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil diperbarui.');
     }
 
     public function destroy($itm)
@@ -67,6 +101,6 @@ class ITMController extends Controller
         $itm = ITM::findOrFail($itm);
         $itm->delete();
 
-        return redirect()->route('item.index')->with('success', 'Data item berhasil dihapus.');
+        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil dihapus.');
     }
 }

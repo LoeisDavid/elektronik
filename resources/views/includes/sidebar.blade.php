@@ -102,10 +102,10 @@
             <div id="inventoryMenu" class="sidebar-menu-container bg-primary-db py-1 transition-all duration-300">
                 @php
                     $invMenus = [
-                        ['name' => 'Produk', 'route' => 'produk'],
-                        ['name' => 'Supplier', 'route' => 'supplier'],
-                        ['name' => 'Gudang', 'route' => 'gudang'],
-                        ['name' => 'Cek stok', 'route' => 'cek-stok'],
+                        ['name' => 'Produk', 'route' => 'inventory.item'],
+                        ['name' => 'Supplier', 'route' => 'inventory.supplier'],
+                        ['name' => 'Gudang', 'route' => 'inventory.gudang'],
+                        ['name' => 'Cek stok', 'route' => 'inventory.opname-stok'],
                     ];
                 @endphp
 
