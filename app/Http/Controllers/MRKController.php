@@ -10,8 +10,8 @@ class MRKController extends Controller
     // halaman index untuk menampilkan semua data merk
     public function index()
     {
-        $mrks = MRK::all();
-        return response()->json($mrks);
+        $data = MRK::all();
+        return view('data.merk', compact('mrks'));
     }
 
     // halaman create untuk menampilkan form tambah data merk

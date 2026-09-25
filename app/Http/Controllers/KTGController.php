@@ -10,8 +10,8 @@ class KTGController extends Controller
     // halaman index untuk menampilkan semua data gudang
     public function index()
     {
-        $ktgs = KTG::all();
-        return response()->json($ktgs);
+        $data = KTG::all();
+        return view('data.kategori', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data gudang

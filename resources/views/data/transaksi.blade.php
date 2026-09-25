@@ -1,0 +1,654 @@
+@extends('layouts.app')
+
+@section('title', 'Riwayat Transaksi - Elektronik')
+@section('header_title', 'Riwayat Transaksi')
+
+@section('content')
+<div
+    x-data="transaksiApp()"
+    class="flex-1 flex flex-col h-full overflow-y-auto bg-[#CECECE]/60 p-4 md:p-6 select-none"
+>
+    {{-- Toolbar --}}
+    <div class="flex items-center gap-2 mb-4">
+
+        {{-- Search --}}
+        <div class="relative w-64 md:w-80 group">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                    />
+                </svg>
+            </span>
+
+            <input
+                type="text"
+                x-model="searchQuery"
+                placeholder="Cari transaksi"
+                class="w-full bg-white border border-gray-400 hover:border-[#2D8CFF] focus:border-[#2D8CFF] rounded-lg pl-10 pr-4 py-2 text-sm text-[#1A1F36] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#2D8CFF]"
+            >
+        </div>
+
+        {{-- Filter --}}
+        <div class="relative" @click.outside="filterOpen = false">
+
+            <button
+                type="button"
+                @click="filterOpen = !filterOpen"
+                class="h-9.5 w-9.5 bg-white border border-gray-400 rounded-lg flex items-center justify-center hover:bg-blue-50 hover:border-[#2D8CFF] hover:text-[#2D8CFF] cursor-pointer"
+            >
+                <svg class="w-5 h-5 text-current fill-current" viewBox="0 0 24 24">
+                    <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                </svg>
+            </button>
+
+            <div
+                x-show="filterOpen"
+                x-transition
+                class="absolute left-0 mt-2 w-56 bg-[#CECECE] rounded-xl p-2 shadow-2xl space-y-1.5 border border-gray-300 z-50"
+                style="display:none"
+            >
+                <template x-for="option in sortOptions" :key="option">
+                    <button
+                        type="button"
+                        @click="selectSort(option)"
+                        class="w-full flex items-center justify-between px-3.5 py-2.5 bg-white hover:bg-gray-50 rounded-lg text-sm font-medium text-[#1A1F36] text-left cursor-pointer"
+                    >
+                        <span x-text="option"></span>
+
+                        <svg
+                            x-show="selectedSort === option"
+                            class="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M4.5 12.75l6 6 9-13.5"
+                            />
+                        </svg>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    {{-- Table --}}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden flex flex-col">
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+
+                <thead>
+                    <tr class="bg-[#242F40] text-white text-sm font-semibold tracking-wide">
+                        <th class="py-3 px-4">Kode Transaksi</th>
+                        <th class="py-3 px-4">Tanggal pembelian</th>
+                        <th class="py-3 px-4">Waktu</th>
+                        <th class="py-3 px-4">Total</th>
+                        <th class="py-3 px-4">Sales</th>
+                        <th class="py-3 px-4">Customer</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200 text-sm text-[#1A1F36]">
+
+                    <template
+                        x-for="trx in paginatedTransactions"
+                        :key="trx.kode"
+                    >
+                        <tr class="hover:bg-gray-50/80 transition-colors">
+
+                            {{-- REF_NO --}}
+                            <td
+                                class="py-3.5 px-4 font-medium"
+                                x-text="trx.kode"
+                            ></td>
+
+                            {{-- DT --}}
+                            <td
+                                class="py-3.5 px-4"
+                                x-text="trx.tanggal"
+                            ></td>
+
+                            {{-- Waktu --}}
+                            <td
+                                class="py-3.5 px-4"
+                                x-text="trx.waktu"
+                            ></td>
+
+                            {{-- BRT --}}
+                            <td
+                                class="py-3.5 px-4 font-medium font-number"
+                                x-text="formatRupiah(trx.total)"
+                            ></td>
+
+                            {{-- SLS --}}
+                            <td
+                                class="py-3.5 px-4"
+                                x-text="trx.sales"
+                            ></td>
+
+                            {{-- CST --}}
+                            <td
+                                class="py-3.5 px-4"
+                                x-text="trx.customer"
+                            ></td>
+
+                            {{-- Status --}}
+                            <td class="py-3.5 px-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-[#34D399] text-white">
+                                    Selesai
+                                </span>
+                            </td>
+
+                            {{-- Aksi --}}
+                            <td class="py-3.5 px-4 text-center">
+
+                                <button
+                                    type="button"
+                                    @click="openStrukModal(trx)"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-400 hover:border-black rounded-md text-xs font-semibold text-black hover:bg-gray-100 cursor-pointer"
+                                >
+                                    <svg
+                                        class="w-4 h-4 text-black"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                    </svg>
+
+                                    <span>Struk</span>
+                                </button>
+
+                            </td>
+                        </tr>
+                    </template>
+
+                    {{-- Empty --}}
+                    <tr x-show="filteredTransactions.length === 0">
+                        <td
+                            colspan="8"
+                            class="py-8 text-center text-gray-500 text-sm"
+                        >
+                            Tidak ada transaksi yang cocok.
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Pagination --}}
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+
+            <div>
+                Menampilkan
+                <span x-text="paginationInfo"></span>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+
+                <button
+                    type="button"
+                    @click="prevPage()"
+                    :disabled="currentPage === 1"
+                    :class="currentPage === 1
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'hover:bg-gray-100 cursor-pointer text-black'"
+                    class="h-7 w-7 border border-gray-400 rounded flex items-center justify-center text-xs font-semibold"
+                >
+                    ‹
+                </button>
+
+                <template x-for="p in totalPages" :key="p">
+                    <button
+                        type="button"
+                        @click="currentPage = p"
+                        :class="currentPage === p
+                            ? 'bg-[#2D8CFF] text-white border-[#2D8CFF]'
+                            : 'bg-white text-gray-700 border-gray-400 hover:bg-gray-100'"
+                        class="h-7 w-7 border rounded flex items-center justify-center text-xs font-semibold cursor-pointer"
+                        x-text="p"
+                    ></button>
+                </template>
+
+                <button
+                    type="button"
+                    @click="nextPage()"
+                    :disabled="currentPage === totalPages"
+                    :class="currentPage === totalPages
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'hover:bg-gray-100 cursor-pointer text-black'"
+                    class="h-7 w-7 border border-gray-400 rounded flex items-center justify-center text-xs font-semibold"
+                >
+                    ›
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- Struk Modal --}}
+    <div
+        x-show="isStrukOpen"
+        x-transition
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+        style="display:none"
+    >
+
+        <div
+            class="fixed inset-0"
+            @click="closeStrukModal()"
+        ></div>
+
+        <div
+            x-show="isStrukOpen"
+            x-transition
+            class="relative w-full max-w-xl bg-white p-6 md:p-8 rounded-lg shadow-2xl z-10 max-h-[92vh] overflow-y-auto text-black"
+        >
+
+            {{-- Close --}}
+            <button
+                type="button"
+                @click="closeStrukModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-black p-1 cursor-pointer"
+            >
+                <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                    />
+                </svg>
+            </button>
+
+            {{-- Header --}}
+            <div class="flex items-start justify-between gap-4 pr-6">
+
+                <h2 class="text-3xl md:text-4xl font-bold">
+                    NamaToko
+                </h2>
+
+                <div class="text-right text-xs leading-tight">
+                    <p>Medokan Ayu, Kec. Rungkut,</p>
+                    <p>Surabaya</p>
+                    <p>No Telp: 0881-0268-77983</p>
+                </div>
+
+            </div>
+
+            <div class="border-b-2 border-dotted border-black my-4"></div>
+
+            {{-- Transaction Info --}}
+            <div class="space-y-1 text-sm">
+
+                <div class="flex items-center justify-between">
+
+                    <span
+                        x-text="activeTrx
+                            ? 'Tanggal: ' + activeTrx.tanggal + ' ' + activeTrx.waktu
+                            : ''"
+                    ></span>
+
+                    <span
+                        class="font-medium"
+                        x-text="activeTrx
+                            ? 'No: ' + activeTrx.kode
+                            : ''"
+                    ></span>
+
+                </div>
+
+                <div>
+                    <span
+                        x-text="activeTrx
+                            ? 'Sales: ' + activeTrx.sales
+                            : ''"
+                    ></span>
+                </div>
+
+                <div>
+                    <span
+                        x-text="activeTrx
+                            ? 'Customer: ' + activeTrx.customer
+                            : ''"
+                    ></span>
+                </div>
+
+                <div>
+                    <span
+                        x-text="activeTrx
+                            ? 'User: ' + activeTrx.user
+                            : ''"
+                    ></span>
+                </div>
+
+            </div>
+
+            <div class="border-b-2 border-dotted border-black my-4"></div>
+
+            {{-- ACR belum memiliki detail item --}}
+            <div class="text-sm text-gray-600">
+                Detail barang belum tersedia pada tabel ACR.
+            </div>
+
+            <div class="border-b-2 border-dotted border-black my-4"></div>
+
+            {{-- Total --}}
+            <div class="space-y-2">
+
+                <div class="flex items-center justify-between text-2xl font-bold">
+                    <span>Total:</span>
+
+                    <span
+                        class="font-number"
+                        x-text="activeTrx
+                            ? formatRupiah(activeTrx.total)
+                            : 'Rp 0'"
+                    ></span>
+                </div>
+
+                <div class="text-sm">
+
+                    <div class="flex justify-between">
+                        <span>POT_1:</span>
+
+                        <span
+                            x-text="activeTrx
+                                ? formatRupiah(activeTrx.pot1)
+                                : 'Rp 0'"
+                        ></span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span>POT_2:</span>
+
+                        <span
+                            x-text="activeTrx
+                                ? formatRupiah(activeTrx.pot2)
+                                : 'Rp 0'"
+                        ></span>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <span>POT_R:</span>
+
+                        <span
+                            x-text="activeTrx
+                                ? formatRupiah(activeTrx.potR)
+                                : 'Rp 0'"
+                        ></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- Buttons --}}
+            <div class="mt-8 pt-4 flex items-center justify-center gap-6">
+
+                <button
+                    type="button"
+                    @click="downloadInvoice()"
+                    class="px-8 py-2.5 bg-white border-2 border-black rounded-md text-base font-bold hover:bg-gray-100 cursor-pointer min-w-[140px]"
+                >
+                    Download
+                </button>
+
+                <button
+                    type="button"
+                    @click="window.print()"
+                    class="px-8 py-2.5 bg-white border-2 border-black rounded-md text-base font-bold hover:bg-gray-100 cursor-pointer min-w-[140px]"
+                >
+                    Print
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function transaksiApp() {
+    return {
+
+        searchQuery: '',
+
+        filterOpen: false,
+
+        selectedSort: 'Nama',
+
+        sortOptions: [
+            'Nama',
+            'Total tertinggi',
+            'Total terendah',
+            'Metode pembayaran'
+        ],
+
+        isStrukOpen: false,
+
+        activeTrx: null,
+
+        currentPage: 1,
+
+        itemsPerPage: 3,
+
+        // Data dari ACRController
+        transactions: @json($transactions ?? []),
+
+        selectSort(option) {
+            this.selectedSort = option;
+            this.filterOpen = false;
+            this.currentPage = 1;
+        },
+
+        get filteredTransactions() {
+
+            let list = [...this.transactions];
+
+            if (this.searchQuery.trim()) {
+
+                const q = this.searchQuery
+                    .toLowerCase()
+                    .trim();
+
+                list = list.filter(trx =>
+                    String(trx.kode ?? '')
+                        .toLowerCase()
+                        .includes(q) ||
+
+                    String(trx.customer ?? '')
+                        .toLowerCase()
+                        .includes(q) ||
+
+                    String(trx.sales ?? '')
+                        .toLowerCase()
+                        .includes(q) ||
+
+                    String(trx.tanggal ?? '')
+                        .toLowerCase()
+                        .includes(q)
+                );
+            }
+
+            if (this.selectedSort === 'Nama') {
+
+                list.sort((a, b) =>
+                    String(a.kode ?? '')
+                        .localeCompare(String(b.kode ?? ''))
+                );
+
+            } else if (this.selectedSort === 'Total tertinggi') {
+
+                list.sort((a, b) =>
+                    Number(b.total ?? 0) - Number(a.total ?? 0)
+                );
+
+            } else if (this.selectedSort === 'Total terendah') {
+
+                list.sort((a, b) =>
+                    Number(a.total ?? 0) - Number(b.total ?? 0)
+                );
+
+            } else if (this.selectedSort === 'Metode pembayaran') {
+
+                // ACR tidak mempunyai kolom metode pembayaran.
+                // Sorting ini dibiarkan tanpa perubahan.
+                list.sort((a, b) =>
+                    String(a.metode ?? '')
+                        .localeCompare(String(b.metode ?? ''))
+                );
+            }
+
+            return list;
+        },
+
+        get totalPages() {
+
+            return Math.ceil(
+                this.filteredTransactions.length /
+                this.itemsPerPage
+            ) || 1;
+        },
+
+        get paginatedTransactions() {
+
+            const start =
+                (this.currentPage - 1) *
+                this.itemsPerPage;
+
+            return this.filteredTransactions.slice(
+                start,
+                start + this.itemsPerPage
+            );
+        },
+
+        get paginationInfo() {
+
+            const total = this.filteredTransactions.length;
+
+            if (total === 0) {
+                return '0 dari 0 transaksi';
+            }
+
+            const start =
+                (this.currentPage - 1) *
+                this.itemsPerPage + 1;
+
+            const end =
+                Math.min(
+                    start + this.itemsPerPage - 1,
+                    total
+                );
+
+            return `${start}-${end} dari ${total} transaksi`;
+        },
+
+        prevPage() {
+
+            if (this.currentPage > 1) {
+                this.currentPage--;
+            }
+        },
+
+        nextPage() {
+
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+            }
+        },
+
+        openStrukModal(trx) {
+
+            this.activeTrx = trx;
+
+            this.isStrukOpen = true;
+        },
+
+        closeStrukModal() {
+
+            this.isStrukOpen = false;
+
+            this.activeTrx = null;
+        },
+
+        downloadInvoice() {
+
+            if (!this.activeTrx) {
+                return;
+            }
+
+            const trx = this.activeTrx;
+
+            const content =
+                `NamaToko\n` +
+                `Medokan Ayu, Kec. Rungkut, Surabaya\n` +
+                `No Telp: 0881-0268-77983\n` +
+                `--------------------------------\n` +
+                `Tanggal: ${trx.tanggal} ${trx.waktu}\n` +
+                `No: ${trx.kode}\n` +
+                `Customer: ${trx.customer}\n` +
+                `Sales: ${trx.sales}\n` +
+                `User: ${trx.user}\n` +
+                `--------------------------------\n` +
+                `Total: ${this.formatRupiah(trx.total)}\n` +
+                `POT_1: ${this.formatRupiah(trx.pot1)}\n` +
+                `POT_2: ${this.formatRupiah(trx.pot2)}\n` +
+                `POT_R: ${this.formatRupiah(trx.potR)}\n`;
+
+            const blob = new Blob(
+                [content],
+                {
+                    type: 'text/plain;charset=utf-8'
+                }
+            );
+
+            const url =
+                URL.createObjectURL(blob);
+
+            const a =
+                document.createElement('a');
+
+            a.href = url;
+
+            a.download =
+                `Invoice-${trx.kode}.txt`;
+
+            document.body.appendChild(a);
+
+            a.click();
+
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+        },
+
+        formatRupiah(num) {
+
+            return 'Rp ' +
+                Number(num || 0)
+                    .toLocaleString('id-ID');
+        }
+    };
+}
+</script>
+@endsection

@@ -10,8 +10,9 @@ class GDController extends Controller
     // halaman index untuk menampilkan semua data gudang
     public function index()
     {
-        $gds = GD::all();
-        return response()->json($gds);
+        $data = GD::all();
+
+        return view('data.gudang', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data gudang

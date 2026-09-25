@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\ACRController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CSTController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\kasirController;
+use App\Http\Controllers\SLSController;
+use App\Http\Controllers\STSController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -25,9 +29,10 @@ Route::get('/login', function () {
 })->name('login');
 
 // Riwayat Transaksi View
-Route::get('/transaksi', function () {
-    return view('transaksi');
-})->name('transaksi');
+Route::get('/transaksi', [ACRController::class, 'index'])->name('transaksi');
+Route::post('/transaksi', [ACRController::class, 'store'])->name('transaksi.store');
+Route::put('/transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
+Route::delete('/transaksi/{id}', [ACRController::class, 'destroy'])->name('transaksi.destroy');
 
 // User Management View
 Route::get('/user', function () {
@@ -35,14 +40,16 @@ Route::get('/user', function () {
 })->name('user');
 
 // Sales Management View
-Route::get('/sales', function () {
-    return view('sales');
-})->name('sales');
+Route::get('/sales', [SLSController::class, 'index'])->name('sales');
+Route::post('/sales', [SLSController::class, 'store'])->name('sales.store');
+Route::put('/sales/{id}', [SLSController::class, 'update'])->name('sales.update');
+Route::delete('/sales/{id}', [SLSController::class, 'destroy'])->name('sales.destroy');
 
 // Customer Management View
-Route::get('/customer', function () {
-    return view('customer');
-})->name('customer');
+Route::get('/customer', [CSTController::class, 'index'])->name('customer');
+Route::post('/customer', [CSTController::class, 'store'])->name('customer.store');
+Route::put('/customer/{id}', [CSTController::class, 'update'])->name('customer.update');
+Route::delete('/customer/{id}', [CSTController::class, 'destroy'])->name('customer.destroy');
 
 // Laporan Kasir / Transaksi View
 Route::get('/laporan', function () {

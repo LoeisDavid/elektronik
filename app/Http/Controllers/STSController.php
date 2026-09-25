@@ -10,8 +10,8 @@ class STSController extends Controller
     // halaman index untuk menampilkan semua data merk
     public function index()
     {
-        $sts = STS::all();
-        return response()->json($sts);
+        $data = STS::all();
+        return view('data.status', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data item detail
