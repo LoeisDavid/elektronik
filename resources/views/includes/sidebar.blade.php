@@ -48,8 +48,8 @@
                         ['name' => 'Kasir', 'route' => 'POS.kasir'],
                         ['name' => 'Transaksi', 'route' => 'transaksi'],
                         ['name' => 'User', 'route' => 'user'],
-                        ['name' => 'Sales', 'route' => 'sales'],
-                        ['name' => 'Customer', 'route' => 'customer'],
+                        ['name' => 'Sales', 'route' => 'POS.sales'],
+                        ['name' => 'Customer', 'route' => 'POS.customer'],
                         ['name' => 'Laporan', 'route' => 'laporan'],
                     ];
                 @endphp

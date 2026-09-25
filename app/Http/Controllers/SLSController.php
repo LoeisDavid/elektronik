@@ -36,7 +36,7 @@ class SLSController extends Controller
 
         $data = $query->paginate(10);
 
-        return view('data.sales', compact('sales'));
+        return view('POS.sales', compact('data'));
     }
 
 
@@ -46,7 +46,7 @@ class SLSController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sls' => 'required|string|max:10|unique:sales,sls',
+            'SLS' => 'required|string|max:10|unique:sls,SLS',
             'DES' => 'required|string|max:150',
             'HP'  => 'required|string|max:20',
             'AL'  => 'required|string|max:100',
@@ -55,7 +55,7 @@ class SLSController extends Controller
         SLS::create($validated);
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil ditambahkan.');
     }
 
@@ -76,10 +76,13 @@ class SLSController extends Controller
      */
     public function update(Request $request, $sls)
     {
-        $sales = SLS::where('sls', $sls)->firstOrFail();
+        // Decode parameter ID untuk mengantisipasi karakter khusus
+        $decodedId = urldecode($sls);
+
+        $sales = SLS::where('sls', $decodedId)->firstOrFail();
 
         $validated = $request->validate([
-            'sls' => 'required|string|max:10|unique:sales,sls,' . $sales->sls . ',sls',
+            'SLS' => 'required|string|max:10|unique:sls,SLS,' . $sales->SLS . ',sls',
             'DES' => 'required|string|max:150',
             'HP'  => 'required|string|max:20',
             'AL'  => 'required|string|max:100',
@@ -88,7 +91,7 @@ class SLSController extends Controller
         $sales->update($validated);
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil diubah.');
     }
 
@@ -103,7 +106,7 @@ class SLSController extends Controller
         $sales->delete();
 
         return redirect()
-            ->route('sales.index')
+            ->route('POS.sales')
             ->with('success', 'Sales berhasil dihapus.');
     }
 }

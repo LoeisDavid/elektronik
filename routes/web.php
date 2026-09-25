@@ -39,18 +39,6 @@ Route::get('/user', function () {
     return view('user');
 })->name('user');
 
-// Sales Management View
-Route::get('/sales', [SLSController::class, 'index'])->name('sales');
-Route::post('/sales', [SLSController::class, 'store'])->name('sales.store');
-Route::put('/sales/{id}', [SLSController::class, 'update'])->name('sales.update');
-Route::delete('/sales/{id}', [SLSController::class, 'destroy'])->name('sales.destroy');
-
-// Customer Management View
-Route::get('/customer', [CSTController::class, 'index'])->name('customer');
-Route::post('/customer', [CSTController::class, 'store'])->name('customer.store');
-Route::put('/customer/{id}', [CSTController::class, 'update'])->name('customer.update');
-Route::delete('/customer/{id}', [CSTController::class, 'destroy'])->name('customer.destroy');
-
 // Laporan Kasir / Transaksi View
 Route::get('/laporan', function () {
     return view('laporan');
@@ -65,6 +53,18 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('buka-kasir', [kasirController::class, 'bukaKasir'])->name('buka-kasir');
     Route::post('tutup-kasir', [kasirController::class, 'tutupKasir'])->name('tutup-kasir');
     Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
+
+    // customer
+    Route::get('customer', [CSTController::class, 'index'])->name('customer');
+    Route::post('customer', [CSTController::class, 'store'])->name('customer.store');
+    Route::put('customer/{id}', [CSTController::class, 'update'])->name('customer.update');
+    Route::delete('customer/{id}', [CSTController::class, 'destroy'])->name('customer.destroy');
+
+    // sales
+    Route::get('sales', [SLSController::class, 'index'])->name('sales');
+    Route::post('sales', [SLSController::class, 'store'])->name('sales.store');
+    Route::put('sales/{id}', [SLSController::class, 'update'])->name('sales.update');
+    Route::delete('sales/{id}', [SLSController::class, 'destroy'])->name('sales.destroy');
 });
 
 Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');

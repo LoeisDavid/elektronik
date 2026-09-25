@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-[#CECECE]/60 p-4 md:p-6 select-none">
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none">
 
     {{-- ========================================================= --}}
     {{-- TOOLBAR --}}
@@ -17,28 +17,30 @@
         <div class="flex items-center gap-2">
 
             <div class="relative w-64 md:w-80">
+                <form action="{{ route('POS.customer') }}" method="GET">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                        <svg
+                            class="w-5 h-5 stroke-[2.5]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                            />
+                        </svg>
+                    </span>
 
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
-                    <svg
-                        class="w-5 h-5 stroke-[2.5]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <input
+                        type="text"
+                        placeholder="Cari customer"
+                        class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                        value="{{ request('keyword') }}"
+                        name="keyword"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                        />
-                    </svg>
-                </span>
-
-                <input
-                    type="text"
-                    placeholder="Cari customer"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-[#1A1F36] placeholder-gray-500 focus:outline-none focus:border-[#172554] focus:ring-1 focus:ring-[#172554]"
-                >
-
+                </form>
             </div>
 
             {{-- FILTER --}}
@@ -62,7 +64,7 @@
         <button
             type="button"
             onclick="openTambahModal()"
-            class="h-9.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
         >
             <span class="text-lg leading-none font-bold">+</span>
             <span>Tambah customer</span>
@@ -84,18 +86,18 @@
                 {{-- HEADER --}}
                 <thead>
 
-                    <tr class="bg-[#142854] text-white text-xs font-semibold">
+                    <tr class="bg-primary-db text-white text-xs font-semibold">
 
                         <th class="py-2.5 px-4 font-semibold">
-                            CST Customer
+                            Kode Customer
                         </th>
 
                         <th class="py-2.5 px-4 font-semibold">
-                            DES Customer
+                            Nama Customer
                         </th>
 
                         <th class="py-2.5 px-4 font-semibold">
-                            Nomor TLP
+                            Nomor Telepon
                         </th>
 
                         <th class="py-2.5 px-4 font-semibold text-center w-20">
@@ -108,9 +110,9 @@
 
 
                 {{-- BODY --}}
-                <tbody class="divide-y divide-gray-200 text-sm text-[#1A1F36]">
+                <tbody class="divide-y divide-gray-200 text-sm text-black">
 
-                    @forelse ($customers as $customer)
+                    @forelse ($data as $customer)
 
                         <tr class="hover:bg-gray-50/80 transition-colors">
 
@@ -141,12 +143,12 @@
                                     <button
                                         type="button"
                                         onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-[#172554] rounded-md inline-flex items-center justify-center transition-colors cursor-pointer"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors cursor-pointer"
                                         title="Aksi Customer"
                                     >
 
                                         <svg
-                                            class="w-4 h-4 text-[#172554]"
+                                            class="w-4 h-4 text-primary-db"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -199,7 +201,7 @@
                                         {{-- DELETE --}}
                                         <form
                                             method="POST"
-                                            action="{{ url('/customer/' . urlencode($customer->CST)) }}"
+                                            action="{{ route('POS.customer.destroy', ['id' => $customer->CST]) }}"
                                         >
 
                                             @csrf
@@ -271,23 +273,23 @@
             <div class="whitespace-nowrap">
 
                 Menampilkan
-                {{ $customers->firstItem() ?? 0 }}
+                {{ $data->firstItem() ?? 0 }}
                 -
-                {{ $customers->lastItem() ?? 0 }}
+                {{ $data->lastItem() ?? 0 }}
                 dari
-                {{ $customers->total() ?? 0 }}
+                {{ $data->total() ?? 0 }}
                 customer
 
             </div>
 
 
             {{-- PAGINATION --}}
-            @if ($customers->lastPage() > 1)
+            @if ($data->lastPage() > 1)
 
                 <div class="flex items-center gap-1">
 
                     {{-- PREVIOUS --}}
-                    @if ($customers->onFirstPage())
+                    @if ($data->onFirstPage())
 
                         <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
                             ‹
@@ -296,7 +298,7 @@
                     @else
 
                         <a
-                            href="{{ $customers->previousPageUrl() }}"
+                            href="{{ $data->previousPageUrl() }}"
                             class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
                         >
                             ‹
@@ -306,8 +308,8 @@
 
 
                     @php
-                        $current = $customers->currentPage();
-                        $last = $customers->lastPage();
+                        $current = $data->currentPage();
+                        $last = $data->lastPage();
                     @endphp
 
 
@@ -316,7 +318,7 @@
                     {{-- ========================================= --}}
 
                     <a
-                        href="{{ $customers->url(1) }}"
+                        href="{{ $data->url(1) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == 1
                             ? 'bg-[#142854] text-white border-[#142854]'
@@ -332,7 +334,7 @@
                         @for ($page = 2; $page <= $last; $page++)
 
                             <a
-                                href="{{ $customers->url($page) }}"
+                                href="{{ $data->url($page) }}"
                                 class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                                 {{ $current == $page
                                     ? 'bg-[#142854] text-white border-[#142854]'
@@ -349,7 +351,7 @@
                         {{-- 1 2 3 ... LAST --}}
 
                         <a
-                            href="{{ $customers->url(2) }}"
+                            href="{{ $data->url(2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 2
                                 ? 'bg-[#142854] text-white border-[#142854]'
@@ -359,7 +361,7 @@
                         </a>
 
                         <a
-                            href="{{ $customers->url(3) }}"
+                            href="{{ $data->url(3) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 3
                                 ? 'bg-[#142854] text-white border-[#142854]'
@@ -373,7 +375,7 @@
                         </span>
 
                         <a
-                            href="{{ $customers->url($last) }}"
+                            href="{{ $data->url($last) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
                         >
@@ -390,7 +392,7 @@
                         </span>
 
                         <a
-                            href="{{ $customers->url($last - 2) }}"
+                            href="{{ $data->url($last - 2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 2
                                 ? 'bg-[#142854] text-white border-[#142854]'
@@ -400,7 +402,7 @@
                         </a>
 
                         <a
-                            href="{{ $customers->url($last - 1) }}"
+                            href="{{ $data->url($last - 1) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 1
                                 ? 'bg-[#142854] text-white border-[#142854]'
@@ -410,7 +412,7 @@
                         </a>
 
                         <a
-                            href="{{ $customers->url($last) }}"
+                            href="{{ $data->url($last) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last
                                 ? 'bg-[#142854] text-white border-[#142854]'
@@ -429,21 +431,21 @@
                         </span>
 
                         <a
-                            href="{{ $customers->url($current - 1) }}"
+                            href="{{ $data->url($current - 1) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
                         >
                             {{ $current - 1 }}
                         </a>
 
                         <a
-                            href="{{ $customers->url($current) }}"
+                            href="{{ $data->url($current) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854]"
                         >
                             {{ $current }}
                         </a>
 
                         <a
-                            href="{{ $customers->url($current + 1) }}"
+                            href="{{ $data->url($current + 1) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
                         >
                             {{ $current + 1 }}
@@ -454,7 +456,7 @@
                         </span>
 
                         <a
-                            href="{{ $customers->url($last) }}"
+                            href="{{ $data->url($last) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
                         >
                             {{ $last }}
@@ -464,10 +466,10 @@
 
 
                     {{-- NEXT --}}
-                    @if ($customers->hasMorePages())
+                    @if ($data->hasMorePages())
 
                         <a
-                            href="{{ $customers->nextPageUrl() }}"
+                            href="{{ $data->nextPageUrl() }}"
                             class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
                         >
                             ›
@@ -506,7 +508,7 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-[#F8FAFC] border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-[#1A1F36]"
+            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
         >
 
             <h2 class="text-2xl font-bold mb-5">
@@ -516,7 +518,7 @@
 
             <form
                 method="POST"
-                action="{{ url('/customer') }}"
+                action="{{ route('POS.customer.store') }}"
                 class="space-y-4"
             >
 
@@ -526,7 +528,7 @@
                 <div>
 
                     <label class="block text-sm font-semibold mb-1">
-                        CST Customer
+                        Kode Customer
                     </label>
 
                     <input
@@ -534,7 +536,7 @@
                         name="CST"
                         placeholder="Contoh: CST004"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
 
                 </div>
@@ -544,14 +546,14 @@
                 <div>
 
                     <label class="block text-sm font-semibold mb-1">
-                        DES Customer
+                        Nama Customer
                     </label>
 
                     <input
                         type="text"
                         name="DES"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
 
                 </div>
@@ -561,14 +563,14 @@
                 <div>
 
                     <label class="block text-sm font-semibold mb-1">
-                        Nomor TLP
+                        Nomor Telepon
                     </label>
 
                     <input
                         type="text"
                         name="TLP"
                         required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
 
                 </div>
@@ -579,14 +581,14 @@
                     <button
                         type="button"
                         onclick="closeTambahModal()"
-                        class="flex-1 py-2.5 px-4 bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer"
                     >
                         Batal
                     </button>
 
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] text-white rounded-xl text-sm font-semibold cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer"
                     >
                         Simpan
                     </button>
@@ -616,7 +618,7 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-[#F8FAFC] border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-[#1A1F36]"
+            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
         >
 
             <h2 class="text-2xl font-bold mb-5">
@@ -625,89 +627,77 @@
 
 
             <form
-                id="editCustomerForm"
-                method="POST"
-                class="space-y-4"
-            >
+            id="editCustomerForm"
+            method="POST"
+            class="space-y-4"
+        >
+            @csrf
+            @method('PUT')
 
-                @csrf
-                @method('PUT')
+            {{-- CST (Kode Customer) --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-black">
+                    Kode Customer
+                </label>
+                <input
+                    id="editCST"
+                    type="text"
+                    name="CST"
+                    readonly
+                    required
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                >
+            </div>
 
+            {{-- DES (Nama Customer) --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-black">
+                    Nama Customer
+                </label>
+                <input
+                    id="editDES"
+                    type="text"
+                    name="DES"
+                    required
+                    placeholder="Masukkan nama customer"
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                >
+            </div>
 
-                {{-- CST --}}
-                <div>
+            {{-- TLP (Nomor Telepon) --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-black">
+                    Nomor Telepon
+                </label>
+                <input
+                    id="editTLP"
+                    type="text"
+                    name="TLP"
+                    required
+                    placeholder="Masukkan nomor telepon"
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                >
+            </div>
 
-                    <label class="block text-sm font-semibold mb-1">
-                        CST Customer
-                    </label>
+            {{-- Action Buttons --}}
+            <div class="pt-4 flex items-center gap-3">
+                <button
+                    type="button"
+                    onclick="closeEditModal()"
+                    class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                    Batal
+                </button>
 
-                    <input
-                        id="editCST"
-                        type="text"
-                        name="CST"
-                        required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
-                    >
+                <button
+                    type="submit"
+                    class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+                >
+                    Simpan
+                </button>
+            </div>
 
-                </div>
-
-
-                {{-- DES --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        DES Customer
-                    </label>
-
-                    <input
-                        id="editDES"
-                        type="text"
-                        name="DES"
-                        required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
-                    >
-
-                </div>
-
-
-                {{-- TLP --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Nomor TLP
-                    </label>
-
-                    <input
-                        id="editTLP"
-                        type="text"
-                        name="TLP"
-                        required
-                        class="w-full bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#172554] focus:border-[#172554]"
-                    >
-
-                </div>
-
-
-                <div class="pt-4 flex items-center gap-3">
-
-                    <button
-                        type="button"
-                        onclick="closeEditModal()"
-                        class="flex-1 py-2.5 px-4 bg-[#F8FAFC] border border-[#1A1F36]/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer"
-                    >
-                        Batal
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="flex-1 py-2.5 px-4 bg-[#172554] hover:bg-[#1e3a8a] text-white rounded-xl text-sm font-semibold cursor-pointer"
-                    >
-                        Simpan
-                    </button>
-
-                </div>
-
-            </form>
+        </form>
 
         </div>
 
@@ -801,10 +791,9 @@
         document.getElementById('editDES').value = DES;
         document.getElementById('editTLP').value = TLP;
 
-
-        document.getElementById('editCustomerForm').action =
-            "{{ url('/customer') }}/" + encodeURIComponent(CST);
-
+        // Set URL action secara dinamis menggantikan placeholder ':id'
+        const updateUrl = "{{ route('POS.customer.update', ':id') }}".replace(':id', encodeURIComponent(CST));
+        document.getElementById('editCustomerForm').action = updateUrl;
 
         // Tutup menu aksi
         document.querySelectorAll('.action-menu').forEach(function(menu) {
