@@ -4,7 +4,7 @@
     {{-- Left Section: Judul Page & Tombol Tutup Kasir --}}
     <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold text-[#1A1F36] tracking-tight">
-            @yield('header_title', 'POS - Kasir')
+            @yield('header_title')
         </h1>
 
         {{-- Tombol Tutup Kasir (Hanya tampil jika kasir sudah dibuka) --}}
