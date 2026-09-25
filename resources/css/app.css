@@ -7,6 +7,7 @@
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --font-number: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+    --font-montserrat: "Montserrat", sans-serif;
 
     /* Extracted Design System Palette */
     --color-primary-db: #0D1C43;

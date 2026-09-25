@@ -13,7 +13,7 @@
     <!-- Vite Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen w-full bg-[#f3f5f9] font-sans flex flex-col items-center justify-center p-4 antialiased select-none">
+<body class="min-h-screen w-full bg-secondary-bw font-sans flex flex-col items-center justify-center p-4 antialiased select-none">
     
     {{-- Main Container Centered --}}
     <div class="w-full max-w-md flex flex-col items-center">
@@ -24,7 +24,7 @@
         </h1>
 
         {{-- Login Card (#dde5ee) --}}
-        <div class="w-full bg-[#dde5ee] p-8 md:p-10 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+        <div class="w-full bg-white p-8 md:p-10 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
             
             {{-- 
                 BACKEND INTEGRATION NOTE:
@@ -34,7 +34,7 @@
                 
                 {{-- Username Input --}}
                 <div class="space-y-2">
-                    <label for="username" class="block text-sm font-medium text-[#2D3748]">
+                    <label for="username" class="block text-sm font-medium text-black">
                         Username:
                     </label>
                     <input 
@@ -43,13 +43,13 @@
                         name="username" 
                         required
                         autocomplete="username"
-                        class="w-full bg-transparent border-b-2 border-[#2D3748] focus:border-black py-1 px-0.5 text-base text-[#1A1F36] outline-none transition-colors duration-150"
+                        class="w-full bg-transparent border-b-2 focus:border-black py-1 px-0.5 text-base text-black outline-none transition-colors duration-150"
                     />
                 </div>
 
                 {{-- Password Input --}}
                 <div class="space-y-2 pt-2">
-                    <label for="password" class="block text-sm font-medium text-[#2D3748]">
+                    <label for="password" class="block text-sm font-medium text-black">
                         Password:
                     </label>
                     <input 
@@ -58,7 +58,7 @@
                         name="password" 
                         required
                         autocomplete="current-password"
-                        class="w-full bg-transparent border-b-2 border-[#2D3748] focus:border-black py-1 px-0.5 text-base text-[#1A1F36] outline-none transition-colors duration-150"
+                        class="w-full bg-transparent border-b-2 focus:border-black py-1 px-0.5 text-base text-black outline-none transition-colors duration-150"
                     />
                 </div>
 
@@ -66,7 +66,7 @@
                 <div class="pt-6 flex justify-center">
                     <button 
                         type="submit" 
-                        class="bg-white text-black font-bold px-12 py-2 text-sm tracking-wider shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2D8CFF]"
+                        class="bg-primary-db text-white font-bold px-12 py-2 text-base tracking-wider shadow-sm hover:bg-primary-sdb transition-all cursor-pointer focus:outline-none w-full"
                     >
                         LOGIN
                     </button>
