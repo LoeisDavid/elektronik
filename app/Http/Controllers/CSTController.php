@@ -11,11 +11,11 @@ class CSTController extends Controller
     {
         $query = CST::query();
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('DES', 'LIKE', "%{$search}%")
-                  ->orWhere('CST', 'LIKE', "%{$search}%")
-                  ->orWhere('TLP', 'LIKE', "%{$search}%");
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$keyword}%")
+                  ->orWhere('CST', 'LIKE', "%{$keyword}%")
+                  ->orWhere('TLP', 'LIKE', "%{$keyword}%");
         }
 
         if ($request->filled('sort')) {
@@ -26,7 +26,7 @@ class CSTController extends Controller
 
         $data = $query->paginate(10);
 
-        return view('data.customer', compact('data'));
+        return view('POS.customer', compact('data'));
     }
 
     public function store(Request $request)
@@ -43,13 +43,16 @@ class CSTController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Decode parameter ID untuk mengantisipasi karakter khusus
+        $decodedId = urldecode($id);
+
         $request->validate([
             'CST' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
             'TLP' => 'required|string|max:20',
         ]);
 
-        $customer = CST::where('CST', $id)->firstOrFail();
+        $customer = CST::where('CST', $decodedId)->firstOrFail();
         $customer->update($request->all());
         return redirect()->back()->with('success', 'Data berhasil diupdate');
     }
