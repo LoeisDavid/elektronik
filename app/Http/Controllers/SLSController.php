@@ -12,20 +12,29 @@ class SLSController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->search;
+        $query = SLS::query();
 
-        $sales = SLS::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('sls', 'like', '%' . $search . '%')
-                        ->orWhere('DES', 'like', '%' . $search . '%')
-                        ->orWhere('HP', 'like', '%' . $search . '%')
-                        ->orWhere('AL', 'like', '%' . $search . '%');
-                });
-            })
-            ->orderBy('sls')
-            ->paginate(10)
-            ->withQueryString();
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('SLS', 'LIKE', "%{$search}%");
+        }
+
+        $sort = $request->filled('sort');
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
 
         return view('data.sales', compact('sales'));
     }

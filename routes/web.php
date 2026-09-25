@@ -67,6 +67,26 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
 });
 
+Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
+Route::prefix('Inventory')->name('inventory.')->group(function () {
+    Route::get('item', [App\Http\Controllers\ITMController::class, 'index'])->name('item');
+    Route::get('item/create', [App\Http\Controllers\ITMController::class, 'create'])->name('item.create');
+    Route::post('item', [App\Http\Controllers\ITMController::class, 'store'])->name('item.store');
+    Route::get('item/{id}/edit', [App\Http\Controllers\ITMController::class, 'edit'])->name('item.edit');
+    Route::put('item/{id}', [App\Http\Controllers\ITMController::class, 'update'])->name('item.update');
+    Route::delete('item/{id}', [App\Http\Controllers\ITMController::class, 'destroy'])->name('item.destroy');
+
+    Route::get('gudang', [App\Http\Controllers\GDController::class, 'index'])->name('gudang');
+    Route::get('gudang/create', [App\Http\Controllers\GDController::class, 'create'])->name('gudang.create');
+    Route::post('gudang', [App\Http\Controllers\GDController::class, 'store'])->name('gudang.store');
+    Route::get('gudang/{gd}/edit', [App\Http\Controllers\GDController::class, 'edit'])->name('gudang.edit');
+    Route::put('gudang/{gd}', [App\Http\Controllers\GDController::class, 'update'])->name('gudang.update');
+    Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
+
+    Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
+    Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
+    Route::get('supplier', [App\Http\Controllers\SPPController::class, 'index'])->name('supplier');
+});
 
 
 

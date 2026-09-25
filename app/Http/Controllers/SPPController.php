@@ -8,9 +8,31 @@ use App\Models\SPP;
 class SPPController extends Controller
 {
      // halaman index untuk menampilkan semua data supplier
-    public function index()
+    public function index(Request $request)
     {
-        $data = SPP::all();
+        $query = SPP::query();
+
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('SPP', 'LIKE', "%{$search}%");
+        }
+
+        $sort = $request->filled('sort');
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
         return view('data.supplier', compact('data'));
     }
 

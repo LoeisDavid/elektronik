@@ -8,10 +8,32 @@ use App\Models\MRK;
 class MRKController extends Controller
 {
     // halaman index untuk menampilkan semua data merk
-    public function index()
+    public function index(Request $request)
     {
-        $data = MRK::all();
-        return view('data.merk', compact('mrks'));
+        $query = MRK::query();
+
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('MRK', 'LIKE', "%{$search}%");
+        }
+
+        $sort = $request->filled('sort');
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
+        return view('data.merk', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data merk
