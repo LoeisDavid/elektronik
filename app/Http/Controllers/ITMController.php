@@ -10,8 +10,8 @@ class ITMController extends Controller
      // halaman index untuk menampilkan semua data item
     public function index()
     {
-        $itms = ITM::all();
-        return response()->json($itms);
+        $data = ITM::all();
+        return view('data.item', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data item

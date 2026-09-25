@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- WAJIB: CSRF Token untuk keamanan Form/AJAX Laravel -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <title>@yield('title', 'Point Of Sales') - Elektronik</title>
 
     <!-- Google Fonts -->
@@ -35,6 +39,9 @@
 
     </main>
 
+    <!-- Import Script Generic CRUD -->
+    <script src="{{ asset('js/crud.js') }}"></script>
+    
     @stack('scripts')
 </body>
 </html>

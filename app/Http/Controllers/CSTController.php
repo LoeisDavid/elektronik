@@ -2,63 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\CST;
+use Illuminate\Http\Request;
 
 class CSTController extends Controller
 {
-     // halaman index untuk menampilkan semua data customer
-    public function index()
+    public function index(Request $request)
     {
-        $csts = CST::all();
-        return response()->json($csts);
-    }
+        $query = CST::query();
 
-    // halaman create untuk menampilkan form tambah data customer
-    public function create()
-    {
-        return view('customer.create');
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('CST', 'LIKE', "%{$search}%")
+                  ->orWhere('TLP', 'LIKE', "%{$search}%");
+        }
+
+        if ($request->filled('sort')) {
+            $query->orderBy('DES', $request->sort);
+        } else {
+            $query->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
+
+        return view('data.customer', compact('data'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'CST' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
             'TLP' => 'required|string|max:20',
         ]);
 
-        CST::create($validated);
-
-        return redirect()->route('customer.index')->with('success', 'Data customer berhasil ditambahkan.');
+        CST::create($request->all());
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }
 
-    // halaman edit untuk menampilkan form edit data customer
-    public function edit($cst)
+    public function update(Request $request, $id)
     {
-        $cst = CST::findOrFail($cst);
-        return view('customer.edit', compact('cst'));
-    }
-
-    public function update(Request $request, $cst)
-    {
-        $validated = $request->validate([
+        $request->validate([
             'CST' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
             'TLP' => 'required|string|max:20',
         ]);
 
-        $cst = CST::findOrFail($cst);
-        $cst->update($validated);
-
-        return redirect()->route('customer.index')->with('success', 'Data customer berhasil diperbarui.');
+        $customer = CST::where('CST', $id)->firstOrFail();
+        $customer->update($request->all());
+        return redirect()->back()->with('success', 'Data berhasil diupdate');
     }
 
-    public function destroy($cst)
+    public function destroy($id)
     {
-        $cst = CST::findOrFail($cst);
-        $cst->delete();
-
-        return redirect()->route('customer.index')->with('success', 'Data customer berhasil dihapus.');
+        $customer = CST::where('CST', $id)->firstOrFail();
+        $customer->delete();
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 }

@@ -10,8 +10,8 @@ class SPPController extends Controller
      // halaman index untuk menampilkan semua data supplier
     public function index()
     {
-        $spps = SPP::all();
-        return response()->json($spps);
+        $data = SPP::all();
+        return view('data.supplier', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data supplier
@@ -24,7 +24,7 @@ class SPPController extends Controller
     {
         $validated = $request->validate([
             'SPP' => 'required|string|max:10',
-            'DES' => 'required|string|max:45',
+            'DES' => 'required|string|max:150',
             'TLP' => 'required|string|max:20',
         ]);
 

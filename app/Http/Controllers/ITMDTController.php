@@ -10,8 +10,8 @@ class ITMDTController extends Controller
     // halaman index untuk menampilkan semua data merk
     public function index()
     {
-        $itmtd = ITMDT::all();
-        return response()->json($itmtd);
+        $data = ITMDT::all();
+        return view('data.itmdt', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data item detail

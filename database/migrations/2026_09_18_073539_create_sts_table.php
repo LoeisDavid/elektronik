@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('REC', 3)->primary();
             $table->string('REF_NO', 10);
             $table->string('BC_OUT', 20);
-            $table->string('ITM', 20);
+            $table->string('ITM', 10);
             $table->decimal('HGJ', 16, 2);
             $table->string('ST', 3);
             $table->integer('POT_1')->nullable();
