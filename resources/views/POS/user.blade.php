@@ -44,57 +44,52 @@
             </div>
 
 
-            {{-- FILTER BUTTON --}}
-            <div class="relative inline-block text-left" id="containerFilterKategori">
-                
-                {{-- TOMBOL FILTER --}}
-                <button
-                    type="button"
-                    onclick="toggleFilterKategori(event)"
-                    class="h-9.5 w-9.5 border border-gray-400 bg-white rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors shadow-xs"
-                    title="Filter"
-                >
-                    <svg
-                        class="w-5 h-5 text-black fill-current"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
-                    </svg>
-                </button>
-
-                {{-- PANEL FILTER TIMBUL (DROPDOWN POPUP TANPA BLUR) --}}
-                <div
-                    id="panelFilterKategori"
-                    class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2.5 shadow-2xl border border-gray-300 z-50 space-y-2"
-                >
-                    <!-- Opsi 1: Nama (A-Z) -->
+            {{-- DROPDOWN FILTER GUDANG TIMBUL --}}
+                <div class="relative inline-block text-left" id="containerFilterUser">
+                    
+                    {{-- Tombol Trigger Dropdown --}}
                     <button
                         type="button"
-                        onclick="pilihFilterKategori('asc')"
-                        class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        onclick="toggleFilterUser(event)"
+                        class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5"
                     >
-                        <span>Nama (A-Z)</span>
-                        <!-- Indikator Centang -->
-                        <svg id="checkAsc" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        <span id="labelSelectedUserSort">Urutkan: Nama (A-Z)</span>
+                        <svg id="arrowUserSort" class="w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
                     </button>
 
-                    <!-- Opsi 2: Nama (Z-A) -->
-                    <button
-                        type="button"
-                        onclick="pilihFilterKategori('desc')"
-                        class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                    {{-- Panel Pop-up Timbul --}}
+                    <div
+                        id="panelFilterUser"
+                        class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
                     >
-                        <span>Nama (Z-A)</span>
-                        <!-- Indikator Centang (Hidden secara default) -->
-                        <svg id="checkDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                    </button>
+                        <!-- Opsi 1: Nama (A-Z) -->
+                        <button
+                            type="button"
+                            onclick="pilihFilterUser('Nama (A-Z)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Nama (A-Z)</span>
+                            <svg id="checkUserAsc" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+
+                        <!-- Opsi 2: Nama (Z-A) -->
+                        <button
+                            type="button"
+                            onclick="pilihFilterUser('Nama (Z-A)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Nama (Z-A)</span>
+                            <svg id="checkUserDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                    </div>
+
                 </div>
-
-            </div>
 
         </div>
 
@@ -980,61 +975,60 @@
 
     }
 
-    let currentSortOrder = 'asc';
-
     // Function Buka/Tutup Panel Filter
-    function toggleFilterKategori(event) {
-        if (event) event.stopPropagation(); // Mencegah event bubbling
-        const panel = document.getElementById('panelFilterKategori');
+        function toggleFilterUser(event) {
+        if (event) event.stopPropagation();
+        const panel = document.getElementById('panelFilterUser');
+        const arrow = document.getElementById('arrowGudangSort');
         if (panel) {
             panel.classList.toggle('hidden');
+            if (arrow) arrow.classList.toggle('rotate-180');
         }
     }
 
-    // Function Tutup Panel Filter
-    function tutupPanelFilter() {
-        const panel = document.getElementById('panelFilterKategori');
-        if (panel) {
-            panel.classList.add('hidden');
-        }
-    }
-
-    // Function Memilih Opsi Filter
-    function pilihFilterKategori(sortType) {
-        currentSortOrder = sortType;
-
-        const checkAsc = document.getElementById('checkAsc');
-        const checkDesc = document.getElementById('checkDesc');
-
-        if (sortType === 'asc') {
-            if (checkAsc) checkAsc.classList.remove('hidden');
-            if (checkDesc) checkDesc.classList.add('hidden');
-        } else {
-            if (checkAsc) checkAsc.classList.add('hidden');
-            if (checkDesc) checkDesc.classList.remove('hidden');
+        function tutupFilterUser() {
+            const panel = document.getElementById('panelFilterUser');
+            const arrow = document.getElementById('arrowGudangSort');
+            if (panel) panel.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
         }
 
-        // Panggil fungsi pengurutan tabel Anda di sini (jika ada)
-        if (typeof sortTableData === 'function') {
-            sortTableData(sortType);
+        function pilihFilterUser(labelOption) {
+            // Update label tombol
+            document.getElementById('labelSelectedUserSort').innerText = 'Urutkan: ' + labelOption;
+
+            // Toggle centang aktif
+            const checkAsc = document.getElementById('checkUserAsc');
+            const checkDesc = document.getElementById('checkUserDesc');
+
+            if (labelOption === 'Nama (A-Z)') {
+                if (checkAsc) checkAsc.classList.remove('hidden');
+                if (checkDesc) checkDesc.classList.add('hidden');
+            } else {
+                if (checkAsc) checkAsc.classList.add('hidden');
+                if (checkDesc) checkDesc.classList.remove('hidden');
+            }
+
+            // Panggil fungsi pengurutan data tabel gudang Anda di sini
+            if (typeof sortDataUser === 'function') {
+                sortDataUser(labelOption);
+            }
+
+            tutupFilterUser();
         }
 
-        // Tutup panel setelah memilih
-        tutupPanelFilter();
-    }
-
-    // Menutup panel timbul jika pengguna mengeklik area mana saja di luar panel
+    // Klik di luar area dropdown untuk menutup
     document.addEventListener('click', function(event) {
-        const container = document.getElementById('containerFilterKategori');
+        const container = document.getElementById('containerFilterGudang');
         if (container && !container.contains(event.target)) {
-            tutupPanelFilter();
+            tutupFilterUser();
         }
     });
 
-    // Menutup panel jika menekan tombol Escape
+    // Menekan tombol Escape untuk menutup
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            tutupPanelFilter();
+            tutupFilterUser();
         }
     });
 

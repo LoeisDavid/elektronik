@@ -11,28 +11,39 @@
     
         {{-- Input Pencarian --}}
         <div class="flex items-center gap-2">
-        <div class="relative w-64 md:w-80">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
-            </span>
+            <div class="relative w-64 md:w-80">
+                <form action="{{ route('POS.user') }}" method="GET">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                        <svg
+                            class="w-5 h-5 stroke-[2.5]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                            />
+                        </svg>
+                    </span>
 
-            <input
-                type="text"
-                id="searchQuery"
-                onkeyup="filterTransaksi()"
-                placeholder="Cari produk"
-                class="w-full bg-white border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#1A233A]"
-            />
-        </div>
+                    <input
+                        type="text"
+                        placeholder="Cari Transaksi"
+                        class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                        value="{{ request('keyword') }}"
+                        name="keyword"
+                    >
+                </form>
+            </div>
 
         {{-- Dropdown Urutkan Popup Timbul --}}
         <div class="relative inline-block text-left" id="containerUrutkan">
             <button
                 type="button"
                 onclick="toggleDropdownUrutkan(event)"
-                class="h-9.5 px-4 bg-white border border rounded-lg flex items-center justify-between gap-3 text-sm font-medium text-black hover:bg-gray-100 cursor-pointer shadow-xs"
+                class="h-9.5 px-4 bg-white border rounded-lg flex items-center justify-between gap-3 text-sm font-medium text-black hover:bg-gray-100 cursor-pointer shadow-xs"
             >
                 <span id="labelSelectedSort">Urutkan: Tanggal</span>
                 <svg id="arrowUrutkan" class="w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -77,17 +88,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                 </button>
-
-                <button
-                    type="button"
-                    onclick="pilihUrutkan('Metode Pembayaran')"
-                    class="w-full flex items-center justify-between px-3.5 py-2 border bg-white hover:bg-gray-50 rounded-xl text-sm font-medium text-black text-left cursor-pointer"
-                >
-                    <span>Metode Pembayaran</span>
-                    <svg id="checkMetode" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                </button>
             </div>
         </div>
         </div>
@@ -103,9 +103,10 @@
                     <tr class="bg-primary-db text-white text-xs font-semibold">
                         <th class="py-2.5 px-4 font-semibold">Kode Transaksi</th>
                         <th class="py-2.5 px-4 font-semibold">Tanggal pembelian</th>
-                        <th class="py-2.5 px-4 font-semibold">Waktu</th>
                         <th class="py-2.5 px-4 font-semibold">Total</th>
-                        <th class="py-2.5 px-4 font-semibold">Metode pembayaran</th>
+                        <th class="py-2.5 px-4 font-semibold">Kasir</th>
+                        <th class="py-2.5 px-4 font-semibold">Customer</th>
+                        <th class="py-2.5 px-4 font-semibold">Sales</th>
                         <th class="py-2.5 px-4 font-semibold">Status</th>
                         <th class="py-2.5 px-4 font-semibold text-center">Aksi</th>
                     </tr>
@@ -116,9 +117,10 @@
                     <tr class="hover:bg-gray-50/80 transition-colors">
                         <td class="py-3.5 px-4 font-medium">2026-0003</td>
                         <td class="py-3.5 px-4">13/09/2026</td>
-                        <td class="py-3.5 px-4">12:00</td>
-                        <td class="py-3.5 px-4 font-semibold font-number">Rp 20.000.000</td>
-                        <td class="py-3.5 px-4">QRIS</td>
+                        <td class="py-3.5 px-4 font-semibold">Rp 20.000.000</td>
+                        <td class="py-3.5 px-4">Fadil</td>
+                        <td class="py-3.5 px-4">David</td>
+                        <td class="py-3.5 px-4">Kezia</td>
                         <td class="py-3.5 px-4">
                             <span class="inline-flex items-center px-3 py-0.5 rounded-md text-xs font-semibold bg-[#A2E9B0] text-[#14532D]">
                                 Selesai
@@ -127,7 +129,7 @@
                         <td class="py-3.5 px-4 text-center">
                             <button
                                 type="button"
-                                onclick="openStrukModal('2026-0003', '13/09/2026', '12:00', '20000000', 'QRIS')"
+                                onclick="openStrukModal()"
                                 class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-100 rounded-lg text-xs font-semibold text-black cursor-pointer transition-colors"
                             >
                                 <svg class="w-3.5 h-3.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -204,7 +206,7 @@
                 <div class="space-y-1 text-gray-600">
                     <div class="flex justify-between">
                         <span>No. Transaksi</span>
-                        <span id="strukNoNota" class="font-semibold text-gray-900">2026-0001</span>
+                        <span id="strukNoNota" class="font-semibold text-black">2026-0001</span>
                     </div>
                     <div class="flex justify-between">
                         <span>Tanggal</span>
@@ -223,9 +225,9 @@
                     <!-- Diisi secara dinamis via JavaScript -->
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="font-semibold text-gray-900">1x NamaProduk</p>
+                            <p class="font-semibold text-black">1x NamaProduk</p>
                         </div>
-                        <span class="font-semibold text-gray-900">Rp 20.000.000</span>
+                        <span class="font-semibold text-black">Rp 20.000.000</span>
                     </div>
                 </div>
 
@@ -233,22 +235,22 @@
 
                 <!-- Total & Pembayaran -->
                 <div class="space-y-1.5 pt-1">
-                    <div class="flex justify-between text-sm font-bold text-gray-900">
+                    <div class="flex justify-between text-sm font-bold text-black">
                         <span>Total</span>
                         <span id="strukTotal" class="text-base">Rp 0</span>
                     </div>
                     <div class="flex justify-between text-gray-600">
                         <span>Metode pembayaran</span>
-                        <span id="strukMetode" class="font-semibold text-gray-900">QRIS</span>
+                        <span id="strukMetode" class="font-semibold text-black">Tunai</span>
                     </div>
                     <div id="wrapperDetailTunai" class="hidden space-y-1 pt-1 border-t border-gray-100 text-gray-600">
                         <div class="flex justify-between">
                             <span>Dibayar</span>
-                            <span id="strukDibayar" class="font-semibold text-gray-900">Rp 0</span>
+                            <span id="strukDibayar" class="font-semibold text-black">Rp 0</span>
                         </div>
                         <div class="flex justify-between">
                             <span>Kembali</span>
-                            <span id="strukKembali" class="font-semibold text-gray-900">Rp 0</span>
+                            <span id="strukKembali" class="font-semibold text-black">Rp 0</span>
                         </div>
                     </div>
                 </div>
@@ -308,7 +310,6 @@
             'Tanggal': document.getElementById('checkTanggal'),
             'Total Tertinggi': document.getElementById('checkTotalTertinggi'),
             'Total Terendah': document.getElementById('checkTotalTerendah'),
-            'Metode Pembayaran': document.getElementById('checkMetode')
         };
 
         Object.entries(checks).forEach(([key, el]) => {

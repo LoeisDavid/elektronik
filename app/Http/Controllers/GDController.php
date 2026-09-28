@@ -35,7 +35,7 @@ class GDController extends Controller
 
         $data = $query->paginate(10);
         
-        return view('data.gudang', compact('data'));
+        return view('Inventory.gudang', compact('data'));
     }
 
     // halaman create untuk menampilkan form tambah data gudang
@@ -62,6 +62,12 @@ class GDController extends Controller
         return view('gudang.edit', compact('gd'));
     }
 
+    public function show($gd)
+    {
+        $gd = GD::findOrFail($gd);
+        return view('inventory.detailGudang', compact('gd'));
+    }
+
     public function update(Request $request, $gd)
     {
         $validated = $request->validate([
@@ -79,6 +85,6 @@ class GDController extends Controller
         $gd = GD::findOrFail($gd);
         $gd->delete();
 
-        return redirect()->route('gudang.index')->with('success', 'Data gudang berhasil dihapus.');
+        return redirect()->route('Inventory.gudang')->with('success', 'Data gudang berhasil dihapus.');
     }
 }
