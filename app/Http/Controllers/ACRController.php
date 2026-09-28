@@ -8,7 +8,7 @@ class ACRController extends Controller
 {
     public function index()
     {
-        $transactions = ACR::orderBy('DT', 'desc')
+        $data = ACR::orderBy('DT', 'desc')
             ->orderBy('REF_NO', 'desc')
             ->get()
             ->map(function ($acr) {
@@ -33,6 +33,6 @@ class ACRController extends Controller
                 ];
             });
 
-        return view('data.transaksi', compact('transactions'));
+        return view('POS.transaksi', compact('data'));
     }
 }

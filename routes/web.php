@@ -29,12 +29,6 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-// Riwayat Transaksi View
-Route::get('/transaksi', [ACRController::class, 'index'])->name('transaksi');
-Route::post('/transaksi', [ACRController::class, 'store'])->name('transaksi.store');
-Route::put('/transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
-Route::delete('/transaksi/{id}', [ACRController::class, 'destroy'])->name('transaksi.destroy');
-
 // User Management View
 Route::get('/user', function () {
     return view('user');
@@ -72,6 +66,9 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('user', [UserController::class, 'store'])->name('user.store');
     Route::put('user/{id}', [UserController::class, 'update'])->name('user.update');
     Route::delete('user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+
+    // Riwayat Transaksi View
+    Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
 });
 
 Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
