@@ -96,6 +96,12 @@ class ITMController extends Controller
         return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil diperbarui.');
     }
 
+    public function show($itm)
+    {
+        $itm = ITM::findOrFail($itm);
+        return view('Inventory.detailItem', compact('itm'));
+    }
+
     public function destroy($itm)
     {
         $itm = ITM::findOrFail($itm);

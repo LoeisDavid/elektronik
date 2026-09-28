@@ -43,19 +43,92 @@
                 </form>
             </div>
 
-            {{-- FILTER --}}
-            <button
-                type="button"
-                class="h-9.5 w-9.5 border border-gray-400 bg-white rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
-                title="Filter"
-            >
-                <svg
-                    class="w-5 h-5 text-black fill-current"
-                    viewBox="0 0 24 24"
-                >
-                    <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
-                </svg>
-            </button>
+            {{-- DROPDOWN FILTER Item TIMBUL --}}
+                <div class="relative inline-block text-left" id="containerFilterItem">
+                    
+                    {{-- Tombol Trigger Dropdown --}}
+                    <button
+                        type="button"
+                        onclick="toggleFilterItem(event)"
+                        class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5"
+                    >
+                        <span id="labelSelectedItemSort">Urutkan: Nama (A-Z)</span>
+                        <svg id="arrowItemSort" class="w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+
+                    {{-- Panel Pop-up Timbul --}}
+                    <div
+                        id="panelFilterItem"
+                        class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
+                    >
+                        <!-- Opsi 1: Nama (A-Z) -->
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Nama (A-Z)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Nama (A-Z)</span>
+                            <svg id="checkItemAsc" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+
+                        <!-- Opsi 2: Nama (Z-A) -->
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Nama (Z-A)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Nama (Z-A)</span>
+                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Tanggal Masuk(Terbaru)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Tanggal Masuk (Terbaru)</span>
+                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Tanggal Masuk(Terlama)')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Tanggal Masuk (Terlama)</span>
+                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Stok Terbanyak')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Stok Terbanyak</span>
+                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onclick="pilihFilterItem('Stok Terkecil')"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <span>Stok Terkecil</span>
+                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>
 
         </div>
 
@@ -170,7 +243,7 @@
 
                             {{-- HRG --}}
                             <td class="py-3.5 px-4 text-right">
-                                {{ number_format($item->HRG, 0, ',', '.') }}
+                               Rp{{ number_format($item->HRG, 0, ',', '.') }}
                             </td>
 
 
@@ -208,6 +281,33 @@
                                     <div
                                         class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden"
                                     >
+
+                                        {{-- DETAIL --}}
+                                            <a
+                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                                href="{{ route('inventory.item.show', $item->ITM) }}"
+                                            >
+                                                <svg
+                                                    class="w-3.5 h-3.5 text-gray-600"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                    stroke-width="2"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                                    />
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                    />
+                                                </svg>
+
+                                                <span>Detail</span>
+                                            </a>
 
                                         {{-- EDIT --}}
                                         <button
@@ -1021,6 +1121,64 @@
         modal.classList.add('hidden');
 
     }
+
+    // Function Buka/Tutup Panel Filter
+        function toggleFilterItem(event) {
+        if (event) event.stopPropagation();
+        const panel = document.getElementById('panelFilterItem');
+        const arrow = document.getElementById('arrowItemSort');
+        if (panel) {
+            panel.classList.toggle('hidden');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+    }
+
+        function tutupFilterItem() {
+            const panel = document.getElementById('panelFilterItem');
+            const arrow = document.getElementById('arrowItemSort');
+            if (panel) panel.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
+        }
+
+        function pilihFilterItem(labelOption) {
+            // Update label tombol
+            document.getElementById('labelSelectedItemSort').innerText = 'Urutkan: ' + labelOption;
+
+            // Toggle centang aktif
+            const checkAsc = document.getElementById('checkItemAsc');
+            const checkDesc = document.getElementById('checkItemDesc');
+
+            if (labelOption === 'Nama (A-Z)') {
+                if (checkAsc) checkAsc.classList.remove('hidden');
+                if (checkDesc) checkDesc.classList.add('hidden');
+            } else {
+                if (checkAsc) checkAsc.classList.add('hidden');
+                if (checkDesc) checkDesc.classList.remove('hidden');
+            }
+
+            // Panggil fungsi pengurutan data tabel Item Anda di sini
+            if (typeof sortDataItem === 'function') {
+                sortDataItem(labelOption);
+            }
+
+            tutupFilterItem();
+        }
+
+    // Klik di luar area dropdown untuk menutup
+    document.addEventListener('click', function(event) {
+        const container = document.getElementById('containerFilterItem');
+        if (container && !container.contains(event.target)) {
+            tutupFilterItem();
+        }
+    });
+
+    // Menekan tombol Escape untuk menutup
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            tutupFilterItem();
+        }
+    });
+
 
 </script>
 
