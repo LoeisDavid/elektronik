@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\kasirController;
 use App\Http\Controllers\SLSController;
 use App\Http\Controllers\STSController;
+use App\Http\Controllers\UserController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -65,6 +66,12 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('sales', [SLSController::class, 'store'])->name('sales.store');
     Route::put('sales/{id}', [SLSController::class, 'update'])->name('sales.update');
     Route::delete('sales/{id}', [SLSController::class, 'destroy'])->name('sales.destroy');
+
+    // User
+    Route::get('user', [UserController::class, 'index'])->name('user');
+    Route::post('user', [UserController::class, 'store'])->name('user.store');
+    Route::put('user/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::delete('user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
 });
 
 Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');

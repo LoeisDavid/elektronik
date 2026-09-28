@@ -47,7 +47,7 @@
                     $posMenus = [
                         ['name' => 'Kasir', 'route' => 'POS.kasir'],
                         ['name' => 'Transaksi', 'route' => 'transaksi'],
-                        ['name' => 'User', 'route' => 'user'],
+                        ['name' => 'User', 'route' => 'POS.user'],
                         ['name' => 'Sales', 'route' => 'POS.sales'],
                         ['name' => 'Customer', 'route' => 'POS.customer'],
                         ['name' => 'Laporan', 'route' => 'laporan'],
