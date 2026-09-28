@@ -78,6 +78,7 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::post('item', [App\Http\Controllers\ITMController::class, 'store'])->name('item.store');
     Route::get('item/{id}/edit', [App\Http\Controllers\ITMController::class, 'edit'])->name('item.edit');
     Route::put('item/{id}', [App\Http\Controllers\ITMController::class, 'update'])->name('item.update');
+    Route::get('item/{id}/show', [App\Http\Controllers\ITMController::class, 'show'])->name('item.show');
     Route::delete('item/{id}', [App\Http\Controllers\ITMController::class, 'destroy'])->name('item.destroy');
 
     Route::get('gudang', [App\Http\Controllers\GDController::class, 'index'])->name('gudang');
