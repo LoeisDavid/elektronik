@@ -9,30 +9,28 @@ class ACRController extends Controller
     public function index()
     {
         $data = ACR::orderBy('DT', 'desc')
-            ->orderBy('REF_NO', 'desc')
-            ->get()
-            ->map(function ($acr) {
-                return [
-                    'kode' => $acr->REF_NO,
-                    'tanggal' => $acr->DT
-                        ? \Carbon\Carbon::parse($acr->DT)->format('d/m/Y')
-                        : '-',
-                    'waktu' => $acr->DT
-                        ? \Carbon\Carbon::parse($acr->DT)->format('H:i')
-                        : '-',
-                    'total' => $acr->BRT ?? 0,
-                    'metode' => '-',
-                    'status' => 'Selesai',
-                    'customer' => $acr->CST,
-                    'sales' => $acr->SLS,
-                    'pot1' => $acr->POT_1 ?? 0,
-                    'pot2' => $acr->POT_2 ?? 0,
-                    'potR' => $acr->POT_R ?? 0,
-                    'user' => $acr->USER,
-                    'items' => [],
-                ];
-            });
+    ->orderBy('REF_NO', 'desc')
+    ->limit(10)
+    ->get();
 
-        return view('POS.transaksi', compact('data'));
+    foreach ($data as $acr) {
+        $detail = [];
+
+        foreach ($acr->sts() as $item) {
+            if (!isset($detail[$item->ITM])) {
+                $detail[$item->ITM] = [
+                    'nama' => $item->itm()->DES,
+                    'qty' => 1,
+                ];
+            } else {
+                $detail[$item->ITM]['qty']++;
+            }
+        }
+
+        $acr->detail = array_values($detail);
+    }
+    
+
+    return view('POS.transaksi', compact('data'));
     }
 }
