@@ -50,7 +50,7 @@
                         ['name' => 'User', 'route' => 'POS.user'],
                         ['name' => 'Sales', 'route' => 'POS.sales'],
                         ['name' => 'Customer', 'route' => 'POS.customer'],
-                        ['name' => 'Laporan', 'route' => 'laporan'],
+                        ['name' => 'Laporan', 'route' => 'POS.laporan'],
                     ];
                 @endphp
 
