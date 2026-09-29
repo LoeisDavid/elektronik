@@ -78,13 +78,14 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::post('item', [App\Http\Controllers\ITMController::class, 'store'])->name('item.store');
     Route::get('item/{id}/edit', [App\Http\Controllers\ITMController::class, 'edit'])->name('item.edit');
     Route::put('item/{id}', [App\Http\Controllers\ITMController::class, 'update'])->name('item.update');
+    Route::get('item/{id}/show', [App\Http\Controllers\ITMController::class, 'show'])->name('item.show');
     Route::delete('item/{id}', [App\Http\Controllers\ITMController::class, 'destroy'])->name('item.destroy');
 
     Route::get('gudang', [App\Http\Controllers\GDController::class, 'index'])->name('gudang');
     Route::get('gudang/create', [App\Http\Controllers\GDController::class, 'create'])->name('gudang.create');
     Route::post('gudang', [App\Http\Controllers\GDController::class, 'store'])->name('gudang.store');
-    Route::get('gudang/{gd}/edit', [App\Http\Controllers\GDController::class, 'edit'])->name('gudang.edit');
     Route::put('gudang/{gd}', [App\Http\Controllers\GDController::class, 'update'])->name('gudang.update');
+    Route::get('gudang/{gd}/show', [App\Http\Controllers\GDController::class, 'show'])->name('gudang.show');
     Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
 
     Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');

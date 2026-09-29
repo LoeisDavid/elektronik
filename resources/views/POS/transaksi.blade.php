@@ -155,7 +155,7 @@
                 <div class="border-b border-dashed border-gray-300 my-2"></div>
 
                 <div class="space-y-1.5 pt-1">
-                    <div class="flex justify-between text-sm font-bold text-gray-900">
+                    <div class="flex justify-between text-sm font-bold text-black">
                         <span>Total</span>
                         <span id="strukTotal" class="text-base">Rp 0</span>
                     </div>
