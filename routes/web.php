@@ -8,6 +8,7 @@ use App\Http\Controllers\kasirController;
 use App\Http\Controllers\SLSController;
 use App\Http\Controllers\STSController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KASController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -33,11 +34,6 @@ Route::get('/login', function () {
 Route::get('/user', function () {
     return view('user');
 })->name('user');
-
-// Laporan Kasir / Transaksi View
-Route::get('/laporan', function () {
-    return view('laporan');
-})->name('laporan');
 
 Route::prefix('POS')->name('POS.')->group(function () {
     Route::get('kasir', [kasirController::class, 'index'])->name('kasir');
@@ -69,6 +65,9 @@ Route::prefix('POS')->name('POS.')->group(function () {
 
     // Riwayat Transaksi View
     Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
+
+    // Laporan View
+    Route::get('laporan', [KASController::class, 'index'])->name('laporan');
 });
 
 Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');

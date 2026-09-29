@@ -119,7 +119,7 @@
         </div>
 
         {{-- 3. RINGKASAN PEMBAYARAN & ACTION BUTTONS --}}
-        <div class="border-y border-black bg-white">
+        <div class="border-t border-black bg-white">
             
             {{-- Rincian Biaya (Subtotal, Diskon, Metode Pembayaran) --}}
             <div class="p-4 space-y-2.5">
