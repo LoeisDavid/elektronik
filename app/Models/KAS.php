@@ -18,4 +18,8 @@ class KAS extends Model
         'tglk' => 'datetime',
     ];
     }
+
+    function user(){
+        return User::where('USERNAME', $this->USER)->first();
+    }
 }

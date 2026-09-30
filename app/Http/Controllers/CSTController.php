@@ -14,17 +14,24 @@ class CSTController extends Controller
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
             $query->where('DES', 'LIKE', "%{$keyword}%")
-                  ->orWhere('CST', 'LIKE', "%{$keyword}%")
-                  ->orWhere('TLP', 'LIKE', "%{$keyword}%");
+                  ->orWhere('CST', 'LIKE', "%{$keyword}%");
         }
 
-        if ($request->filled('sort')) {
-            $query->orderBy('DES', $request->sort);
+        $sort = $request->sort;
+
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
         } else {
             $query->orderBy('DES', 'asc');
         }
 
-        $data = $query->paginate(10);
+        $data = $query->paginate(10)->withQueryString();
 
         return view('POS.customer', compact('data'));
     }

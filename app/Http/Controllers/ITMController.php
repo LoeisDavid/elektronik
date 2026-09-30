@@ -2,111 +2,292 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\GD;
 use App\Models\ITM;
+use App\Models\ITMDT;
 use App\Models\KTG;
 use App\Models\MRK;
 use App\Models\SPP;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ITMController extends Controller
 {
-     // halaman index untuk menampilkan semua data item
+    private const PER_PAGE      = 10;
+    private const BATAS_MENIPIS = 5; // STOK 1..5 dianggap menipis
+
+    private const OPSI_SORT = [
+        'nama_asc'        => 'Nama (A-Z)',
+        'nama_desc'       => 'Nama (Z-A)',
+        'tgl_terbaru'     => 'Tanggal Masuk (Terbaru)',
+        'tgl_terlama'     => 'Tanggal Masuk (Terlama)',
+        'stok_terbanyak'  => 'Stok Terbanyak',
+        'stok_tersedikit' => 'Stok Tersedikit',
+    ];
+
+    // ================================================================
+    // INDEX
+    // ================================================================
     public function index(Request $request)
     {
-        $query = ITM::query();
-
-        if ($request->filled('keyword')) {
-            $search = $request->keyword;
-            $query->where('DES', 'LIKE', "%{$search}%")
-                  ->orWhere('ITM', 'LIKE', "%{$search}%")
-                  ->orWhere('KTG', 'LIKE', "%{$search}%")
-                  ->orWhere('MRK', 'LIKE', "%{$search}%")
-                  ->orWhere('SPP', 'LIKE', "%{$search}%")
-                  ->orWhere('HRG', 'LIKE', "%{$search}%")
-                  ->orWhere('STOK', 'LIKE', "%{$search}%");
+        $keyword = trim((string) $request->query('keyword', ''));
+        $sort    = (string) $request->query('sort', 'nama_asc');
+        if (!isset(self::OPSI_SORT[$sort])) {
+            $sort = 'nama_asc';
         }
+        $page = max(1, (int) $request->query('page', 1));
 
-        $sort = $request->filled('sort');
-
-        if($sort == 'a-z') {
-            $query->orderBy('DES', 'asc');
-        } else if ($sort == 'z-a') {
-            $query->orderBy('DES', 'desc');
-        } else if($sort == 'new-old') {
-            $query->orderBy('created_at', 'desc');
-        } else if ($sort == 'old-new') {
-            $query->orderBy('created_at', 'asc');
-        } else {
-            $query->orderBy('DES', 'asc');
-        }
-
-        $data = $query->paginate(10);
-        $MRK = MRK::all();
+        // ------------------------------------------------------------
+        // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
+        //    Dipakai untuk nama di tabel DAN pilihan dropdown di modal.
+        // ------------------------------------------------------------
         $KTG = KTG::all();
+        $MRK = MRK::all();
         $SPP = SPP::all();
+        $GD  = GD::all();
 
-        return view('Inventory.item', compact('data', 'MRK', 'KTG', 'SPP'));
+        $namaKTG = $KTG->pluck('DES', 'KTG')->all();
+        $namaMRK = $MRK->pluck('DES', 'MRK')->all();
+        $namaSPP = $SPP->pluck('DES', 'SPP')->all();
+
+        // ------------------------------------------------------------
+        // 2. Tanggal masuk terakhir per ITM — hanya bila sort butuh
+        // ------------------------------------------------------------
+        $tglMasuk = [];
+        if ($sort === 'tgl_terbaru' || $sort === 'tgl_terlama') {
+            foreach (ITMDT::selectRaw('ITM, MAX(TM) AS TM_AKHIR')->groupBy('ITM')->get() as $dt) {
+                $tglMasuk[$dt->ITM] = substr((string) $dt->TM_AKHIR, 0, 10);
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 3. Ambil semua ITM: kolom seperlunya, tanpa hydrate model
+        //    (toBase) dan tanpa query per baris.
+        // ------------------------------------------------------------
+        $semuaRow = [];
+
+        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'SPP', 'HRG', 'STOK']) as $itm) {
+            $semuaRow[] = (object) [
+                'itm'       => $itm->ITM,
+                'des'       => $itm->DES,
+                'ktg'       => $itm->KTG,
+                'ktg_nama'  => $namaKTG[$itm->KTG] ?? '-',
+                'mrk'       => $itm->MRK,
+                'mrk_nama'  => $namaMRK[$itm->MRK] ?? '-',
+                'spp'       => $itm->SPP,
+                'spp_nama'  => $namaSPP[$itm->SPP] ?? '-',
+                'hrg'       => $itm->HRG,
+                'stok'      => (int) $itm->STOK,
+                'tgl_masuk' => $tglMasuk[$itm->ITM] ?? null,
+            ];
+        }
+
+        // Daftar ITM untuk dropdown "Nama Barang" di modal tambah stok
+        $daftarITM = $semuaRow;
+        usort($daftarITM, fn ($a, $b) => strcasecmp($a->des, $b->des));
+
+        // ------------------------------------------------------------
+        // 4. Statistik (semua ITM)
+        // ------------------------------------------------------------
+        $stat = ['total' => count($semuaRow), 'menipis' => 0, 'habis' => 0];
+        foreach ($semuaRow as $r) {
+            if ($r->stok === 0) {
+                $stat['habis']++;
+            } elseif ($r->stok <= self::BATAS_MENIPIS) {
+                $stat['menipis']++;
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 5. Search PHP murni
+        // ------------------------------------------------------------
+        $hasil = $semuaRow;
+
+        if ($keyword !== '') {
+            $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
+                foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama, $r->spp_nama] as $field) {
+                    if (mb_stripos((string) $field, $keyword) !== false) {
+                        return true;
+                    }
+                }
+                return false;
+            }));
+        }
+
+        // ------------------------------------------------------------
+        // 6. Sort PHP murni
+        // ------------------------------------------------------------
+        usort($hasil, function ($a, $b) use ($sort) {
+            $nama = strcasecmp($a->des, $b->des);
+
+            switch ($sort) {
+                case 'nama_desc':
+                    return -$nama;
+
+                case 'tgl_terbaru':
+                case 'tgl_terlama':
+                    if ($a->tgl_masuk === $b->tgl_masuk) return $nama;
+                    if ($a->tgl_masuk === null) return 1;   // belum pernah masuk → paling bawah
+                    if ($b->tgl_masuk === null) return -1;
+                    $cmp = strcmp($a->tgl_masuk, $b->tgl_masuk);
+                    return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
+
+                case 'stok_terbanyak':
+                    return ($b->stok <=> $a->stok) ?: $nama;
+
+                case 'stok_tersedikit':
+                    return ($a->stok <=> $b->stok) ?: $nama;
+
+                default: // nama_asc
+                    return $nama;
+            }
+        });
+
+        // ------------------------------------------------------------
+        // 7. Pagination PHP murni
+        // ------------------------------------------------------------
+        $totalData  = count($hasil);
+        $totalPages = max(1, (int) ceil($totalData / self::PER_PAGE));
+        $page       = min($page, $totalPages);
+        $offset     = ($page - 1) * self::PER_PAGE;
+
+        $produk = array_slice($hasil, $offset, self::PER_PAGE);
+
+        $pagination = [
+            'page'        => $page,
+            'total_data'  => $totalData,
+            'total_pages' => $totalPages,
+            'dari'        => $totalData > 0 ? $offset + 1 : 0,
+            'sampai'      => $offset + count($produk),
+        ];
+
+        return view('inventory.item', [
+            'produk'     => $produk,
+            'stat'       => $stat,
+            'pagination' => $pagination,
+            'daftarITM'  => $daftarITM,
+            'opsiSort'   => self::OPSI_SORT,
+            'keyword'    => $keyword,
+            'sort'       => $sort,
+            'MRK'        => $MRK,
+            'KTG'        => $KTG,
+            'SPP'        => $SPP,
+            'GD'         => $GD,
+        ]);
     }
 
-    // halaman create untuk menampilkan form tambah data item
-    public function create()
-    {
-        return view('Inventory.item.create');
-    }
-
+    // ================================================================
+    // TAMBAH BARANG (ITM) — STOK awal selalu 0, stok masuk lewat ITMDT
+    // ================================================================
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validateWithBag('tambah', [
             'ITM' => 'required|string|max:10',
             'DES' => 'required|string|max:150',
-            'STOK' => 'required|integer',
-            'HRG' => 'required|decimal:2',
-            'KTG' => 'required|string|max:10',
             'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
             'SPP' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
         ]);
 
-        ITM::create($validated);
+        if (ITM::where('ITM', $data['ITM'])->exists()) {
+            throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.'])
+                ->errorBag('tambah');
+        }
 
-        return redirect()->route('Inventory.item')->with('success', 'Data item berhasil ditambahkan.');
+        ITM::create($data + ['STOK' => 0]);
+
+        return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
     }
 
-    // halaman edit untuk menampilkan form edit data item
-    public function edit($itm)
+    // ================================================================
+    // EDIT BARANG (ITM) — STOK tidak diubah dari sini
+    // ================================================================
+    public function update(Request $request, string $id)
     {
-        $itm = ITM::findOrFail($itm);
-        return view('Inventory.item.edit', compact('itm'));
-    }
-
-    public function update(Request $request, $itm)
-    {
-        $validated = $request->validate([
-            'ITM' => 'required|string|max:10',
+        $data = $request->validateWithBag('edit', [
             'DES' => 'required|string|max:150',
-            'STOK' => 'required|integer',
-            'HRG' => 'required|decimal:2',
-            'KTG' => 'required|string|max:10',
             'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
             'SPP' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
         ]);
 
-        $itm = ITM::findOrFail($itm);
-        $itm->update($validated);
+        ITM::where('ITM', $id)->update($data);
 
-        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil diperbarui.');
+        return back()->with('success', 'Barang berhasil diperbarui.');
     }
 
-    public function show($itm)
+    // ================================================================
+    // TAMBAH STOK (1 input = 1 baris ITMDT = ITM.STOK + 1)
+    // ================================================================
+    public function tambahStok(Request $request)
     {
-        $itm = ITM::findOrFail($itm);
-        return view('Inventory.detailItem', compact('itm'));
+        $data = $request->validateWithBag('stok', [
+            'stok_itm' => 'required|string|max:10',
+            'stok_gd'  => 'required|string|max:10',
+            'stok_hrb' => 'required|numeric|min:0',
+            'stok_bc'  => 'required|string|max:20',
+        ], [
+            'stok_itm.required' => 'Pilih nama barang.',
+            'stok_gd.required'  => 'Pilih gudang.',
+            'stok_hrb.required' => 'Harga beli wajib diisi.',
+            'stok_bc.required'  => 'Kode barcode wajib diisi.',
+        ]);
+
+        if (!ITM::where('ITM', $data['stok_itm'])->exists()) {
+            throw ValidationException::withMessages(['stok_itm' => 'Barang tidak ditemukan.'])
+                ->errorBag('stok');
+        }
+        if (!GD::where('GD', $data['stok_gd'])->exists()) {
+            throw ValidationException::withMessages(['stok_gd' => 'Gudang tidak ditemukan.'])
+                ->errorBag('stok');
+        }
+
+        $bcOut = null;
+
+        DB::transaction(function () use ($data, &$bcOut) {
+            $bcOut = $this->generateBcOut($data['stok_itm']);
+
+            ITMDT::create([
+                'ITM'    => $data['stok_itm'],
+                'BC_IN'  => $data['stok_bc'],   // kode yang diinputkan / di-scan
+                'BC_OUT' => $bcOut,             // kode hasil generate
+                'TM'     => date('Y-m-d'),      // tanggal masuk
+                'HRB'    => $data['stok_hrb'],
+                'GD'     => $data['stok_gd'],
+            ]);
+
+            ITM::where('ITM', $data['stok_itm'])->increment('STOK');
+        });
+
+        // Pilihan barang, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
+        return back()
+            ->withInput($request->only(['stok_itm', 'stok_gd', 'stok_hrb']))
+            ->with('stok_ok', 'Stok tersimpan. BC Out: ' . $bcOut);
     }
 
-    public function destroy($itm)
+    /**
+     * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit  => maks 20 karakter.
+     */
+    private function generateBcOut(string $itm): string
     {
-        $itm = ITM::findOrFail($itm);
-        $itm->delete();
+        $prefix = strtoupper($itm) . date('ymd');
+        $urut   = ITMDT::where('BC_OUT', 'like', $prefix . '%')->count();
 
-        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil dihapus.');
+        do {
+            $urut++;
+            $kode = $prefix . str_pad((string) $urut, 4, '0', STR_PAD_LEFT);
+        } while (ITMDT::where('BC_OUT', $kode)->exists());
+
+        return $kode;
+    }
+
+    public function destroy($id){
+        $item = ITM::where('ITM', $id)->firstOrFail();
+        $item->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 }

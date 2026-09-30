@@ -3,6 +3,7 @@
 use App\Http\Controllers\ACRController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CSTController;
+use App\Http\Controllers\ITMController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\kasirController;
 use App\Http\Controllers\SLSController;
@@ -72,7 +73,10 @@ Route::prefix('POS')->name('POS.')->group(function () {
 });
 
 Route::prefix('Inventory')->name('inventory.')->group(function () {
-    Route::get('item', [App\Http\Controllers\ITMController::class, 'index'])->name('item');
+    Route::get('/item', [ITMController::class, 'index'])->name('item');
+    Route::post('/item', [ITMController::class, 'store'])->name('item.store');
+    Route::post('/item/stok', [ITMController::class, 'tambahStok'])->name('item.stok');
+    Route::put('/item/{id}', [ITMController::class, 'update'])->name('item.update');
     Route::get('item/create', [App\Http\Controllers\ITMController::class, 'create'])->name('item.create');
     Route::post('item', [App\Http\Controllers\ITMController::class, 'store'])->name('item.store');
     Route::get('item/{id}/edit', [App\Http\Controllers\ITMController::class, 'edit'])->name('item.edit');

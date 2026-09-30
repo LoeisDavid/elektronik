@@ -26,6 +26,8 @@
        di browser (JavaScript, in-memory). Tidak ada request AJAX ke server,
        tidak ada yang disimpan ke database. Refresh halaman = data balik ke
        kondisi awal yang dikirim controller.
+    4. Search & filter status juga murni JavaScript (tidak ada request ke
+       controller).
     =========================================================================
 --}}
 
@@ -76,6 +78,34 @@
                 Scan / Input Kode
             </button>
         </div>
+    </div>
+
+    {{-- ================= SEARCH & FILTER (murni JS) ================= --}}
+    <div class="flex items-center gap-3 px-6 pt-4 shrink-0">
+        <div class="relative w-64 md:w-80">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+            </span>
+            <input
+                type="text"
+                id="inputCari"
+                autocomplete="off"
+                placeholder="Cari kode / nama barang"
+                class="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1e2a4a]/40 focus:border-[#1e2a4a]"
+            >
+        </div>
+
+        <select
+            id="filterStatus"
+            class="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#1e2a4a]/40 focus:border-[#1e2a4a] cursor-pointer"
+        >
+            <option value="semua">Status: Semua</option>
+            <option value="checking">Status: Checking</option>
+            <option value="belum_terjual">Status: Belum Terjual</option>
+            <option value="sudah_terjual">Status: Sudah Terjual</option>
+        </select>
     </div>
 
     {{-- ================= TABLE (VIRTUAL SCROLL) ================= --}}
@@ -218,6 +248,9 @@ document.addEventListener('DOMContentLoaded', function () {
             : 'checking',
     }));
 
+    // Data yang sedang ditampilkan (hasil search + filter). Awalnya semua data.
+    let tampil = stokData.slice();
+
     let sesiSelesai = false;   // flag apakah sesi sudah "diselesaikan"
     let pendingNavHref = null; // menyimpan link yang mau dituju setelah konfirmasi
 
@@ -242,7 +275,10 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function renderVisibleRows() {
-        const total = stokData.length;
+        const total = tampil.length;
+        emptyState.textContent = stokData.length === 0
+            ? 'Tidak ada data untuk di-opname.'
+            : 'Tidak ada data yang cocok.';
         emptyState.classList.toggle('hidden', total > 0);
         spacer.style.height = (total * ROW_HEIGHT) + 'px';
 
@@ -259,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let html = '';
         for (let i = start; i < end; i++) {
-            const item = stokData[i];
+            const item = tampil[i];
             html += `
                 <div class="grid grid-cols-[70px_220px_1fr_170px] items-center text-sm border-b border-gray-100 data-row"
                      data-idx="${item.idx}" style="height:${ROW_HEIGHT}px;">
@@ -278,11 +314,13 @@ document.addEventListener('DOMContentLoaded', function () {
     scrollBox.addEventListener('scroll', () => window.requestAnimationFrame(renderVisibleRows));
     window.addEventListener('resize', renderVisibleRows);
 
-    function scrollToIndex(idx) {
-        const targetTop = Math.max(0, (idx * ROW_HEIGHT) - (scrollBox.clientHeight / 2));
+    // posisi = urutan baris pada daftar yang sedang ditampilkan (tampil)
+    function scrollToIndex(posisi) {
+        const targetTop = Math.max(0, (posisi * ROW_HEIGHT) - (scrollBox.clientHeight / 2));
         scrollBox.scrollTop = targetTop;
         renderVisibleRows();
         // efek flash sebentar biar user tau baris mana yang barusan berubah
+        const idx = tampil[posisi].idx;
         setTimeout(() => {
             const el = rowsWrap.querySelector(`[data-idx="${idx}"]`);
             if (el) {
@@ -291,6 +329,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 50);
     }
+
+    /* =====================================================================
+       2b. SEARCH & FILTER STATUS (murni JS, tanpa controller)
+    ===================================================================== */
+    const inputCari    = document.getElementById('inputCari');
+    const filterStatus = document.getElementById('filterStatus');
+
+    function terapkanFilter(resetScroll = true) {
+        const kw = inputCari.value.trim().toLowerCase();
+        const st = filterStatus.value;
+
+        tampil = stokData.filter(d =>
+            (st === 'semua' || d.status === st) &&
+            (!kw ||
+                d.kode_barcode.toLowerCase().includes(kw) ||
+                String(d.nama_barang).toLowerCase().includes(kw))
+        );
+
+        if (resetScroll) scrollBox.scrollTop = 0;
+        renderVisibleRows();
+    }
+
+    let cariTimer = null;
+    inputCari.addEventListener('input', () => {
+        clearTimeout(cariTimer);
+        cariTimer = setTimeout(() => terapkanFilter(), 150);
+    });
+    filterStatus.addEventListener('change', () => terapkanFilter());
 
     /* =====================================================================
        3. HITUNG STATUS (dipakai header counter, modal scan, & summary)
@@ -369,8 +435,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         updateModalScanCounter();
-        renderVisibleRows();
-        scrollToIndex(item.idx);
+
+        // hitung ulang daftar tampil (status bisa berubah), tanpa reset scroll
+        terapkanFilter(false);
+
+        // lompat ke baris itu kalau memang sedang tampil (lolos search/filter)
+        const posisi = tampil.indexOf(item);
+        if (posisi !== -1) scrollToIndex(posisi);
     }
 
     document.getElementById('btnScan').addEventListener('click', openScanModal);

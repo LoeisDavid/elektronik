@@ -5,6 +5,18 @@
 
 @section('content')
 
+@php
+    // Sort ditentukan dari query string (?sort=a-z|z-a|new-old|old-new), default a-z
+    $sortOptions = [
+        'a-z'     => 'Nama (A-Z)',
+        'z-a'     => 'Nama (Z-A)',
+        'new-old' => 'Terbaru',
+        'old-new' => 'Terlama',
+    ];
+    $sort = array_key_exists((string) request('sort'), $sortOptions) ? request('sort') : 'a-z';
+    $sortLabel = $sortOptions[$sort];
+@endphp
+
 <div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none">
 
     {{-- ========================================================= --}}
@@ -18,6 +30,9 @@
 
             <div class="relative w-64 md:w-80">
                 <form action="{{ route('POS.user') }}" method="GET">
+                    {{-- pertahankan sort saat search --}}
+                    <input type="hidden" name="sort" value="{{ $sort }}">
+
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
                         <svg
                             class="w-5 h-5 stroke-[2.5]"
@@ -44,16 +59,16 @@
             </div>
 
 
-            {{-- DROPDOWN FILTER GUDANG TIMBUL --}}
+            {{-- DROPDOWN SORT --}}
                 <div class="relative inline-block text-left" id="containerFilterUser">
-                    
+
                     {{-- Tombol Trigger Dropdown --}}
                     <button
                         type="button"
                         onclick="toggleFilterUser(event)"
                         class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5"
                     >
-                        <span id="labelSelectedUserSort">Urutkan: Nama (A-Z)</span>
+                        <span id="labelSelectedUserSort">Urutkan: {{ $sortLabel }}</span>
                         <svg id="arrowUserSort" class="w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
@@ -64,29 +79,17 @@
                         id="panelFilterUser"
                         class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
                     >
-                        <!-- Opsi 1: Nama (A-Z) -->
-                        <button
-                            type="button"
-                            onclick="pilihFilterUser('Nama (A-Z)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Nama (A-Z)</span>
-                            <svg id="checkUserAsc" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-
-                        <!-- Opsi 2: Nama (Z-A) -->
-                        <button
-                            type="button"
-                            onclick="pilihFilterUser('Nama (Z-A)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Nama (Z-A)</span>
-                            <svg id="checkUserDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
+                        @foreach ($sortOptions as $key => $label)
+                            <a
+                                href="{{ request()->fullUrlWithQuery(['sort' => $key, 'page' => null]) }}"
+                                class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                            >
+                                <span>{{ $label }}</span>
+                                <svg class="w-4 h-4 text-gray-600 {{ $sort === $key ? '' : 'hidden' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                            </a>
+                        @endforeach
                     </div>
 
                 </div>
@@ -229,6 +232,7 @@
                                             data-hp="{{ $user->HP }}"
                                             data-des="{{ $user->DES }}"
                                             data-role="{{ $user->ROLE }}"
+                                            data-action="{{ route('POS.user.update', ['id' => $user->USERNAME]) }}"
                                             onclick="openEditModal(this)"
                                             class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
                                         >
@@ -859,178 +863,79 @@
 
 
 {{-- ============================================================= --}}
-{{-- JAVASCRIPT --}}
+{{-- JAVASCRIPT (hanya tampilan: menu aksi, dropdown, modal)        --}}
 {{-- ============================================================= --}}
 
 <script>
 
-    // ============================================================
-    // ACTION MENU
-    // ============================================================
-
+    // ---------- Menu aksi ----------
     function toggleActionMenu(button) {
-
         const menu = button.parentElement.querySelector('.action-menu');
 
-        document.querySelectorAll('.action-menu').forEach(function(item) {
-
-            if (item !== menu) {
-                item.classList.add('hidden');
-            }
-
+        document.querySelectorAll('.action-menu').forEach(function (item) {
+            if (item !== menu) item.classList.add('hidden');
         });
 
         menu.classList.toggle('hidden');
     }
 
+    // ---------- Dropdown sort (buka/tutup saja) ----------
+    function toggleFilterUser(event) {
+        event.stopPropagation();
+        document.getElementById('panelFilterUser').classList.toggle('hidden');
+        document.getElementById('arrowUserSort').classList.toggle('rotate-180');
+    }
 
-    // ============================================================
-    // CLOSE ACTION MENU WHEN CLICK OUTSIDE
-    // ============================================================
-
-    document.addEventListener('click', function(event) {
-
-        if (
-            !event.target.closest('.action-menu') &&
-            !event.target.closest('[onclick="toggleActionMenu(this)"]')
-        ) {
-
-            document.querySelectorAll('.action-menu').forEach(function(menu) {
+    // ---------- Tutup menu/dropdown saat klik di luar ----------
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.action-menu') && !event.target.closest('[onclick="toggleActionMenu(this)"]')) {
+            document.querySelectorAll('.action-menu').forEach(function (menu) {
                 menu.classList.add('hidden');
             });
-
         }
 
+        if (!event.target.closest('#containerFilterUser')) {
+            document.getElementById('panelFilterUser').classList.add('hidden');
+            document.getElementById('arrowUserSort').classList.remove('rotate-180');
+        }
     });
 
-
-    // ============================================================
-    // TAMBAH MODAL
-    // ============================================================
-
+    // ---------- Modal tambah ----------
     function openTambahModal() {
-
         const modal = document.getElementById('tambahUserModal');
-
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
     }
-
 
     function closeTambahModal() {
-
         const modal = document.getElementById('tambahUserModal');
-
         modal.classList.remove('flex');
         modal.classList.add('hidden');
-
     }
 
-
-    // ============================================================
-    // EDIT MODAL
-    // ============================================================
-
+    // ---------- Modal edit ----------
     function openEditModal(button) {
+        document.getElementById('editUSERNAME').value = button.dataset.usr;
+        document.getElementById('editDES').value = button.dataset.des;
+        document.getElementById('editHP').value = button.dataset.hp;
+        document.getElementById('editROLE').value = button.dataset.role;
+        document.getElementById('editAL').value = button.dataset.al;
+        document.getElementById('editUserForm').action = button.dataset.action;
 
-        const USERNAME = button.dataset.usr || '';
-        const DES = button.dataset.des || '';
-        const HP = button.dataset.hp || button.dataset.tlp || '';
-        const ROLE = button.dataset.role || '';
-        const AL = button.dataset.al || '';
-
-
-        document.getElementById('editUSERNAME').value = USERNAME;
-        document.getElementById('editDES').value = DES;
-        document.getElementById('editHP').value = HP;
-        document.getElementById('editROLE').value = ROLE;
-        document.getElementById('editAL').value = AL;
-
-        // Set URL action secara dinamis menggantikan placeholder ':id'
-        const updateUrl = "{{ route('POS.user.update', ':id') }}".replace(':id', encodeURIComponent(USERNAME));
-        document.getElementById('editUserForm').action = updateUrl;
-
-        // Tutup menu aksi
-        document.querySelectorAll('.action-menu').forEach(function(menu) {
+        document.querySelectorAll('.action-menu').forEach(function (menu) {
             menu.classList.add('hidden');
         });
 
-
-        // Buka modal
         const modal = document.getElementById('editUserModal');
-
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
     }
-
 
     function closeEditModal() {
-
         const modal = document.getElementById('editUserModal');
-
         modal.classList.remove('flex');
         modal.classList.add('hidden');
-
     }
-
-    // Function Buka/Tutup Panel Filter
-        function toggleFilterUser(event) {
-        if (event) event.stopPropagation();
-        const panel = document.getElementById('panelFilterUser');
-        const arrow = document.getElementById('arrowGudangSort');
-        if (panel) {
-            panel.classList.toggle('hidden');
-            if (arrow) arrow.classList.toggle('rotate-180');
-        }
-    }
-
-        function tutupFilterUser() {
-            const panel = document.getElementById('panelFilterUser');
-            const arrow = document.getElementById('arrowGudangSort');
-            if (panel) panel.classList.add('hidden');
-            if (arrow) arrow.classList.remove('rotate-180');
-        }
-
-        function pilihFilterUser(labelOption) {
-            // Update label tombol
-            document.getElementById('labelSelectedUserSort').innerText = 'Urutkan: ' + labelOption;
-
-            // Toggle centang aktif
-            const checkAsc = document.getElementById('checkUserAsc');
-            const checkDesc = document.getElementById('checkUserDesc');
-
-            if (labelOption === 'Nama (A-Z)') {
-                if (checkAsc) checkAsc.classList.remove('hidden');
-                if (checkDesc) checkDesc.classList.add('hidden');
-            } else {
-                if (checkAsc) checkAsc.classList.add('hidden');
-                if (checkDesc) checkDesc.classList.remove('hidden');
-            }
-
-            // Panggil fungsi pengurutan data tabel gudang Anda di sini
-            if (typeof sortDataUser === 'function') {
-                sortDataUser(labelOption);
-            }
-
-            tutupFilterUser();
-        }
-
-    // Klik di luar area dropdown untuk menutup
-    document.addEventListener('click', function(event) {
-        const container = document.getElementById('containerFilterGudang');
-        if (container && !container.contains(event.target)) {
-            tutupFilterUser();
-        }
-    });
-
-    // Menekan tombol Escape untuk menutup
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            tutupFilterUser();
-        }
-    });
 
 </script>
 
