@@ -23,7 +23,7 @@
     {{-- ========================================================= --}}
     {{-- TOAST CONTAINER (Melayang di Tengah Atas) --}}
     {{-- ========================================================= --}}
-    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-9999 flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4"></div>
 
     <!-- Wrapper Utama dengan Flexbox Horizontal -->
     <main class="flex h-screen w-screen overflow-hidden">
@@ -43,9 +43,6 @@
         </section>
 
     </main>
-
-    <!-- Import Script Generic CRUD -->
-    <script src="{{ asset('js/crud.js') }}"></script>
 
     {{-- ========================================================= --}}
     {{-- SCRIPT VANILLA JS TOAST NOTIFICATION --}}
