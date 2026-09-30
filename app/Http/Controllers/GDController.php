@@ -87,4 +87,9 @@ class GDController extends Controller
 
         return redirect()->route('Inventory.gudang')->with('success', 'Data gudang berhasil dihapus.');
     }
+
+    public function daftarBarang()
+    {
+        return view('Inventory.daftarBarang');
+    }
 }

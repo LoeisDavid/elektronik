@@ -86,6 +86,7 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::put('gudang/{gd}', [App\Http\Controllers\GDController::class, 'update'])->name('gudang.update');
     Route::get('gudang/{gd}/show', [App\Http\Controllers\GDController::class, 'show'])->name('gudang.show');
     Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
+    Route::get('daftarBarang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
 
     Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
     Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
