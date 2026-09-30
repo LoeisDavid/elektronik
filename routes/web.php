@@ -10,6 +10,8 @@ use App\Http\Controllers\STSController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KASController;
 use App\Http\Controllers\SPPController;
+use App\Http\Controllers\MRKController;
+use App\Http\Controllers\KTGController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -79,6 +81,18 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::put('item/{id}', [App\Http\Controllers\ITMController::class, 'update'])->name('item.update');
     Route::get('item/{id}/show', [App\Http\Controllers\ITMController::class, 'show'])->name('item.show');
     Route::delete('item/{id}', [App\Http\Controllers\ITMController::class, 'destroy'])->name('item.destroy');
+
+    // Merk
+    Route::get('merk', [MRKController::class, 'index'])->name('merk');
+    Route::post('merk', [MRKController::class, 'store'])->name('merk.store');
+    Route::put('merk/{mrk}', [MRKController::class, 'update'])->name('merk.update');
+    Route::delete('merk/{mrk}', [MRKController::class, 'destroy'])->name('merk.destroy');
+
+    // Kategori
+    Route::get('kategori', [KTGController::class, 'index'])->name('kategori');
+    Route::post('kategori', [KTGController::class, 'store'])->name('kategori.store');
+    Route::put('kategori/{ktg}', [KTGController::class, 'update'])->name('kategori.update');
+    Route::delete('kategori/{ktg}', [KTGController::class, 'destroy'])->name('kategori.destroy');
 
     Route::get('gudang', [App\Http\Controllers\GDController::class, 'index'])->name('gudang');
     Route::get('gudang/create', [App\Http\Controllers\GDController::class, 'create'])->name('gudang.create');

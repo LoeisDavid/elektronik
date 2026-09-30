@@ -10,74 +10,83 @@ class MRKController extends Controller
     // halaman index untuk menampilkan semua data merk
     public function index(Request $request)
     {
-        $query = MRK::query();
-
-        if ($request->filled('keyword')) {
-            $search = $request->keyword;
-            $query->where('DES', 'LIKE', "%{$search}%")
-                  ->orWhere('MRK', 'LIKE', "%{$search}%");
-        }
-
-        $sort = $request->filled('sort');
-
-        if($sort == 'a-z') {
-            $query->orderBy('DES', 'asc');
-        } else if ($sort == 'z-a') {
-            $query->orderBy('DES', 'desc');
-        } else if($sort == 'new-old') {
-            $query->orderBy('created_at', 'desc');
-        } else if ($sort == 'old-new') {
-            $query->orderBy('created_at', 'asc');
-        } else {
-            $query->orderBy('DES', 'asc');
-        }
-
-        $data = $query->paginate(10);
-        return view('data.merk', compact('data'));
+        $keyword = trim((string) $request->query('keyword', ''));
+        $sort    = $request->query('sort') === 'desc' ? 'desc' : 'asc';
+ 
+        $data = MRK::query()
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('MRK', 'like', "%{$keyword}%")
+                      ->orWhere('DES', 'like', "%{$keyword}%");
+                });
+            })
+            ->orderBy('DES', $sort)
+            ->paginate(10)
+            ->withQueryString();   // keyword & sort tetap terbawa saat pindah halaman
+ 
+        return view('inventory.merk', compact('data', 'sort'));
     }
-
-    // halaman create untuk menampilkan form tambah data merk
-    public function create()
-    {
-        return view('merk.create');
-    }
-
+ 
+    /**
+     * Simpan merk baru.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'MRK' => 'required|string|max:10',
-            'DES' => 'required|string|max:45',
+            'MRK' => ['required', 'string', 'max:10', 'unique:mrk,MRK'],
+            'DES' => ['required', 'string', 'max:255'],
+        ], [
+            'MRK.required' => 'Kode merk wajib diisi.',
+            'MRK.unique'   => 'Kode merk sudah digunakan.',
+            'MRK.max'      => 'Kode merk maksimal 10 karakter.',
+            'DES.required' => 'Nama merk wajib diisi.',
         ]);
-
+ 
         MRK::create($validated);
-
-        return redirect()->route('merk.index')->with('success', 'Data merk berhasil ditambahkan.');
+ 
+        return redirect()
+            ->route('inventory.merk')
+            ->with('success', 'Merk berhasil ditambahkan.');
     }
-
-    // halaman edit untuk menampilkan form edit data merk
-    public function edit($mrk)
+ 
+    /**
+     * Perbarui nama merk (kode merk tidak bisa diubah).
+     */
+    public function update(Request $request, string $mrk)
     {
-        $mrk = MRK::findOrFail($mrk);
-        return view('merk.edit', compact('mrk'));
-    }
-
-    public function update(Request $request, $mrk)
-    {
+        $merk = MRK::findOrFail($mrk);
+ 
         $validated = $request->validate([
-            'DES' => 'required|string|max:45',
+            'DES' => ['required', 'string', 'max:255'],
+        ], [
+            'DES.required' => 'Nama merk wajib diisi.',
         ]);
-
-        $mrk = MRK::findOrFail($mrk);
-        $mrk->update($validated);
-
-        return redirect()->route('merk.index')->with('success', 'Data merk berhasil diperbarui.');
+ 
+        $merk->update($validated);
+ 
+        return redirect()
+            ->route('inventory.merk')
+            ->with('success', 'Merk berhasil diperbarui.');
     }
-
-    public function destroy($mrk)
+ 
+    /**
+     * Hapus merk.
+     */
+    public function destroy(string $mrk)
     {
-        $mrk = MRK::findOrFail($mrk);
-        $mrk->delete();
-
-        return redirect()->route('merk.index')->with('success', 'Data merk berhasil dihapus.');
+        $merk = MRK::findOrFail($mrk);
+ 
+        try {
+            $merk->delete();
+        } catch (QueryException $e) {
+            // Biasanya karena merk masih dipakai tabel lain (foreign key)
+            return redirect()
+                ->route('inventory.merk')
+                ->with('error', 'Merk tidak dapat dihapus karena masih digunakan pada data lain.');
+        }
+ 
+        return redirect()
+            ->route('inventory.merk')
+            ->with('success', 'Merk berhasil dihapus.');
     }
 }

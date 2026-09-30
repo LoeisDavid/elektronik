@@ -10,74 +10,79 @@ class KTGController extends Controller
     // halaman index untuk menampilkan semua data gudang
     public function index(Request $request)
     {
-        $query = KTG::query();
-
-        if ($request->filled('keyword')) {
-            $search = $request->keyword;
-            $query->where('DES', 'LIKE', "%{$search}%")
-                  ->orWhere('KTG', 'LIKE', "%{$search}%");
-        }
-
-        $sort = $request->filled('sort');
-
-        if($sort == 'a-z') {
-            $query->orderBy('DES', 'asc');
-        } else if ($sort == 'z-a') {
-            $query->orderBy('DES', 'desc');
-        } else if($sort == 'new-old') {
-            $query->orderBy('created_at', 'desc');
-        } else if ($sort == 'old-new') {
-            $query->orderBy('created_at', 'asc');
-        } else {
-            $query->orderBy('DES', 'asc');
-        }
-
-        $data = $query->paginate(10);
-        return view('data.kategori', compact('data'));
+        $keyword = trim((string) $request->query('keyword', ''));
+        $sort    = $request->query('sort') === 'desc' ? 'desc' : 'asc';
+ 
+        $data = KTG::query()
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('KTG', 'like', "%{$keyword}%")
+                      ->orWhere('DES', 'like', "%{$keyword}%");
+                });
+            })
+            ->orderBy('DES', $sort)
+            ->paginate(10)
+            ->withQueryString();   // keyword & sort tetap terbawa saat pindah halaman
+ 
+        return view('inventory.kategori', compact('data', 'sort'));
     }
-
-    // halaman create untuk menampilkan form tambah data gudang
-    public function create()
-    {
-        return view('kategori.create');
-    }
-
+ 
+    /**
+     * Simpan kategori baru.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'KTG' => 'required|string|max:10',
-            'DES' => 'required|string|max:45',
+            'KTG' => ['required', 'string', 'max:10', 'unique:ktg,KTG'],
+            'DES' => ['required', 'string', 'max:255'],
+        ], [
+            'KTG.required' => 'Kode kategori wajib diisi.',
+            'KTG.unique'   => 'Kode kategori sudah digunakan.',
+            'KTG.max'      => 'Kode kategori maksimal 10 karakter.',
+            'DES.required' => 'Nama kategori wajib diisi.',
         ]);
-
+ 
         KTG::create($validated);
-
-        return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil ditambahkan.');
+ 
+        return redirect()
+            ->route('inventory.kategori')->with('success', 'Kategori berhasil disimpan.');
     }
-
-    // halaman edit untuk menampilkan form edit data kategori
-    public function edit($ktg)
+ 
+    /**
+     * Perbarui nama kategori (kode kategori tidak bisa diubah).
+     */
+    public function update(Request $request, string $ktg)
     {
-        $ktg = KTG::findOrFail($ktg);
-        return view('kategori.edit', compact('ktg'));
-    }
-
-    public function update(Request $request, $ktg)
-    {
+        $kategori = KTG::findOrFail($ktg);
+ 
         $validated = $request->validate([
-            'DES' => 'required|string|max:45',
+            'DES' => ['required', 'string', 'max:255'],
+        ], [
+            'DES.required' => 'Nama kategori wajib diisi.',
         ]);
-
-        $ktg = KTG::findOrFail($ktg);
-        $ktg->update($validated);
-
-        return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil diperbarui.');
+ 
+        $kategori->update($validated);
+ 
+        return redirect()
+            ->route('inventory.kategori')->with('success', 'Kategori berhasil diperbarui.');
     }
-
-    public function destroy($ktg)
+ 
+    /**
+     * Hapus kategori.
+     */
+    public function destroy(string $ktg)
     {
-        $ktg = KTG::findOrFail($ktg);
-        $ktg->delete();
-
-        return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil dihapus.');
+        $kategori = KTG::findOrFail($ktg);
+ 
+        try {
+            $kategori->delete();
+        } catch (QueryException $e) {
+            // Biasanya karena kategori masih dipakai tabel lain (foreign key)
+            return redirect()
+                ->route('inventory.kategori');
+        }
+ 
+        return redirect()
+            ->route('inventory.kategori')->with('success', 'Kategori berhasil dihapus.');
     }
 }
