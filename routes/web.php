@@ -9,6 +9,7 @@ use App\Http\Controllers\SLSController;
 use App\Http\Controllers\STSController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KASController;
+use App\Http\Controllers\SPPController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -70,7 +71,6 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::get('laporan', [KASController::class, 'index'])->name('laporan');
 });
 
-Route::get('/opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
 Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::get('item', [App\Http\Controllers\ITMController::class, 'index'])->name('item');
     Route::get('item/create', [App\Http\Controllers\ITMController::class, 'create'])->name('item.create');
@@ -89,7 +89,15 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
 
     Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
     Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
-    Route::get('supplier', [App\Http\Controllers\SPPController::class, 'index'])->name('supplier');
+
+    // SPP
+    Route::get('supplier', [SPPController::class, 'index'])->name('supplier');
+    Route::post('supplier', [SPPController::class, 'store'])->name('supplier.store');
+    Route::put('supplier/{spp}', [SPPController::class, 'update'])->name('supplier.update');
+    Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->name('supplier.destroy');
+
+    // Cek Stok
+    Route::get('opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
 });
 
 

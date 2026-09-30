@@ -111,9 +111,9 @@
     {{-- TABLE --}}
     {{-- ========================================================= --}}
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden flex flex-col">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
 
-        <div class="overflow-x-auto">
+        <div class="overflow-visible">
 
             <table class="w-full text-left border-collapse">
 
@@ -122,27 +122,27 @@
 
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 rounded-tl-lg">
                             Username
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Alamat
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Nomor Handphone
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Nama
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Role
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold text-center w-20">
+                        <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -321,7 +321,7 @@
         {{-- FOOTER --}}
         {{-- ========================================================= --}}
 
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db rounded-b-lg">
 
             {{-- INFO --}}
             <div class="whitespace-nowrap">

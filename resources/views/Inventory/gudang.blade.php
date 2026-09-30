@@ -110,9 +110,9 @@
     {{-- TABLE --}}
     {{-- ========================================================= --}}
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden flex flex-col">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
 
-        <div class="overflow-x-auto">
+        <div class="overflow-visible">
 
             <table class="w-full text-left border-collapse">
 
@@ -121,19 +121,19 @@
 
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 rounded-tl-lg">
                             Kode Gudang
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4">
                             Nama Gudang
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4">
                             Jumlah Barang
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold text-center w-20">
+                        <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -307,7 +307,7 @@
                                 colspan="8"
                                 class="py-8 text-center text-gray-500 text-sm"
                             >
-                                Tidak ada item.
+                                Tidak ada Gudang.
                             </td>
 
                         </tr>
@@ -325,7 +325,7 @@
         {{-- FOOTER --}}
         {{-- ========================================================= --}}
 
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
 
             {{-- INFO --}}
             <div class="whitespace-nowrap">

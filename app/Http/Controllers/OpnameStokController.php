@@ -32,6 +32,6 @@ foreach ($items as $row) {
 }
 // });
 
-return view('opname-stok', ['items' => $items]);
+return view('Inventory.opname-stok', ['items' => $items]);
     }
 }
