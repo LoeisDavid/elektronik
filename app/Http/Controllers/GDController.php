@@ -19,7 +19,7 @@ class GDController extends Controller
                   ->orWhere('GD', 'LIKE', "%{$search}%");
         }
 
-        $sort = $request->filled('sort');
+        $sort = $request->sort;
 
         if($sort == 'a-z') {
             $query->orderBy('DES', 'asc');

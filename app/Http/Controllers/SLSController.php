@@ -20,7 +20,7 @@ class SLSController extends Controller
                   ->orWhere('SLS', 'LIKE', "%{$search}%");
         }
 
-        $sort = $request->filled('sort');
+        $sort = $request->sort;
 
         if($sort == 'a-z') {
             $query->orderBy('DES', 'asc');
@@ -34,7 +34,7 @@ class SLSController extends Controller
             $query->orderBy('DES', 'asc');
         }
 
-        $data = $query->paginate(10);
+        $data = $query->paginate(10)->withQueryString();
 
         return view('POS.sales', compact('data'));
     }

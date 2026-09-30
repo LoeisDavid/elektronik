@@ -10,21 +10,29 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
+        $sort = $request->sort;
 
         if ($request->filled('keyword')) {
             $keyword = $request->keyword;
             $query->where('USERNAME', 'LIKE', "%{$keyword}%")
                   ->orWhere('DES', 'LIKE', "%{$keyword}%")
-                  ->orWhere('AL', 'LIKE', "%{$keyword}%");
+                  ->orWhere('AL', 'LIKE', "%{$keyword}%")
+                  ->orWhere('HP', 'LIKE', "%{$keyword}%");
         }
 
-        if ($request->filled('sort')) {
-            $query->orderBy('USERNAME', $request->sort);
+        if($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
         } else {
-            $query->orderBy('USERNAME', 'desc');
+            $query->orderBy('DES', 'asc');
         }
 
-        $data = $query->paginate(10);
+        $data = $query->paginate(10)->withQueryString();
 
         return view('POS.user', compact('data'));
     }
@@ -49,14 +57,15 @@ class UserController extends Controller
         // Decode parameter ID untuk mengantisipasi karakter khusus
         $decodedId = urldecode($id);
 
-        $request->validate([
-            'CST' => 'required|string|max:10',
-            'DES' => 'required|string|max:45',
-            'TLP' => 'required|string|max:20',
+        $validated = $request->validate([
+            'AL' => 'string|max:100',
+            'HP' => 'required|string|max:25',
+            'DES' => 'required|string|max:100',
+            'ROLE' => 'required|integer',
         ]);
 
         $customer = User::where('USERNAME', $decodedId)->firstOrFail();
-        $customer->update($request->all());
+        $customer->update($validated);
         return redirect()->back()->with('success', 'Data berhasil diupdate');
     }
 

@@ -1,1211 +1,684 @@
 @extends('layouts.app')
 
-@section('title', 'Item - Elektronik')
-@section('header_title', 'Item')
+@section('title', 'Produk - Inventory')
+@section('header_title', 'Inventory')
 
 @section('content')
+<?php
+    // ---------- Helper PHP murni ----------
+    $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.');
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none">
+    $halaman  = $pagination['page'];
+    $totalHal = $pagination['total_pages'];
+
+    // URL dengan mempertahankan search & sort
+    $buatUrl = function (array $ubah = []) use ($keyword, $sort, $halaman) {
+        $q = array_merge(['keyword' => $keyword, 'sort' => $sort, 'page' => $halaman], $ubah);
+        if ($q['sort'] === 'nama_asc') unset($q['sort']);
+        if ((int) $q['page'] <= 1)     unset($q['page']);
+        $q = array_filter($q, fn ($v) => $v !== '' && $v !== null);
+
+        return route('inventory.item') . (count($q) ? '?' . http_build_query($q) : '');
+    };
+
+    // Pesan error per form (bag: tambah / edit / stok)
+    $galat = fn ($bag, $field) => ($m = $errors->getBag($bag)->first($field))
+        ? '<span class="text-red-500 text-xs mt-1 block">' . e($m) . '</span>'
+        : '';
+
+    // Modal otomatis terbuka lagi setelah simpan stok / error validasi
+    $bukaStok   = session('stok_ok') || $errors->hasBag('stok');
+    $bukaTambah = $errors->hasBag('tambah');
+
+
+    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-colors';
+    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100';
+    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854]';
+    $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
+
+    // Nomor halaman: 1 ... (tengah) ... terakhir
+    $nomor = fn ($i) => $i === $halaman
+        ? '<span class="' . $btnAktif . '">' . $i . '</span>'
+        : '<a href="' . e($buatUrl(['page' => $i])) . '" class="' . $btnNormal . '">' . $i . '</a>';
+    $titik = '<span class="px-1">...</span>';
+
+    $inputCls = 'w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db';
+    $labelCls = 'block text-xs font-medium text-black mb-1.5';
+?>
+
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none space-y-4">
+
+    {{-- ========================================================= --}}
+    {{-- ALERT --}}
+    {{-- ========================================================= --}}
+    <?php if (session('success')): ?>
+        <div class="bg-green-50 border border-green-300 text-green-700 text-sm rounded-lg px-4 py-2.5">
+            <?= e(session('success')) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (session('error')): ?>
+        <div class="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-4 py-2.5">
+            <?= e(session('error')) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($errors->hasBag('edit')): ?>
+        <div class="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-4 py-2.5">
+            <?= e($errors->getBag('edit')->first()) ?>
+        </div>
+    <?php endif; ?>
+
+    {{-- ========================================================= --}}
+    {{-- STAT CARDS --}}
+    {{-- ========================================================= --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <div class="border border-gray-300 rounded-xl p-4 bg-white">
+            <p class="text-xs font-semibold text-black">Total Produk</p>
+            <div class="text-3xl font-bold text-black mt-1"><?= (int) $stat['total'] ?></div>
+            <p class="text-[11px] text-gray-500 mt-1">Semua barang</p>
+        </div>
+
+        <div class="border border-gray-300 rounded-xl p-4 bg-white">
+            <p class="text-xs font-semibold text-black">Stok menipis</p>
+            <div class="text-3xl font-bold text-amber-500 mt-1"><?= (int) $stat['menipis'] ?></div>
+            <p class="text-[11px] text-gray-500 mt-1">Perlu restock</p>
+        </div>
+
+        <div class="border border-gray-300 rounded-xl p-4 bg-white">
+            <p class="text-xs font-semibold text-black">Stok Habis</p>
+            <div class="text-3xl font-bold text-red-500 mt-1"><?= (int) $stat['habis'] ?></div>
+            <p class="text-[11px] text-gray-500 mt-1">Tidak tersedia</p>
+        </div>
+
+    </div>
 
     {{-- ========================================================= --}}
     {{-- TOOLBAR --}}
     {{-- ========================================================= --}}
+    <div class="flex items-center justify-between gap-3">
 
-    <div class="flex items-center justify-between gap-3 mb-4">
-
-        {{-- SEARCH --}}
         <div class="flex items-center gap-2">
 
-            <div class="relative w-64 md:w-80">
-                <form action="{{ route('inventory.item') }}" method="GET">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
-                        <svg
-                            class="w-5 h-5 stroke-[2.5]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                            />
-                        </svg>
-                    </span>
+            {{-- SEARCH --}}
+            <form action="<?= e(route('inventory.item')) ?>" method="GET" class="relative w-64 md:w-80">
+                <?php if ($sort !== 'nama_asc'): ?>
+                    <input type="hidden" name="sort" value="<?= e($sort) ?>">
+                <?php endif; ?>
 
-                    <input
-                        type="text"
-                        placeholder="Cari item"
-                        class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
-                        value="{{ request('keyword') }}"
-                        name="keyword"
-                    >
-                </form>
-            </div>
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                    <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </span>
 
-            {{-- DROPDOWN FILTER Item TIMBUL --}}
-                <div class="relative inline-block text-left" id="containerFilterItem">
-                    
-                    {{-- Tombol Trigger Dropdown --}}
-                    <button
-                        type="button"
-                        onclick="toggleFilterItem(event)"
-                        class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5"
-                    >
-                        <span id="labelSelectedItemSort">Urutkan: Nama (A-Z)</span>
-                        <svg id="arrowItemSort" class="w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
+                <input
+                    type="text"
+                    name="keyword"
+                    value="<?= e($keyword) ?>"
+                    placeholder="Cari produk"
+                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                >
+            </form>
 
-                    {{-- Panel Pop-up Timbul --}}
-                    <div
-                        id="panelFilterItem"
-                        class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
-                    >
-                        <!-- Opsi 1: Nama (A-Z) -->
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Nama (A-Z)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Nama (A-Z)</span>
-                            <svg id="checkItemAsc" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
+            {{-- SORT (HTML murni: <details> + link) --}}
+            <details class="relative group">
+                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5">
+                    <span>Urutkan: <?= e($opsiSort[$sort]) ?></span>
+                    <svg class="w-4 h-4 text-gray-600 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </summary>
 
-                        <!-- Opsi 2: Nama (Z-A) -->
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Nama (Z-A)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                <div class="absolute left-0 mt-2 w-60 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-40 space-y-1.5">
+                    <?php foreach ($opsiSort as $kode => $label): ?>
+                        <a
+                            href="<?= e($buatUrl(['sort' => $kode, 'page' => 1])) ?>"
+                            class="w-full bg-white border border-gray-300 text-black rounded-xl px-3.5 py-2 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
-                            <span>Nama (Z-A)</span>
-                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Tanggal Masuk(Terbaru)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Tanggal Masuk (Terbaru)</span>
-                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Tanggal Masuk(Terlama)')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Tanggal Masuk (Terlama)</span>
-                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Stok Terbanyak')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Stok Terbanyak</span>
-                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            onclick="pilihFilterItem('Stok Terkecil')"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <span>Stok Terkecil</span>
-                            <svg id="checkItemDesc" class="w-4 h-4 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                        </button>
-                    </div>
-
+                            <span><?= e($label) ?></span>
+                            <?php if ($sort === $kode): ?>
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                            <?php endif; ?>
+                        </a>
+                    <?php endforeach; ?>
                 </div>
+            </details>
 
         </div>
 
+        {{-- TOMBOL TAMBAH --}}
+        <div class="flex items-center gap-2">
+            <button
+                type="button"
+                onclick="openStokModal()"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            >
+                <span class="text-lg leading-none font-bold">+</span>
+                <span>Tambah stok</span>
+            </button>
 
-        {{-- TAMBAH ITEM --}}
-        <button
-            type="button"
-            onclick="openTambahModal()"
-            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
-        >
-            <span class="text-lg leading-none font-bold">+</span>
-            <span>Tambah item</span>
-        </button>
+            <button
+                type="button"
+                onclick="bukaModal('tambahITMModal')"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            >
+                <span class="text-lg leading-none font-bold">+</span>
+                <span>Tambah barang</span>
+            </button>
+        </div>
 
     </div>
 
-
     {{-- ========================================================= --}}
-    {{-- TABLE --}}
+    {{-- TABEL --}}
     {{-- ========================================================= --}}
-
     <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
 
         <div class="overflow-visible">
+            <table class="w-full text-center border-collapse">
 
-            <table class="w-full text-left border-collapse">
-
-                {{-- HEADER --}}
                 <thead>
-
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-
-                        <th class="py-2.5 px-4 rounded-tl-lg">
-                            Kode Item
-                        </th>
-
-                        <th class="py-2.5 px-4 ">
-                            Nama Item
-                        </th>
-
-                        <th class="py-2.5 px-4 ">
-                            Kategori
-                        </th>
-
-                        <th class="py-2.5 px-4 ">
-                            Merk
-                        </th>
-
-                        <th class="py-2.5 px-4 ">
-                            Supplier
-                        </th>
-
-                        <th class="py-2.5 px-4  text-right">
-                            Stok
-                        </th>
-
-                        <th class="py-2.5 px-4  text-right">
-                            Harga
-                        </th>
-
-                        <th class="py-2.5 px-4  text-center w-20 rounded-tr-lg">
-                            Aksi
-                        </th>
-
+                        <th class="py-2.5 px-4 rounded-tl-lg">Kode Item</th>
+                        <th class="py-2.5 px-4">Nama item</th>
+                        <th class="py-2.5 px-4">Kategori</th>
+                        <th class="py-2.5 px-4">Merk</th>
+                        <th class="py-2.5 px-4">Supplier</th>
+                        <th class="py-2.5 px-4">Stok</th>
+                        <th class="py-2.5 px-4">Harga</th>
+                        <th class="py-2.5 px-4 w-32 rounded-tr-lg">Aksi</th>
                     </tr>
-
                 </thead>
 
+                <tbody class="divide-y divide-gray-200 text-xs text-black">
+                    <?php if (count($produk) > 0): ?>
+                        <?php foreach ($produk as $r): ?>
+                            <tr class="hover:bg-gray-50/80 transition-colors">
+                                <td class="py-3.5 px-4"><?= e($r->itm) ?></td>
+                                <td class="py-3.5 px-4"><?= e($r->des) ?></td>
+                                <td class="py-3.5 px-4"><?= e($r->ktg_nama) ?></td>
+                                <td class="py-3.5 px-4"><?= e($r->mrk_nama) ?></td>
+                                <td class="py-3.5 px-4"><?= e($r->spp_nama) ?></td>
+                                <td class="py-3.5 px-4"><?= (int) $r->stok ?> Unit</td>
+                                <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
+                                <td class="py-3.5 px-4 text-center">
 
-                {{-- BODY --}}
-                <tbody class="divide-y divide-gray-200 text-sm text-black">
-
-                    @forelse ($data as $item)
-
-                        <tr class="hover:bg-gray-50/80 transition-colors">
-
-                            {{-- ITM --}}
-                            <td class="py-3.5 px-4 font-medium">
-                                {{ $item->ITM }}
-                            </td>
-
-
-                            {{-- DES --}}
-                            <td class="py-3.5 px-4">
-                                {{ $item->DES }}
-                            </td>
-
-
-                            {{-- KTG --}}
-                            <td class="py-3.5 px-4">
-                                {{ $item->KTG->DES ?? '-' }}
-                            </td>
-
-
-                            {{-- MRK --}}
-                            <td class="py-3.5 px-4">
-                                {{ $item->MRK->DES ?? '-' }}
-                            </td>
-
-
-                            {{-- SPP --}}
-                            <td class="py-3.5 px-4">
-                                {{ $item->SPP->DES ?? '-' }}
-                            </td>
-
-
-                            {{-- STOK --}}
-                            <td class="py-3.5 px-4 text-right">
-                                {{ $item->STOK }}
-                            </td>
-
-
-                            {{-- HRG --}}
-                            <td class="py-3.5 px-4 text-right">
-                               Rp{{ number_format($item->HRG, 0, ',', '.') }}
-                            </td>
-
-
-                            {{-- AKSI --}}
-                            <td class="py-3.5 px-4 text-center">
-
-                                <div class="relative inline-block">
-
-                                    {{-- BUTTON --}}
-                                    <button
-                                        type="button"
-                                        onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors cursor-pointer"
-                                        title="Aksi Item"
-                                    >
-
-                                        <svg
-                                            class="w-4 h-4 text-primary-db"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="2"
+                                    {{-- DROPDOWN AKSI (HTML murni: <details>) --}}
+                                    <details class="relative inline-block text-left">
+                                        <summary
+                                            title="Aksi Item"
+                                            class="list-none [&::-webkit-details-marker]:hidden h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors cursor-pointer"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                            />
-                                        </svg>
+                                            <svg class="w-4 h-4 text-primary-db" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                            </svg>
+                                        </summary>
 
-                                    </button>
+                                        <div class="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-2xl py-1 z-[999] text-left">
 
-
-                                    {{-- ACTION MENU --}}
-                                    <div
-                                        class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden"
-                                    >
-
-                                        {{-- DETAIL --}}
+                                            {{-- DETAIL --}}
                                             <a
+                                                href="<?= e(route('inventory.item.show', $r->itm)) ?>"
                                                 class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
-                                                href="{{ route('inventory.item.show', $item->ITM) }}"
                                             >
-                                                <svg
-                                                    class="w-3.5 h-3.5 text-gray-600"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                    stroke-width="2"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                                                    />
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                                    />
+                                                <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
-
                                                 <span>Detail</span>
                                             </a>
 
-                                        {{-- EDIT --}}
-                                        <button
-                                            type="button"
-                                            data-itm="{{ $item->ITM }}"
-                                            data-des="{{ $item->DES }}"
-                                            data-stok="{{ $item->STOK }}"
-                                            data-hrg="{{ $item->HRG }}"
-                                            data-ktg="{{ $item->KTG->KTG ?? '' }}"
-                                            data-mrk="{{ $item->MRK->MRK ?? '' }}"
-                                            data-spp="{{ $item->SPP->SPP ?? '' }}"
-                                            onclick="openEditModal(this)"
-                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
-                                        >
-
-                                            <svg
-                                                class="w-3.5 h-3.5 text-gray-600"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                                stroke-width="2"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                                />
-                                            </svg>
-
-                                            <span>Edit</span>
-
-                                        </button>
-
-
-                                        {{-- DELETE --}}
-                                        <form
-                                            method="POST"
-                                            action="{{ route('inventory.item.destroy', ['id' => $item->ITM]) }}"
-                                        >
-
-                                            @csrf
-                                            @method('DELETE')
-
+                                            {{-- EDIT --}}
                                             <button
-                                                type="submit"
-                                                onclick="return confirm('Hapus item ini?')"
-                                                class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                                type="button"
+                                                data-action="<?= e(route('inventory.item.update', $r->itm)) ?>"
+                                                data-itm="<?= e($r->itm) ?>"
+                                                data-des="<?= e($r->des) ?>"
+                                                data-hrg="<?= e($r->hrg) ?>"
+                                                data-ktg="<?= e($r->ktg) ?>"
+                                                data-mrk="<?= e($r->mrk) ?>"
+                                                data-spp="<?= e($r->spp) ?>"
+                                                onclick="openEditModal(this)"
+                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
                                             >
-
-                                                <svg
-                                                    class="w-3.5 h-3.5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                    stroke-width="2"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16"
-                                                    />
+                                                <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                                                 </svg>
-
-                                                <span>Hapus</span>
-
+                                                <span>Edit</span>
                                             </button>
 
-                                        </form>
+                                            {{-- DELETE --}}
+                                            <form
+                                                method="POST"
+                                                action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
 
-                                    </div>
+                                                <button
+                                                    type="submit"
+                                                    onclick="return confirm('Hapus barang ini?')"
+                                                    class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" />
+                                                    </svg>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </form>
 
-                                </div>
+                                        </div>
+                                    </details>
 
-                            </td>
-
-                        </tr>
-
-                    @empty
-
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
                         <tr>
-
-                            <td
-                                colspan="8"
-                                class="py-8 text-center text-gray-500 text-sm"
-                            >
-                                Tidak ada item.
-                            </td>
-
+                            <td colspan="8" class="py-8 text-center text-gray-500 text-sm">Tidak ada produk.</td>
                         </tr>
-
-                    @endforelse
-
+                    <?php endif; ?>
                 </tbody>
 
             </table>
-
         </div>
 
-
-        {{-- ========================================================= --}}
-        {{-- FOOTER --}}
-        {{-- ========================================================= --}}
-
+        {{-- FOOTER / PAGINATION --}}
         <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
 
-            {{-- INFO --}}
             <div class="whitespace-nowrap">
-
-                Menampilkan
-                {{ $data->firstItem() ?? 0 }}
-                -
-                {{ $data->lastItem() ?? 0 }}
-                dari
-                {{ $data->total() ?? 0 }}
-                item
-
+                Menampilkan <?= (int) $pagination['dari'] ?>-<?= (int) $pagination['sampai'] ?>
+                dari <?= (int) $pagination['total_data'] ?> produk
             </div>
 
+            <div class="flex items-center gap-1">
 
-            {{-- PAGINATION --}}
-            @if ($data->lastPage() > 1)
+                <?php if ($halaman > 1): ?>
+                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>">‹</a>
+                <?php else: ?>
+                    <span class="<?= $btnOff ?>">‹</span>
+                <?php endif; ?>
 
-                <div class="flex items-center gap-1">
+                <?= $nomor(1) ?>
 
-                    {{-- PREVIOUS --}}
-                    @if ($data->onFirstPage())
+                <?php if ($totalHal > 3): ?>
 
-                        <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
-                            ‹
-                        </span>
+                    <?php if ($halaman <= 2): ?>
+                        <?= $nomor(2) ?>
+                        <?= $nomor(3) ?>
+                    <?php elseif ($halaman >= $totalHal - 1): ?>
+                        <?= $titik ?>
+                        <?= $nomor($totalHal - 2) ?>
+                        <?= $nomor($totalHal - 1) ?>
+                    <?php else: ?>
+                        <?= $titik ?>
+                        <?= $nomor($halaman - 1) ?>
+                        <?= $nomor($halaman) ?>
+                        <?= $nomor($halaman + 1) ?>
+                    <?php endif; ?>
 
-                    @else
+                    <?php if ($halaman <= $totalHal - 2): ?>
+                        <?= $titik ?>
+                    <?php endif; ?>
 
-                        <a
-                            href="{{ $data->previousPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
-                        >
-                            ‹
-                        </a>
+                    <?= $nomor($totalHal) ?>
 
-                    @endif
+                <?php elseif ($totalHal == 3): ?>
+                    <?= $nomor(2) ?>
+                    <?= $nomor(3) ?>
+                <?php elseif ($totalHal == 2): ?>
+                    <?= $nomor(2) ?>
+                <?php endif; ?>
 
+                <?php if ($halaman < $totalHal): ?>
+                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>">›</a>
+                <?php else: ?>
+                    <span class="<?= $btnOff ?>">›</span>
+                <?php endif; ?>
 
-                    @php
-                        $current = $data->currentPage();
-                        $last = $data->lastPage();
-                    @endphp
-
-
-                    {{-- ========================================= --}}
-                    {{-- 1 --}}
-                    {{-- ========================================= --}}
-
-                    <a
-                        href="{{ $data->url(1) }}"
-                        class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                        {{ $current == 1
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                    >
-                        1
-                    </a>
-
-
-                    @if ($last <= 5)
-
-                        {{-- PAGE 2 --}}
-                        @for ($page = 2; $page <= $last; $page++)
-
-                            <a
-                                href="{{ $data->url($page) }}"
-                                class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                                {{ $current == $page
-                                    ? 'bg-[#142854] text-white border-[#142854]'
-                                    : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                            >
-                                {{ $page }}
-                            </a>
-
-                        @endfor
-
-
-                    @elseif ($current <= 3)
-
-                        {{-- 1 2 3 ... LAST --}}
-
-                        <a
-                            href="{{ $data->url(2) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                        >
-                            2
-                        </a>
-
-                        <a
-                            href="{{ $data->url(3) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == 3
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                        >
-                            3
-                        </a>
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
-                        >
-                            {{ $last }}
-                        </a>
-
-
-                    @elseif ($current >= $last - 2)
-
-                        {{-- 1 ... LAST-2 LAST-1 LAST --}}
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last - 2) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last - 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                        >
-                            {{ $last - 2 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($last - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last - 1
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                        >
-                            {{ $last - 1 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
-                        >
-                            {{ $last }}
-                        </a>
-
-
-                    @else
-
-                        {{-- 1 ... CURRENT-1 CURRENT CURRENT+1 ... LAST --}}
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($current - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
-                        >
-                            {{ $current - 1 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($current) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854]"
-                        >
-                            {{ $current }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($current + 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
-                        >
-                            {{ $current + 1 }}
-                        </a>
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
-                        >
-                            {{ $last }}
-                        </a>
-
-                    @endif
-
-
-                    {{-- NEXT --}}
-                    @if ($data->hasMorePages())
-
-                        <a
-                            href="{{ $data->nextPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
-                        >
-                            ›
-                        </a>
-
-                    @else
-
-                        <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
-                            ›
-                        </span>
-
-                    @endif
-
-                </div>
-
-            @endif
-
+            </div>
         </div>
 
     </div>
 
 
     {{-- ========================================================= --}}
-    {{-- MODAL TAMBAH --}}
+    {{-- MODAL TAMBAH STOK --}}
     {{-- ========================================================= --}}
-
     <div
-        id="tambahItemModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        id="tambahStokModal"
+        class="fixed inset-0 z-50 <?= $bukaStok ? 'flex' : 'hidden' ?> items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
+        <div class="absolute inset-0" onclick="tutupModal('tambahStokModal')"></div>
 
-        {{-- BACKDROP CLICK TO CLOSE --}}
-        <div
-            class="absolute inset-0"
-            onclick="closeTambahModal()"
-        ></div>
+        <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-200 p-5 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
 
-        {{-- MODAL CONTAINER --}}
-        <div
-            class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
-        >
+            <h2 class="text-lg font-bold mb-4">Tambah Stok</h2>
 
-            {{-- JUDUL MODAL --}}
-            <h2 class="text-xl font-bold mb-6 text-black">
-                Tambah Barang
-            </h2>
-
-            {{-- FORM --}}
-            <form
-                method="POST"
-                action="{{ route('inventory.item.store') }}"
-                class="space-y-6"
-            >
-
+            <form method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-3">
                 @csrf
 
-                {{-- GRID 2 KOLOM --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                {{-- NAMA BARANG --}}
+                <div>
+                    <label class="<?= $labelCls ?>">Nama Barang</label>
+                    <select name="stok_itm" required class="<?= $inputCls ?>">
+                        <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Pilih barang</option>
+                        <?php foreach ($daftarITM as $it): ?>
+                            <option value="<?= e($it->itm) ?>" <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>>
+                                <?= e($it->des) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?= $galat('stok', 'stok_itm') ?>
+                </div>
 
-                    {{-- KODE ITEM --}}
+                {{-- GUDANG & HARGA BELI --}}
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Kode Item
-                        </label>
-
-                        <input
-                            type="text"
-                            name="ITM"
-                            value="{{ old('ITM') }}"
-                            placeholder="Contoh: ITM004"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                        @error('ITM')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    {{-- NAMA BARANG --}}
-                    <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Nama Barang
-                        </label>
-
-                        <input
-                            type="text"
-                            name="DES"
-                            value="{{ old('DES') }}"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                        @error('DES')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    {{-- MEREK --}}
-                    <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Merek
-                        </label>
-
-                        <select
-                            name="MRK"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            <option value="" disabled selected>Pilih Merk</option>
-                            @foreach ($MRK as $mrk)
-                                <option value="{{ $mrk->MRK }}" {{ old('MRK') == $mrk->MRK ? 'selected' : '' }}>
-                                    {{ $mrk->DES }}
+                        <label class="<?= $labelCls ?>">Gudang</label>
+                        <select name="stok_gd" required class="<?= $inputCls ?>">
+                            <option value="" disabled <?= old('stok_gd') ? '' : 'selected' ?>>Pilih gudang</option>
+                            <?php foreach ($GD as $g): ?>
+                                <option value="<?= e($g->GD) ?>" <?= old('stok_gd') == $g->GD ? 'selected' : '' ?>>
+                                    <?= e($g->DES) ?>
                                 </option>
-                            @endforeach
+                            <?php endforeach; ?>
                         </select>
-                        @error('MRK')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
+                        <?= $galat('stok', 'stok_gd') ?>
                     </div>
 
-                    {{-- HARGA JUAL --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Harga Jual
-                        </label>
-
+                        <label class="<?= $labelCls ?>">Harga Beli</label>
                         <input
                             type="number"
-                            name="HRG"
+                            name="stok_hrb"
                             step="any"
                             min="0"
-                            value="{{ old('HRG') }}"
                             required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                            value="<?= e(old('stok_hrb')) ?>"
+                            placeholder="0"
+                            class="<?= $inputCls ?>"
                         >
-                        @error('HRG')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
+                        <?= $galat('stok', 'stok_hrb') ?>
                     </div>
+                </div>
 
-                    {{-- KATEGORI --}}
-                    <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Kategori
-                        </label>
+                {{-- AREA SCAN --}}
+                <div class="w-full h-32 rounded-lg bg-slate-500 flex flex-col items-center justify-center gap-2 text-white/80">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75V16.5zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                    </svg>
+                    <span class="text-xs">Area scan barcode</span>
+                </div>
 
-                        <select
-                            name="KTG"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            <option value="" disabled selected>Pilih Kategori</option>
-                            @foreach ($KTG as $ktg)
-                                <option value="{{ $ktg->KTG }}" {{ old('KTG') == $ktg->KTG ? 'selected' : '' }}>
-                                    {{ $ktg->DES }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('KTG')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    {{-- STOK --}}
-                    <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Stok
-                        </label>
-
+                {{-- BARCODE + SIMPAN --}}
+                <div>
+                    <div class="flex items-center gap-2">
                         <input
-                            type="number"
-                            name="STOK"
-                            min="0"
-                            value="{{ old('STOK') }}"
+                            id="stokBarcode"
+                            type="text"
+                            name="stok_bc"
+                            maxlength="20"
                             required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                            autocomplete="off"
+                            <?= $bukaStok ? 'autofocus' : '' ?>
+                            placeholder="Atau ketik kode manual..."
+                            class="<?= $inputCls ?>"
                         >
-                        @error('STOK')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
+                        <button
+                            type="submit"
+                            class="py-2 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                            Simpan
+                        </button>
+                    </div>
+                    <?= $galat('stok', 'stok_bc') ?>
+
+                    <?php if (session('stok_ok')): ?>
+                        <span class="text-green-600 text-xs mt-1 block"><?= e(session('stok_ok')) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <button
+                    type="button"
+                    onclick="tutupModal('tambahStokModal')"
+                    class="w-full py-2 px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
+                >
+                    Batal
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+
+    {{-- ========================================================= --}}
+    {{-- MODAL TAMBAH BARANG --}}
+    {{-- ========================================================= --}}
+    <div
+        id="tambahITMModal"
+        class="fixed inset-0 z-50 <?= $bukaTambah ? 'flex' : 'hidden' ?> items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    >
+        <div class="absolute inset-0" onclick="tutupModal('tambahITMModal')"></div>
+
+        <div class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
+
+            <h2 class="text-xl font-bold mb-6">Tambah Barang</h2>
+
+            <form method="POST" action="<?= e(route('inventory.item.store')) ?>" class="space-y-6">
+                @csrf
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Kode Item</label>
+                        <input type="text" name="ITM" maxlength="10" required placeholder="Contoh: ITM004"
+                               value="<?= e(old('ITM')) ?>" class="<?= $inputCls ?>">
+                        <?= $galat('tambah', 'ITM') ?>
                     </div>
 
-                    {{-- SUPPLIER --}}
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Supplier
-                        </label>
+                    <div>
+                        <label class="<?= $labelCls ?>">Nama Barang</label>
+                        <input type="text" name="DES" maxlength="150" required
+                               value="<?= e(old('DES')) ?>" class="<?= $inputCls ?>">
+                        <?= $galat('tambah', 'DES') ?>
+                    </div>
 
-                        <select
-                            name="SPP"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            <option value="" disabled selected>Pilih Supplier</option>
-                            @foreach ($SPP as $spp)
-                                <option value="{{ $spp->SPP }}" {{ old('SPP') == $spp->SPP ? 'selected' : '' }}>
-                                    {{ $spp->DES }}
-                                </option>
-                            @endforeach
+                    <div>
+                        <label class="<?= $labelCls ?>">Merek</label>
+                        <select name="MRK" required class="<?= $inputCls ?>">
+                            <option value="" disabled <?= old('MRK') ? '' : 'selected' ?>>Pilih Merk</option>
+                            <?php foreach ($MRK as $m): ?>
+                                <option value="<?= e($m->MRK) ?>" <?= old('MRK') == $m->MRK ? 'selected' : '' ?>><?= e($m->DES) ?></option>
+                            <?php endforeach; ?>
                         </select>
-                        @error('SPP')
-                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                        @enderror
+                        <?= $galat('tambah', 'MRK') ?>
+                    </div>
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Harga Jual</label>
+                        <input type="number" name="HRG" step="any" min="0" required
+                               value="<?= e(old('HRG')) ?>" class="<?= $inputCls ?>">
+                        <?= $galat('tambah', 'HRG') ?>
+                    </div>
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Kategori</label>
+                        <select name="KTG" required class="<?= $inputCls ?>">
+                            <option value="" disabled <?= old('KTG') ? '' : 'selected' ?>>Pilih Kategori</option>
+                            <?php foreach ($KTG as $k): ?>
+                                <option value="<?= e($k->KTG) ?>" <?= old('KTG') == $k->KTG ? 'selected' : '' ?>><?= e($k->DES) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?= $galat('tambah', 'KTG') ?>
+                    </div>
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Supplier</label>
+                        <select name="SPP" required class="<?= $inputCls ?>">
+                            <option value="" disabled <?= old('SPP') ? '' : 'selected' ?>>Pilih Supplier</option>
+                            <?php foreach ($SPP as $s): ?>
+                                <option value="<?= e($s->SPP) ?>" <?= old('SPP') == $s->SPP ? 'selected' : '' ?>><?= e($s->DES) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?= $galat('tambah', 'SPP') ?>
                     </div>
 
                 </div>
 
-                {{-- ACTION BUTTONS --}}
                 <div class="pt-2 flex items-center gap-4 w-full">
-
-                    <button
-                        type="button"
-                        onclick="closeTambahModal()"
-                        class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
-                    >
+                    <button type="button" onclick="tutupModal('tambahITMModal')"
+                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
                         Batal
                     </button>
-
-                    <button
-                        type="submit"
-                        class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center"
-                    >
+                    <button type="submit"
+                            class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
                         Simpan
                     </button>
-
                 </div>
 
             </form>
-
         </div>
-
     </div>
 
 
     {{-- ========================================================= --}}
-    {{-- MODAL EDIT --}}
+    {{-- MODAL EDIT BARANG --}}
     {{-- ========================================================= --}}
-
     <div
-        id="editItemModal"
+        id="editITMModal"
         class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
+        <div class="absolute inset-0" onclick="tutupModal('editITMModal')"></div>
 
-        {{-- BACKDROP CLICK TO CLOSE --}}
-        <div
-            class="absolute inset-0"
-            onclick="closeEditModal()"
-        ></div>
+        <div class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
 
-        {{-- MODAL CONTAINER (Dibuat max-w-2xl agar muat layout 2 kolom) --}}
-        <div
-            class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
-        >
+            <h2 class="text-xl font-bold mb-6">Edit Barang</h2>
 
-            {{-- JUDUL MODAL --}}
-            <h2 class="text-xl font-bold mb-6 text-black">
-                Edit Barang
-            </h2>
-
-            {{-- FORM EDIT --}}
-            <form
-                id="editItemForm"
-                method="POST"
-                class="space-y-6"
-            >
+            <form id="editITMForm" method="POST" class="space-y-6">
                 @csrf
                 @method('PUT')
 
-                {{-- GRID 2 KOLOM UNTUK FORM INPUT --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
-                    {{-- ITM (Kode Item) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Kode Item
-                        </label>
-                        <input
-                            id="editITM"
-                            type="text"
-                            name="ITM"
-                            readonly
-                            required
-                            class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 cursor-not-allowed focus:outline-none font-mono"
-                        >
+                        <label class="<?= $labelCls ?>">Kode Item</label>
+                        <input id="editITM" type="text" name="ITM" readonly required
+                               class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 cursor-not-allowed focus:outline-none font-mono">
                     </div>
 
-                    {{-- DES (Nama Item) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Nama Item
-                        </label>
-                        <input
-                            id="editDES"
-                            type="text"
-                            name="DES"
-                            required
-                            placeholder="Masukkan nama item"
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
+                        <label class="<?= $labelCls ?>">Nama Item</label>
+                        <input id="editDES" type="text" name="DES" maxlength="150" required placeholder="Masukkan nama item"
+                               class="<?= $inputCls ?>">
                     </div>
 
-                    {{-- MRK (Merek) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Merk
-                        </label>
-                        <select
-                            id="editMRK"
-                            name="MRK"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            @foreach ($MRK as $mrk)
-                                <option value="{{ $mrk->MRK }}">{{ $mrk->DES }}</option>
-                            @endforeach
+                        <label class="<?= $labelCls ?>">Merk</label>
+                        <select id="editMRK" name="MRK" required class="<?= $inputCls ?>">
+                            <?php foreach ($MRK as $m): ?>
+                                <option value="<?= e($m->MRK) ?>"><?= e($m->DES) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    {{-- HRG (Harga) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Harga
-                        </label>
-                        <input
-                            id="editHRG"
-                            type="number"
-                            name="HRG"
-                            min="0"
-                            step="any"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
+                        <label class="<?= $labelCls ?>">Harga</label>
+                        <input id="editHRG" type="number" name="HRG" min="0" step="any" required
+                               class="<?= $inputCls ?>">
                     </div>
 
-                    {{-- KTG (Kategori) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Kategori
-                        </label>
-                        <select
-                            id="editKTG"
-                            name="KTG"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            @foreach ($KTG as $ktg)
-                                <option value="{{ $ktg->KTG }}">{{ $ktg->DES }}</option>
-                            @endforeach
+                        <label class="<?= $labelCls ?>">Kategori</label>
+                        <select id="editKTG" name="KTG" required class="<?= $inputCls ?>">
+                            <?php foreach ($KTG as $k): ?>
+                                <option value="<?= e($k->KTG) ?>"><?= e($k->DES) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    {{-- STOK (Stok) --}}
                     <div>
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Stok
-                        </label>
-                        <input
-                            id="editSTOK"
-                            type="number"
-                            name="STOK"
-                            min="0"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                    </div>
-
-                    {{-- SPP (Supplier) --}}
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-black mb-1.5">
-                            Supplier
-                        </label>
-                        <select
-                            id="editSPP"
-                            name="SPP"
-                            required
-                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                            @foreach ($SPP as $spp)
-                                <option value="{{ $spp->SPP }}">{{ $spp->DES }}</option>
-                            @endforeach
+                        <label class="<?= $labelCls ?>">Supplier</label>
+                        <select id="editSPP" name="SPP" required class="<?= $inputCls ?>">
+                            <?php foreach ($SPP as $s): ?>
+                                <option value="<?= e($s->SPP) ?>"><?= e($s->DES) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
                 </div>
 
-                {{-- ACTION BUTTONS (FULL WIDTH) --}}
                 <div class="pt-2 flex items-center gap-4 w-full">
-
-                    <button
-                        type="button"
-                        onclick="closeEditModal()"
-                        class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
-                    >
+                    <button type="button" onclick="tutupModal('editITMModal')"
+                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
                         Batal
                     </button>
-
-                    <button
-                        type="submit"
-                        class="w-1/2 py-2.5 px-4 bg-[#1E295D] hover:bg-[#161F48] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center"
-                    >
+                    <button type="submit"
+                            class="w-1/2 py-2.5 px-4 bg-[#1E295D] hover:bg-[#161F48] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
                         Simpan
                     </button>
-
                 </div>
 
             </form>
-
         </div>
-
     </div>
 
 </div>
 
 
 {{-- ============================================================= --}}
-{{-- JAVASCRIPT --}}
+{{-- JAVASCRIPT: hanya buka/tutup modal --}}
 {{-- ============================================================= --}}
-
 <script>
-
-    // ============================================================
-    // ACTION MENU
-    // ============================================================
-
-    function toggleActionMenu(button) {
-
-        const menu = button.parentElement.querySelector('.action-menu');
-
-        document.querySelectorAll('.action-menu').forEach(function(item) {
-
-            if (item !== menu) {
-                item.classList.add('hidden');
-            }
-
-        });
-
-        menu.classList.toggle('hidden');
+    function bukaModal(id) {
+        const m = document.getElementById(id);
+        m.classList.remove('hidden');
+        m.classList.add('flex');
     }
 
-
-    // ============================================================
-    // CLOSE ACTION MENU WHEN CLICK OUTSIDE
-    // ============================================================
-
-    document.addEventListener('click', function(event) {
-
-        if (
-            !event.target.closest('.action-menu') &&
-            !event.target.closest('[onclick="toggleActionMenu(this)"]')
-        ) {
-
-            document.querySelectorAll('.action-menu').forEach(function(menu) {
-                menu.classList.add('hidden');
-            });
-
-        }
-
-    });
-
-
-    // ============================================================
-    // TAMBAH MODAL
-    // ============================================================
-
-    function openTambahModal() {
-
-        const modal = document.getElementById('tambahItemModal');
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-
+    function tutupModal(id) {
+        const m = document.getElementById(id);
+        m.classList.remove('flex');
+        m.classList.add('hidden');
     }
 
-
-    function closeTambahModal() {
-
-        const modal = document.getElementById('tambahItemModal');
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-
+    function openStokModal() {
+        bukaModal('tambahStokModal');
+        setTimeout(function () {
+            document.getElementById('stokBarcode').focus();
+        }, 50);
     }
 
-
-    // ============================================================
-    // EDIT MODAL
-    // ============================================================
-
-    function openEditModal(button) {
-
-        const ITM = button.dataset.itm;
-        const DES = button.dataset.des;
-        const STOK = button.dataset.stok;
-        const HRG = button.dataset.hrg;
-        const KTG = button.dataset.ktg;
-        const MRK = button.dataset.mrk;
-        const SPP = button.dataset.spp;
-
-
-        document.getElementById('editITM').value = ITM;
-        document.getElementById('editDES').value = DES;
-        document.getElementById('editSTOK').value = STOK;
-        document.getElementById('editHRG').value = HRG;
-        document.getElementById('editKTG').value = KTG;
-        document.getElementById('editMRK').value = MRK;
-        document.getElementById('editSPP').value = SPP;
-
-        // Set URL action secara dinamis menggantikan placeholder ':id'
-        const updateUrl = "{{ route('inventory.item.update', ':id') }}".replace(':id', encodeURIComponent(ITM));
-        document.getElementById('editItemForm').action = updateUrl;
-
-        // Tutup menu aksi
-        document.querySelectorAll('.action-menu').forEach(function(menu) {
-            menu.classList.add('hidden');
-        });
-
-
-        // Buka modal
-        const modal = document.getElementById('editItemModal');
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-
+    // Tutup menu <details> milik tombol yang diklik
+    function tutupMenu(btn) {
+        const d = btn.closest('details');
+        if (d) d.removeAttribute('open');
     }
 
+    function openEditModal(btn) {
+        const d = btn.dataset;
 
-    function closeEditModal() {
+        document.getElementById('editITM').value = d.itm;
+        document.getElementById('editDES').value = d.des;
+        document.getElementById('editHRG').value = d.hrg;
+        document.getElementById('editKTG').value = d.ktg;
+        document.getElementById('editMRK').value = d.mrk;
+        document.getElementById('editSPP').value = d.spp;
+        document.getElementById('editITMForm').action = d.action;
 
-        const modal = document.getElementById('editItemModal');
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-
+        tutupMenu(btn);
+        bukaModal('editITMModal');
     }
 
-    // Function Buka/Tutup Panel Filter
-        function toggleFilterItem(event) {
-        if (event) event.stopPropagation();
-        const panel = document.getElementById('panelFilterItem');
-        const arrow = document.getElementById('arrowItemSort');
-        if (panel) {
-            panel.classList.toggle('hidden');
-            if (arrow) arrow.classList.toggle('rotate-180');
-        }
-    }
-
-        function tutupFilterItem() {
-            const panel = document.getElementById('panelFilterItem');
-            const arrow = document.getElementById('arrowItemSort');
-            if (panel) panel.classList.add('hidden');
-            if (arrow) arrow.classList.remove('rotate-180');
-        }
-
-        function pilihFilterItem(labelOption) {
-            // Update label tombol
-            document.getElementById('labelSelectedItemSort').innerText = 'Urutkan: ' + labelOption;
-
-            // Toggle centang aktif
-            const checkAsc = document.getElementById('checkItemAsc');
-            const checkDesc = document.getElementById('checkItemDesc');
-
-            if (labelOption === 'Nama (A-Z)') {
-                if (checkAsc) checkAsc.classList.remove('hidden');
-                if (checkDesc) checkDesc.classList.add('hidden');
-            } else {
-                if (checkAsc) checkAsc.classList.add('hidden');
-                if (checkDesc) checkDesc.classList.remove('hidden');
-            }
-
-            // Panggil fungsi pengurutan data tabel Item Anda di sini
-            if (typeof sortDataItem === 'function') {
-                sortDataItem(labelOption);
-            }
-
-            tutupFilterItem();
-        }
-
-    // Klik di luar area dropdown untuk menutup
-    document.addEventListener('click', function(event) {
-        const container = document.getElementById('containerFilterItem');
-        if (container && !container.contains(event.target)) {
-            tutupFilterItem();
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            ['tambahStokModal', 'tambahITMModal', 'editITMModal'].forEach(tutupModal);
         }
     });
-
-    // Menekan tombol Escape untuk menutup
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            tutupFilterItem();
-        }
-    });
-
-
 </script>
 
 @endsection
