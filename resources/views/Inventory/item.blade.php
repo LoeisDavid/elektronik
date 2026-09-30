@@ -150,9 +150,9 @@
     {{-- TABLE --}}
     {{-- ========================================================= --}}
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden flex flex-col">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
 
-        <div class="overflow-x-auto">
+        <div class="overflow-visible">
 
             <table class="w-full text-left border-collapse">
 
@@ -161,35 +161,35 @@
 
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 rounded-tl-lg">
                             Kode Item
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Nama Item
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Kategori
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Merk
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold">
+                        <th class="py-2.5 px-4 ">
                             Supplier
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold text-right">
+                        <th class="py-2.5 px-4  text-right">
                             Stok
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold text-right">
+                        <th class="py-2.5 px-4  text-right">
                             Harga
                         </th>
 
-                        <th class="py-2.5 px-4 font-semibold text-center w-20">
+                        <th class="py-2.5 px-4  text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -411,7 +411,7 @@
         {{-- FOOTER --}}
         {{-- ========================================================= --}}
 
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
 
             {{-- INFO --}}
             <div class="whitespace-nowrap">
@@ -645,179 +645,195 @@
         class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
+        {{-- BACKDROP CLICK TO CLOSE --}}
         <div
             class="absolute inset-0"
             onclick="closeTambahModal()"
         ></div>
 
-
+        {{-- MODAL CONTAINER --}}
         <div
-            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
+            class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
         >
 
-            <h2 class="text-2xl font-bold mb-5">
-                Tambah Item
+            {{-- JUDUL MODAL --}}
+            <h2 class="text-xl font-bold mb-6 text-black">
+                Tambah Barang
             </h2>
 
-
+            {{-- FORM --}}
             <form
                 method="POST"
                 action="{{ route('inventory.item.store') }}"
-                class="space-y-4"
+                class="space-y-6"
             >
 
                 @csrf
 
-                {{-- ITM --}}
-                <div>
+                {{-- GRID 2 KOLOM --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
-                    <label class="block text-sm font-semibold mb-1">
-                        Kode Item
-                    </label>
+                    {{-- KODE ITEM --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Kode Item
+                        </label>
 
-                    <input
-                        type="text"
-                        name="ITM"
-                        placeholder="Contoh: ITM004"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
+                        <input
+                            type="text"
+                            name="ITM"
+                            value="{{ old('ITM') }}"
+                            placeholder="Contoh: ITM004"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                        @error('ITM')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- NAMA BARANG --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Nama Barang
+                        </label>
+
+                        <input
+                            type="text"
+                            name="DES"
+                            value="{{ old('DES') }}"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                        @error('DES')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- MEREK --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Merek
+                        </label>
+
+                        <select
+                            name="MRK"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            <option value="" disabled selected>Pilih Merk</option>
+                            @foreach ($MRK as $mrk)
+                                <option value="{{ $mrk->MRK }}" {{ old('MRK') == $mrk->MRK ? 'selected' : '' }}>
+                                    {{ $mrk->DES }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('MRK')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- HARGA JUAL --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Harga Jual
+                        </label>
+
+                        <input
+                            type="number"
+                            name="HRG"
+                            step="any"
+                            min="0"
+                            value="{{ old('HRG') }}"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                        @error('HRG')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- KATEGORI --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Kategori
+                        </label>
+
+                        <select
+                            name="KTG"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            <option value="" disabled selected>Pilih Kategori</option>
+                            @foreach ($KTG as $ktg)
+                                <option value="{{ $ktg->KTG }}" {{ old('KTG') == $ktg->KTG ? 'selected' : '' }}>
+                                    {{ $ktg->DES }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('KTG')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- STOK --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Stok
+                        </label>
+
+                        <input
+                            type="number"
+                            name="STOK"
+                            min="0"
+                            value="{{ old('STOK') }}"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                        @error('STOK')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    {{-- SUPPLIER --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Supplier
+                        </label>
+
+                        <select
+                            name="SPP"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            <option value="" disabled selected>Pilih Supplier</option>
+                            @foreach ($SPP as $spp)
+                                <option value="{{ $spp->SPP }}" {{ old('SPP') == $spp->SPP ? 'selected' : '' }}>
+                                    {{ $spp->DES }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('SPP')
+                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
 
                 </div>
 
-
-                {{-- DES --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Nama Item
-                    </label>
-
-                    <input
-                        type="text"
-                        name="DES"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-
-                </div>
-
-
-                {{-- KTG --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Kategori
-                    </label>
-
-                    <select
-                        name="KTG"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        <option value="" disabled selected>Pilih kategori</option>
-
-                        @foreach ($KTG as $ktg)
-                            <option value="{{ $ktg->KTG }}">{{ $ktg->DES }}</option>
-                        @endforeach
-                    </select>
-
-                </div>
-
-
-                {{-- MRK --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Merk
-                    </label>
-
-                    <select
-                        name="MRK"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        <option value="" disabled selected>Pilih merk</option>
-
-                        @foreach ($MRK as $mrk)
-                            <option value="{{ $mrk->MRK }}">{{ $mrk->DES }}</option>
-                        @endforeach
-                    </select>
-
-                </div>
-
-
-                {{-- SPP --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Supplier
-                    </label>
-
-                    <select
-                        name="SPP"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        <option value="" disabled selected>Pilih supplier</option>
-
-                        @foreach ($SPP as $spp)
-                            <option value="{{ $spp->SPP }}">{{ $spp->DES }}</option>
-                        @endforeach
-                    </select>
-
-                </div>
-
-
-                {{-- STOK --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Stok
-                    </label>
-
-                    <input
-                        type="number"
-                        name="STOK"
-                        min="0"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-
-                </div>
-
-
-                {{-- HRG --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Harga
-                    </label>
-
-                    <input
-                        type="number"
-                        name="HRG"
-                        min="0"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-
-                </div>
-
-
-                <div class="pt-4 flex items-center gap-3">
+                {{-- ACTION BUTTONS --}}
+                <div class="pt-2 flex items-center gap-4 w-full">
 
                     <button
                         type="button"
                         onclick="closeTambahModal()"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer"
+                        class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
                     >
                         Batal
                     </button>
 
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer"
+                        class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center"
                     >
                         Simpan
                     </button>
@@ -840,156 +856,166 @@
         class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
+        {{-- BACKDROP CLICK TO CLOSE --}}
         <div
             class="absolute inset-0"
             onclick="closeEditModal()"
         ></div>
 
-
+        {{-- MODAL CONTAINER (Dibuat max-w-2xl agar muat layout 2 kolom) --}}
         <div
-            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
+            class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
         >
 
-            <h2 class="text-2xl font-bold mb-5">
-                Edit Item
+            {{-- JUDUL MODAL --}}
+            <h2 class="text-xl font-bold mb-6 text-black">
+                Edit Barang
             </h2>
 
-
+            {{-- FORM EDIT --}}
             <form
                 id="editItemForm"
                 method="POST"
-                class="space-y-4"
+                class="space-y-6"
             >
                 @csrf
                 @method('PUT')
 
-                {{-- ITM (Kode Item) --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Kode Item
-                    </label>
-                    <input
-                        id="editITM"
-                        type="text"
-                        name="ITM"
-                        readonly
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
-                    >
+                {{-- GRID 2 KOLOM UNTUK FORM INPUT --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+                    {{-- ITM (Kode Item) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Kode Item
+                        </label>
+                        <input
+                            id="editITM"
+                            type="text"
+                            name="ITM"
+                            readonly
+                            required
+                            class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 cursor-not-allowed focus:outline-none font-mono"
+                        >
+                    </div>
+
+                    {{-- DES (Nama Item) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Nama Item
+                        </label>
+                        <input
+                            id="editDES"
+                            type="text"
+                            name="DES"
+                            required
+                            placeholder="Masukkan nama item"
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                    </div>
+
+                    {{-- MRK (Merek) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Merk
+                        </label>
+                        <select
+                            id="editMRK"
+                            name="MRK"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            @foreach ($MRK as $mrk)
+                                <option value="{{ $mrk->MRK }}">{{ $mrk->DES }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- HRG (Harga) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Harga
+                        </label>
+                        <input
+                            id="editHRG"
+                            type="number"
+                            name="HRG"
+                            min="0"
+                            step="any"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                    </div>
+
+                    {{-- KTG (Kategori) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Kategori
+                        </label>
+                        <select
+                            id="editKTG"
+                            name="KTG"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            @foreach ($KTG as $ktg)
+                                <option value="{{ $ktg->KTG }}">{{ $ktg->DES }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- STOK (Stok) --}}
+                    <div>
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Stok
+                        </label>
+                        <input
+                            id="editSTOK"
+                            type="number"
+                            name="STOK"
+                            min="0"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                    </div>
+
+                    {{-- SPP (Supplier) --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-black mb-1.5">
+                            Supplier
+                        </label>
+                        <select
+                            id="editSPP"
+                            name="SPP"
+                            required
+                            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        >
+                            @foreach ($SPP as $spp)
+                                <option value="{{ $spp->SPP }}">{{ $spp->DES }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                 </div>
 
-                {{-- DES (Nama Item) --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Nama Item
-                    </label>
-                    <input
-                        id="editDES"
-                        type="text"
-                        name="DES"
-                        required
-                        placeholder="Masukkan nama item"
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                </div>
+                {{-- ACTION BUTTONS (FULL WIDTH) --}}
+                <div class="pt-2 flex items-center gap-4 w-full">
 
-                {{-- KTG --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Kategori
-                    </label>
-                    <select
-                        id="editKTG"
-                        name="KTG"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        @foreach ($KTG as $ktg)
-                            <option value="{{ $ktg->KTG }}">{{ $ktg->DES }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- MRK --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Merk
-                    </label>
-                    <select
-                        id="editMRK"
-                        name="MRK"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        @foreach ($MRK as $mrk)
-                            <option value="{{ $mrk->MRK }}">{{ $mrk->DES }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- SPP --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Supplier
-                    </label>
-                    <select
-                        id="editSPP"
-                        name="SPP"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                        @foreach ($SPP as $spp)
-                            <option value="{{ $spp->SPP }}">{{ $spp->DES }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- STOK --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Stok
-                    </label>
-                    <input
-                        id="editSTOK"
-                        type="number"
-                        name="STOK"
-                        min="0"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                </div>
-
-                {{-- HRG --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-black">
-                        Harga
-                    </label>
-                    <input
-                        id="editHRG"
-                        type="number"
-                        name="HRG"
-                        min="0"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                </div>
-
-                {{-- Action Buttons --}}
-                <div class="pt-4 flex items-center gap-3">
                     <button
                         type="button"
                         onclick="closeEditModal()"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+                        class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
                     >
                         Batal
                     </button>
 
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+                        class="w-1/2 py-2.5 px-4 bg-[#1E295D] hover:bg-[#161F48] text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center"
                     >
                         Simpan
                     </button>
+
                 </div>
 
             </form>

@@ -1,18 +1,18 @@
 {{-- Left Sidebar Navigation --}}
 <aside 
     id="sidebar" 
-    class="w-48 flex-shrink-0 bg-primary-db text-secondary-bw flex flex-col h-screen select-none z-20 shadow-md transition-all duration-300 ease-in-out overflow-hidden"
+    class="w-48 shrink-0 bg-primary-db text-secondary-bw flex flex-col h-screen select-none z-20 shadow-md transition-all duration-300 ease-in-out overflow-hidden"
 >
     
     {{-- Hamburger Top Bar --}}
-    <div class="h-12 flex items-center justify-start px-4 flex-shrink-0">
+    <div class="h-12 flex items-center justify-start px-4 shrink-0">
         <button 
             type="button" 
             id="btnToggleSidebar"
             class="text-secondary-bw hover:opacity-80 transition-opacity focus:outline-none cursor-pointer flex items-center justify-center" 
             aria-label="Toggle Menu"
         >
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+            <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
         </button>
@@ -31,12 +31,12 @@
                 aria-expanded="true"
             >
                 {{-- Shopping Cart Icon --}}
-                <svg class="w-5 h-5 text-secondary-bw flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-secondary-bw shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
                 </svg>
                 <span class="sidebar-text underline decoration-1 underline-offset-2 whitespace-nowrap transition-opacity duration-200 flex-1 text-left">POS</span>
                 {{-- Chevron --}}
-                <svg class="sidebar-text sidebar-chevron w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <svg class="sidebar-text sidebar-chevron w-3.5 h-3.5 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
@@ -64,9 +64,9 @@
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)
-                            <span class="mr-2 text-[10px] leading-none select-none flex-shrink-0">►</span>
+                            <span class="mr-2 text-[10px] leading-none select-none shrink-0">►</span>
                         @else
-                            <span class="w-[18px] flex-shrink-0"></span>
+                            <span class="w-4.5 shrink-0"></span>
                         @endif
                         
                         {{-- Label --}}
@@ -88,12 +88,12 @@
                 aria-expanded="true"
             >
                 {{-- Box / Inventory Icon --}}
-                <svg class="w-5 h-5 text-secondary-bw flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-secondary-bw shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-1 18H5V9h14v11zm1-13H4V4h16v3z"/>
                 </svg>
                 <span class="sidebar-text whitespace-nowrap transition-opacity duration-200 flex-1 text-left">Inventory</span>
                 {{-- Chevron --}}
-                <svg class="sidebar-text sidebar-chevron w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <svg class="sidebar-text sidebar-chevron w-3.5 h-3.5 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
@@ -119,9 +119,9 @@
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)
-                            <span class="mr-2 text-[10px] leading-none select-none flex-shrink-0">►</span>
+                            <span class="mr-2 text-[10px] leading-none select-none shrink-0">►</span>
                         @else
-                            <span class="w-[18px] flex-shrink-0"></span>
+                            <span class="w-4.5 shrink-0"></span>
                         @endif
                         
                         {{-- Label --}}

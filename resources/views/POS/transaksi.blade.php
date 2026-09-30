@@ -49,15 +49,15 @@
     </div>
 
     {{-- Tabel Riwayat Transaksi --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden flex flex-col">
-        <div class="overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
+        <div class="overflow-visible">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 font-semibold">Kode Transaksi</th>
-                        <th class="py-2.5 px-4 font-semibold">Tanggal pembelian</th>
-                        <th class="py-2.5 px-4 font-semibold">Total</th>
-                        <th class="py-2.5 px-4 font-semibold text-center">Aksi</th>
+                        <th class="py-2.5 px-4 rounded-tl-lg">Kode Transaksi</th>
+                        <th class="py-2.5 px-4 ">Tanggal pembelian</th>
+                        <th class="py-2.5 px-4 ">Total</th>
+                        <th class="py-2.5 px-4 text-center rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
 
@@ -83,7 +83,7 @@
 
                             <td class="py-3.5 px-4 font-medium">{{ $item->REF_NO }}</td>
                             <td class="py-3.5 px-4">{{ $tglFmt }}</td>
-                            <td class="py-3.5 px-4 font-semibold font-number">
+                            <td class="py-3.5 px-4 font-semibold">
                                 Rp {{ number_format($item->BRT ?? 0, 0, ',', '.') }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
@@ -106,7 +106,7 @@
         </div>
 
         {{-- Pagination Footer --}}
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db rounded-b-lg">
             <div>Menampilkan <span id="paginationInfo">0 transaksi</span></div>
             <div class="flex items-center gap-1.5" id="paginationButtons"></div>
         </div>

@@ -33,13 +33,8 @@ class SPPController extends Controller
         }
 
         $data = $query->paginate(10);
-        return view('data.supplier', compact('data'));
-    }
 
-    // halaman create untuk menampilkan form tambah data supplier
-    public function create()
-    {
-        return view('supplier.create');
+        return view('Inventory.supplier', compact('data'));
     }
 
     public function store(Request $request)
@@ -52,7 +47,7 @@ class SPPController extends Controller
 
         SPP::create($validated);
 
-        return redirect()->route('merk.index')->with('success', 'Data merk berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Data Supplier berhasil ditambahkan.');
     }
 
     // halaman edit untuk menampilkan form edit data supplier
@@ -73,7 +68,7 @@ class SPPController extends Controller
         $spp = SPP::findOrFail($spp);
         $spp->update($validated);
 
-        return redirect()->route('supplier.index')->with('success', 'Data supplier berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Data supplier berhasil diperbarui.');
     }
 
     public function destroy($spp)
@@ -81,6 +76,6 @@ class SPPController extends Controller
         $spp = SPP::findOrFail($spp);
         $spp->delete();
 
-        return redirect()->route('supplier.index')->with('success', 'Data supplier berhasil dihapus.');
+        return redirect()->back()->with('success', 'Data supplier berhasil dihapus.');
     }
 }

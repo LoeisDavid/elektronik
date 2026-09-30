@@ -68,7 +68,7 @@ class ITMController extends Controller
 
         ITM::create($validated);
 
-        return redirect()->route('Inventory.item.index')->with('success', 'Data item berhasil ditambahkan.');
+        return redirect()->route('Inventory.item')->with('success', 'Data item berhasil ditambahkan.');
     }
 
     // halaman edit untuk menampilkan form edit data item
