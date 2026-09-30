@@ -108,7 +108,7 @@
             <button 
                 type="button" 
                 onclick="modalDraftTransaksi()" 
-                class="bg-[#1A233A] hover:bg-[#0F1523] text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors cursor-pointer">
+                class="bg-primary-db hover:bg-primary-sdb text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors cursor-pointer">
                 Draft Transaksi
             </button>
         </div>
@@ -159,7 +159,7 @@
             </div>
 
             {{-- Footer Action Buttons (Reload, Reset, Konfirmasi) --}}
-            <div class="flex items-stretch border-y border-black">
+            <div class="flex items-stretch border-t border-black">
                 {{-- Tombol Reload / Refresh --}}
                 <button 
                     type="button" 
@@ -175,7 +175,7 @@
                 <button 
                     type="button" 
                     onclick="modalTambahArsip()"
-                    class="w-14 h-14 flex items-center justify-center border-r border-gray-300 hover:bg-gray-100 text-black transition-colors cursor-pointer"
+                    class="w-14 h-14 flex items-center justify-center border-r text-black transition-colors cursor-pointer"
                     title="Simpan Draft">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125v4.125m3-4.125v4.125M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
