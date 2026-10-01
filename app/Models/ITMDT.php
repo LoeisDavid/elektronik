@@ -20,6 +20,11 @@ class ITMDT extends Model
     {
         return GD::where('GD', $this->GD)->first();
     }
+
+    function sts()
+    {
+        return STS::where('BC_OUT', $this->BC_OUT)->first();
+    }
     
     use HasFactory;
 }

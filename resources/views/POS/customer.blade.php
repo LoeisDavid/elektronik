@@ -560,25 +560,6 @@
             >
 
                 @csrf
-
-                {{-- CST --}}
-                <div>
-
-                    <label class="block text-sm font-semibold mb-1">
-                        Kode Customer
-                    </label>
-
-                    <input
-                        type="text"
-                        name="CST"
-                        placeholder="Contoh: CST004"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-
-                </div>
-
-
                 {{-- DES --}}
                 <div>
 

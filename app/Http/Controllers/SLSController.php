@@ -46,11 +46,12 @@ class SLSController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'SLS' => 'required|string|max:10|unique:sls,SLS',
             'DES' => 'required|string|max:150',
             'HP'  => 'required|string|max:20',
             'AL'  => 'required|string|max:100',
         ]);
+
+        $data['SLS'] = $this->generateCode($validated['DES'], 'SLS');
 
         SLS::create($validated);
 

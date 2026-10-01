@@ -475,13 +475,6 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
                     <div>
-                        <label class="<?= $labelCls ?>">Kode Item</label>
-                        <input type="text" name="ITM" maxlength="10" required placeholder="Contoh: ITM004"
-                               value="<?= e(old('ITM')) ?>" class="<?= $inputCls ?>">
-                        <?= $galat('tambah', 'ITM') ?>
-                    </div>
-
-                    <div>
                         <label class="<?= $labelCls ?>">Nama Barang</label>
                         <input type="text" name="DES" maxlength="150" required
                                value="<?= e(old('DES')) ?>" class="<?= $inputCls ?>">

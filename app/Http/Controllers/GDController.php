@@ -51,6 +51,8 @@ class GDController extends Controller
             'DES' => 'required|string|max:45',
         ]);
 
+        $data['GD'] = $this->generateCode($validated['DES'], 'GD');
+
         GD::create($validated);
 
         return redirect()->route('gudang.index')->with('success', 'Data gudang berhasil ditambahkan.');
