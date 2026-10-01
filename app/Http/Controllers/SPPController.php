@@ -40,10 +40,11 @@ class SPPController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'SPP' => 'required|string|max:10',
             'DES' => 'required|string|max:150',
             'TLP' => 'required|string|max:20',
         ]);
+
+        $data['SPP'] = $this->generateCode($validated['DES'], 'SPP');
 
         SPP::create($validated);
 

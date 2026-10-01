@@ -8,7 +8,9 @@ use App\Models\ITMDT;
 use App\Models\KTG;
 use App\Models\MRK;
 use App\Models\SPP;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -183,13 +185,14 @@ class ITMController extends Controller
     public function store(Request $request)
     {
         $data = $request->validateWithBag('tambah', [
-            'ITM' => 'required|string|max:10',
             'DES' => 'required|string|max:150',
             'MRK' => 'required|string|max:10',
             'KTG' => 'required|string|max:10',
             'SPP' => 'required|string|max:10',
             'HRG' => 'required|numeric|min:0',
         ]);
+
+        $data['ITM'] = $this->generateCode($data['DES'], 'ITM');
 
         if (ITM::where('ITM', $data['ITM'])->exists()) {
             throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.'])
@@ -199,6 +202,100 @@ class ITMController extends Controller
         ITM::create($data + ['STOK' => 0]);
 
         return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
+    }
+
+    public function show(Request $request, string $itm)
+    {
+        // Data item (ITM)
+        $item = Itm::findOrFail($itm);
+
+        // Semua detail stok milik item ini (ITMDT) + hitung field turunan
+        $all = Itmdt::where('ITM', $item->ITM)->get()->map(function ($d) {
+            $masuk  = $d->TM ? Carbon::parse($d->TM) : null;
+            $sts    = $d->sts();            // bukan relasi, panggil fungsinya
+            $keluar = $sts && $sts->created_at ? Carbon::parse($sts->created_at) : null;
+            $gudang = $d->GD();
+
+            return (object) [
+                'kode_stok'   => $d->BC_OUT,
+                'tgl_masuk'   => $masuk,
+                'tgl_keluar'  => $keluar,
+                'ts_masuk'    => $masuk?->timestamp ?? 0,
+                'ts_keluar'   => $keluar?->timestamp,
+                'nama_gudang' => $gudang->DES ?? '-',
+                'terjual'     => $keluar !== null,
+                'status'      => $keluar === null ? 'IN STOK' : 'Terjual',
+            ];
+        });
+
+        // Ringkasan (dihitung sebelum difilter)
+        $summary = [
+            'total'    => $all->count(),
+            'in_stok'  => $all->where('terjual', false)->count(),
+            'terjual'  => $all->where('terjual', true)->count(),
+        ];
+
+        // ---------- FILTER ----------
+        $q       = trim((string) $request->query('q', ''));
+        $tanggal = $request->query('tanggal');          // format Y-m-d
+        $status  = $request->query('status', 'semua');  // semua | in_stok | terjual
+        $sort    = $request->query('sort', 'default');
+
+        $rows = $all
+            ->when($q !== '', function ($c) use ($q) {
+                return $c->filter(fn ($r) =>
+                    stripos($r->nama_gudang, $q) !== false ||
+                    stripos((string) $r->kode_stok, $q) !== false
+                );
+            })
+            ->when($tanggal, function ($c) use ($tanggal) {
+                return $c->filter(fn ($r) =>
+                    $r->tgl_masuk?->toDateString() === $tanggal ||
+                    $r->tgl_keluar?->toDateString() === $tanggal
+                );
+            })
+            ->when($status === 'in_stok', fn ($c) => $c->where('terjual', false))
+            ->when($status === 'terjual', fn ($c) => $c->where('terjual', true));
+
+        // ---------- SORT ----------
+        // Keluar: yang belum keluar (null) selalu di paling bawah
+        $cmpKeluar = function ($a, $b, $dir) {
+            if ($a->ts_keluar === null && $b->ts_keluar === null) return 0;
+            if ($a->ts_keluar === null) return 1;
+            if ($b->ts_keluar === null) return -1;
+            return $dir === 'desc'
+                ? $b->ts_keluar <=> $a->ts_keluar
+                : $a->ts_keluar <=> $b->ts_keluar;
+        };
+
+        $rows = $rows->sort(function ($a, $b) use ($sort, $cmpKeluar) {
+            return match ($sort) {
+                'masuk_terbaru'  => $b->ts_masuk <=> $a->ts_masuk,
+                'masuk_terlama'  => $a->ts_masuk <=> $b->ts_masuk,
+                'keluar_terbaru' => $cmpKeluar($a, $b, 'desc'),
+                'keluar_terlama' => $cmpKeluar($a, $b, 'asc'),
+                'az'             => strcasecmp($a->nama_gudang, $b->nama_gudang)
+                                    ?: strcmp((string) $a->kode_stok, (string) $b->kode_stok),
+                'za'             => strcasecmp($b->nama_gudang, $a->nama_gudang)
+                                    ?: strcmp((string) $b->kode_stok, (string) $a->kode_stok),
+                // DEFAULT: belum terjual dulu, lalu tanggal masuk terlama
+                default          => ($a->terjual <=> $b->terjual)
+                                    ?: ($a->ts_masuk <=> $b->ts_masuk),
+            };
+        })->values();
+
+        // ---------- PAGINATION MANUAL ----------
+        $page  = LengthAwarePaginator::resolveCurrentPage();
+        $items = new LengthAwarePaginator(
+            $rows->forPage($page, self::PER_PAGE)->values(),
+            $rows->count(),
+            self::PER_PAGE,
+            $page,
+            ['path' => $request->url()]
+        );
+        $items->withQueryString();
+
+        return view('inventory.detailItem', compact('item', 'items', 'summary', 'q', 'tanggal', 'status', 'sort'));
     }
 
     // ================================================================

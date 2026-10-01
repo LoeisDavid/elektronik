@@ -38,13 +38,14 @@ class CSTController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'CST' => 'required|string|max:10',
+        $validated = $request->validate([
             'DES' => 'required|string|max:45',
             'TLP' => 'required|string|max:20',
         ]);
 
-        CST::create($request->all());
+        $data['CST'] = $this->generateCode($validated['DES'], 'CST');
+
+        CST::create($validated);
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');
     }
 
