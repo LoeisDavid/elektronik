@@ -6,7 +6,7 @@
     <title>NamaToko - Login</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-[#f3f5f9] min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-900 select-none">
+<body class="bg-[#f3f5f9] min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-900">
 
     <!-- Store Title -->
     <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-black mb-10">

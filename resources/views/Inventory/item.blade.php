@@ -46,7 +46,7 @@
     $labelCls = 'block text-xs font-medium text-black mb-1.5';
 ?>
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none space-y-4">
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 space-y-4">
 
     {{-- ========================================================= --}}
     {{-- ALERT --}}

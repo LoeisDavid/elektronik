@@ -18,7 +18,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="h-screen w-screen bg-light-bg font-montserrat text-heading-dark antialiased select-none relative">
+<body class="h-screen w-screen bg-light-bg font-montserrat text-heading-dark antialiased relative">
 
     {{-- ========================================================= --}}
     {{-- TOAST CONTAINER (Melayang di Tengah Atas) --}}

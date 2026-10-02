@@ -1,7 +1,7 @@
 {{-- Left Sidebar Navigation --}}
 <aside 
     id="sidebar" 
-    class="w-48 shrink-0 bg-primary-db text-secondary-bw flex flex-col h-screen select-none z-20 shadow-md transition-all duration-300 ease-in-out overflow-hidden"
+    class="w-48 shrink-0 bg-primary-db text-secondary-bw flex flex-col h-screen z-20 shadow-md transition-all duration-300 ease-in-out overflow-hidden"
 >
     
     {{-- Hamburger Top Bar --}}
@@ -64,7 +64,7 @@
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)
-                            <span class="mr-2 text-[10px] leading-none select-none shrink-0">►</span>
+                            <span class="mr-2 text-[10px] leading-none shrink-0">►</span>
                         @else
                             <span class="w-4.5 shrink-0"></span>
                         @endif
@@ -121,7 +121,7 @@
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)
-                            <span class="mr-2 text-[10px] leading-none select-none shrink-0">►</span>
+                            <span class="mr-2 text-[10px] leading-none shrink-0">►</span>
                         @else
                             <span class="w-4.5 shrink-0"></span>
                         @endif

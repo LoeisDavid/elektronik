@@ -13,7 +13,7 @@
     <!-- Vite Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen w-full bg-secondary-bw font-sans flex flex-col items-center justify-center p-4 antialiased select-none">
+<body class="min-h-screen w-full bg-secondary-bw font-sans flex flex-col items-center justify-center p-4 antialiased">
     
     {{-- Main Container Centered --}}
     <div class="w-full max-w-md flex flex-col items-center">
