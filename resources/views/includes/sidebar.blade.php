@@ -103,6 +103,8 @@
                 @php
                     $invMenus = [
                         ['name' => 'Produk', 'route' => 'inventory.item'],
+                        ['name' => 'Merk', 'route' => 'inventory.merk'],
+                        ['name' => 'Kategori', 'route' => 'inventory.kategori'],
                         ['name' => 'Supplier', 'route' => 'inventory.supplier'],
                         ['name' => 'Gudang', 'route' => 'inventory.gudang'],
                         ['name' => 'Cek stok', 'route' => 'inventory.opname-stok'],
