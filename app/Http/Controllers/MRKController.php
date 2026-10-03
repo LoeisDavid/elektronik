@@ -45,9 +45,10 @@ class MRKController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'MRK' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
         ]);
+
+        $validated['MRK'] = $this->generateCode($validated['DES'], 'MRK');
 
         MRK::create($validated);
 

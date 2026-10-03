@@ -44,7 +44,7 @@ class SPPController extends Controller
             'TLP' => 'required|string|max:20',
         ]);
 
-        $data['SPP'] = $this->generateCode($validated['DES'], 'SPP');
+        $validated['SPP'] = $this->generateCode($validated['DES'], 'SPP');
 
         SPP::create($validated);
 

@@ -45,11 +45,12 @@ class KTGController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'KTG' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
         ]);
 
         KTG::create($validated);
+
+        $validated['KTG'] = $this->generateCode($validated['DES'], 'KTG');
 
         return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil ditambahkan.');
     }

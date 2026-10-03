@@ -43,7 +43,7 @@ class CSTController extends Controller
             'TLP' => 'required|string|max:20',
         ]);
 
-        $data['CST'] = $this->generateCode($validated['DES'], 'CST');
+        $validated['CST'] = $this->generateCode($validated['DES'], 'CST');
 
         CST::create($validated);
         return redirect()->back()->with('success', 'Data berhasil ditambahkan');
