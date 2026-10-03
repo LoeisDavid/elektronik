@@ -28,6 +28,8 @@
        kondisi awal yang dikirim controller.
     4. Search & filter status juga murni JavaScript (tidak ada request ke
        controller).
+    5. Daftar SELALU diurutkan: Checking -> Belum Terjual -> Sudah Terjual
+       (berlaku saat halaman dibuka, setelah scan berhasil, search, & filter).
     =========================================================================
 --}}
 
@@ -248,8 +250,17 @@ document.addEventListener('DOMContentLoaded', function () {
             : 'checking',
     }));
 
-    // Data yang sedang ditampilkan (hasil search + filter). Awalnya semua data.
+    // Data yang sedang ditampilkan (hasil search + filter + urut). Diisi saat INIT.
     let tampil = stokData.slice();
+
+    // Urutan status: checking dulu, lalu belum terjual, terakhir sudah terjual
+    const URUTAN_STATUS = { checking: 0, belum_terjual: 1, sudah_terjual: 2 };
+
+    function urutkanData(arr) {
+        return arr.sort((a, b) =>
+            (URUTAN_STATUS[a.status] - URUTAN_STATUS[b.status]) || (a.idx - b.idx)
+        );
+    }
 
     let sesiSelesai = false;   // flag apakah sesi sudah "diselesaikan"
     let pendingNavHref = null; // menyimpan link yang mau dituju setelah konfirmasi
@@ -282,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
         emptyState.classList.toggle('hidden', total > 0);
         spacer.style.height = (total * ROW_HEIGHT) + 'px';
 
-        if (total === 0) { rowsWrap.innerHTML = ''; return; }
+        if (total === 0) { rowsWrap.innerHTML = ''; updateHeaderCounter(); return; }
 
         const viewportH = scrollBox.clientHeight - HEADER_H;
         const scrollTop = Math.max(0, scrollBox.scrollTop - HEADER_H);
@@ -331,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =====================================================================
-       2b. SEARCH & FILTER STATUS (murni JS, tanpa controller)
+       2b. SEARCH & FILTER STATUS + URUTAN (murni JS, tanpa controller)
     ===================================================================== */
     const inputCari    = document.getElementById('inputCari');
     const filterStatus = document.getElementById('filterStatus');
@@ -340,11 +351,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const kw = inputCari.value.trim().toLowerCase();
         const st = filterStatus.value;
 
-        tampil = stokData.filter(d =>
-            (st === 'semua' || d.status === st) &&
-            (!kw ||
-                d.kode_barcode.toLowerCase().includes(kw) ||
-                String(d.nama_barang).toLowerCase().includes(kw))
+        tampil = urutkanData(
+            stokData.filter(d =>
+                (st === 'semua' || d.status === st) &&
+                (!kw ||
+                    d.kode_barcode.toLowerCase().includes(kw) ||
+                    String(d.nama_barang).toLowerCase().includes(kw))
+            )
         );
 
         if (resetScroll) scrollBox.scrollTop = 0;
@@ -436,7 +449,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         updateModalScanCounter();
 
-        // hitung ulang daftar tampil (status bisa berubah), tanpa reset scroll
+        // hitung ulang + urutkan ulang daftar tampil (checking -> belum terjual -> terjual),
+        // tanpa reset scroll
         terapkanFilter(false);
 
         // lompat ke baris itu kalau memang sedang tampil (lolos search/filter)
@@ -522,9 +536,6 @@ document.addEventListener('DOMContentLoaded', function () {
         openConfirmModal();
     }, true);
 
-    // Kalau confirm dipicu oleh klik link, setelah "Ya, Selesai" -> summary -> baru pindah halaman
-    // (sudah otomatis ke-handle lewat pendingNavHref di atas)
-
     // Peringatan browser kalau user refresh / menutup tab sebelum sesi selesai
     window.addEventListener('beforeunload', function (e) {
         if (sesiSelesai) return;
@@ -533,9 +544,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /* =====================================================================
-       INIT
+       INIT — terapkanFilter() supaya urutan status langsung berlaku
     ===================================================================== */
-    renderVisibleRows();
+    terapkanFilter();
 });
 </script>
 @endpush

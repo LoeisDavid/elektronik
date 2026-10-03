@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\KTG;
+use Illuminate\Database\QueryException;
 
 class KTGController extends Controller
 {
@@ -33,19 +34,14 @@ class KTGController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'KTG' => ['required', 'string', 'max:10', 'unique:ktg,KTG'],
-            'DES' => ['required', 'string', 'max:255'],
-        ], [
-            'KTG.required' => 'Kode kategori wajib diisi.',
-            'KTG.unique'   => 'Kode kategori sudah digunakan.',
-            'KTG.max'      => 'Kode kategori maksimal 10 karakter.',
-            'DES.required' => 'Nama kategori wajib diisi.',
+            'DES' => 'required|string|max:45',
         ]);
  
         KTG::create($validated);
- 
-        return redirect()
-            ->route('inventory.kategori')->with('success', 'Kategori berhasil disimpan.');
+
+        $validated['KTG'] = $this->generateCode($validated['DES'], 'KTG');
+
+        return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil ditambahkan.');
     }
  
     /**

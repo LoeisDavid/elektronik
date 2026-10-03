@@ -291,7 +291,7 @@
 
             <h2 class="text-2xl font-bold mb-5">Tambah Item</h2>
 
-            <form method="POST" action="<?= e(route('inventory.item.store')) ?>" class="space-y-4">
+            <form method="POST" action="<?= e(route('inventory.gudang.store')) ?>" class="space-y-4">
                 @csrf
 
                 <div>

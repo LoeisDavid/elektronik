@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\MRK;
+use Illuminate\Database\QueryException;
 
 class MRKController extends Controller
 {
@@ -33,15 +34,11 @@ class MRKController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'MRK' => ['required', 'string', 'max:10', 'unique:mrk,MRK'],
-            'DES' => ['required', 'string', 'max:255'],
-        ], [
-            'MRK.required' => 'Kode merk wajib diisi.',
-            'MRK.unique'   => 'Kode merk sudah digunakan.',
-            'MRK.max'      => 'Kode merk maksimal 10 karakter.',
-            'DES.required' => 'Nama merk wajib diisi.',
+            'DES' => 'required|string|max:45',
         ]);
- 
+
+        $validated['MRK'] = $this->generateCode($validated['DES'], 'MRK');
+
         MRK::create($validated);
  
         return redirect()

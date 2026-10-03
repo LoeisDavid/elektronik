@@ -51,7 +51,7 @@ class SLSController extends Controller
             'AL'  => 'required|string|max:100',
         ]);
 
-        $data['SLS'] = $this->generateCode($validated['DES'], 'SLS');
+        $validated['SLS'] = $this->generateCode($validated['DES'], 'SLS');
 
         SLS::create($validated);
 

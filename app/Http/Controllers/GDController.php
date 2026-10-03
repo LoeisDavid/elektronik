@@ -47,15 +47,16 @@ class GDController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'GD' => 'required|string|max:10',
             'DES' => 'required|string|max:45',
         ]);
 
-        $data['GD'] = $this->generateCode($validated['DES'], 'GD');
+        
+
+        $validated['GD'] = $this->generateCode($validated['DES'], 'GD');
 
         GD::create($validated);
 
-        return redirect()->route('gudang.index')->with('success', 'Data gudang berhasil ditambahkan.');
+        return redirect()->route('inventory.gudang')->with('success', 'Data gudang berhasil ditambahkan.');
     }
 
     public function edit($gd)
@@ -79,7 +80,7 @@ class GDController extends Controller
         $gd = GD::findOrFail($gd);
         $gd->update($validated);
 
-        return redirect()->route('gudang.index')->with('success', 'Data gudang berhasil diperbarui.');
+        return redirect()->route('inventory.gudang')->with('success', 'Data gudang berhasil diperbarui.');
     }
 
     public function destroy($gd)
@@ -87,7 +88,7 @@ class GDController extends Controller
         $gd = GD::findOrFail($gd);
         $gd->delete();
 
-        return redirect()->route('Inventory.gudang')->with('success', 'Data gudang berhasil dihapus.');
+        return redirect()->route('inventory.gudang')->with('success', 'Data gudang berhasil dihapus.');
     }
 
     public function daftarBarang()
