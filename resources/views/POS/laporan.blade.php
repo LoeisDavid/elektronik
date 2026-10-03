@@ -34,7 +34,7 @@
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 ?>
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-6 select-none space-y-6">
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-6 space-y-6">
 
     {{-- ========================================================= --}}
     {{-- SECTION ATAS: STATISTIK & FILTER --}}

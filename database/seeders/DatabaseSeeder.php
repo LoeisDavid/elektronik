@@ -184,13 +184,15 @@ class DatabaseSeeder extends Seeder
             DB::table('acr')->insert($data);
         }
 
-        // 11. STS (Surat / Detail Penjualan) - 10,000
-        $this->command?->info("Seeding STS (10,000 records)...");
+        // 11. STS (Surat / Detail Penjualan) - Sisakan 10 item belum terjual (index 1-10)
+        $this->command?->info("Seeding STS (9,990 records, 10 item belum terjual)...");
         STSFactory::resetSequence(0);
-        $globalIndex = 1;
-        for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
+        $globalIndex = 11;
+        $stsRecords = $totalRecords - 10;
+        for ($offset = 0; $offset < $stsRecords; $offset += $chunkSize) {
+            $limit = min($chunkSize, $stsRecords - $offset);
             $data = [];
-            for ($i = 0; $i < $chunkSize; $i++) {
+            for ($i = 0; $i < $limit; $i++) {
                 $data[] = STS::factory()->make([
                     'REF_NO' => sprintf('INV%07d', $globalIndex),
                     'BC_OUT' => sprintf('BCO%017d', $globalIndex),

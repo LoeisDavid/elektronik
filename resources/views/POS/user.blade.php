@@ -17,7 +17,7 @@
     $sortLabel = $sortOptions[$sort];
 @endphp
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 select-none">
+<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6">
 
     {{-- ========================================================= --}}
     {{-- TOOLBAR --}}
