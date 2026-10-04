@@ -49,6 +49,8 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('tutup-kasir', [kasirController::class, 'tutupKasir'])->name('tutup-kasir');
     Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
 
+Route::post('/struk/print', [ACRController::class, 'print'])->name('struk.print');
+
     // customer
     Route::get('customer', [CSTController::class, 'index'])->name('customer');
     Route::post('customer', [CSTController::class, 'store'])->name('customer.store');
@@ -86,6 +88,8 @@ Route::prefix('Inventory')->name('inventory.')->group(function () {
     Route::get('item/{id}/show', [App\Http\Controllers\ITMController::class, 'show'])->name('item.show');
     Route::delete('item/{id}', [App\Http\Controllers\ITMController::class, 'destroy'])->name('item.destroy');
 
+Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
+    ->name('item.stok.selesai');
     // Merk
     Route::get('merk', [MRKController::class, 'index'])->name('merk');
     Route::post('merk', [MRKController::class, 'store'])->name('merk.store');

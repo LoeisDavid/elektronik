@@ -764,6 +764,26 @@
      @include('POS.struk')
     <!-- end: Modal Struk Pembayaran -->
 
+    {{-- ===================================================================== --}}
+    {{-- [TAMBAHAN PRINT] FORM TERSEMBUNYI -> POST KE CONTROLLER PRINT (DomPDF) --}}
+    {{-- ===================================================================== --}}
+    <form
+        id="formPrintStruk"
+        method="POST"
+        action="{{ route('POS.struk.print') }}"
+        target="_blank"
+        class="hidden">
+        @csrf
+        <input type="hidden" name="ref_no"    id="printRefNo">
+        <input type="hidden" name="tanggal"   id="printTanggal">
+        <input type="hidden" name="kasir"     id="printKasir">
+        <input type="hidden" name="metode"    id="printMetode">
+        <input type="hidden" name="total"     id="printTotal">
+        <input type="hidden" name="dibayar"   id="printDibayar">
+        <input type="hidden" name="kembalian" id="printKembalian">
+        <input type="hidden" name="items"     id="printItems">
+    </form>
+
 </div>
 
 {{-- ========================================================================= --}}
@@ -782,6 +802,9 @@
     let currentGrandTotal = 0;
     let activePaymentMethod = 'Cash';
     let selectedBankName = '';
+
+    // [TAMBAHAN PRINT] Menampung data struk transaksi terakhir (untuk print DomPDF)
+    let strukTerakhir = null;
 
     // Pastikan jika cartData bukan object/array, inisialisasi sebagai object kosong
     if (!cartData || typeof cartData !== 'object') {
@@ -1506,6 +1529,9 @@
     function tampilModalStruk(transaksiData) {
         if (!transaksiData) return;
 
+        // [TAMBAHAN PRINT] simpan data struk (salinan) agar bisa dikirim ke Controller print
+        strukTerakhir = JSON.parse(JSON.stringify(transaksiData));
+
         // 1. Fill data header & info transaksi
         const elNoNota = document.getElementById('strukNoNota');
         const elTanggal = document.getElementById('strukTanggal');
@@ -1584,6 +1610,59 @@
             tutupModalStruk();
         }
     }
+
+    // -------------------------------------------------------------------------
+    // [TAMBAHAN PRINT] CETAK STRUK POS VIA DomPDF
+    // Panggil fungsi ini dari tombol Print di POS/struk.blade.php
+    // -------------------------------------------------------------------------
+    function cetakStrukPdf() {
+        if (!strukTerakhir) {
+            alert('Data struk tidak ditemukan.');
+            return;
+        }
+
+        const rawItems = Array.isArray(strukTerakhir.items)
+            ? strukTerakhir.items
+            : Object.values(strukTerakhir.items || {});
+
+        const items = rawItems.map(function (item) {
+            const qty = parseInt(item.qty) || 1;
+            const nama = item.nama_produk || item.name || 'Produk';
+
+            let subtotal;
+            if (item.subtotal !== undefined && item.subtotal !== null) {
+                subtotal = parseFloat(item.subtotal) || 0;
+            } else {
+                // Hitung harga setelah diskon item (sama seperti perhitungan di keranjang)
+                const price = parseFloat(item.price) || 0;
+                const pct = parseFloat(item.discount) || 0;
+                const vch = parseFloat(item.discount_voucher) || 0;
+                const hargaAkhir = Math.max(0, price - (price * (pct / 100)) - vch);
+                subtotal = hargaAkhir * qty;
+            }
+
+            return { nama: nama, qty: qty, subtotal: subtotal };
+        });
+
+        const metode = strukTerakhir.metode || '';
+        const isTunai = metode.toLowerCase() === 'cash' || metode.toLowerCase() === 'tunai';
+
+        document.getElementById('printRefNo').value = strukTerakhir.ref_no || '';
+        document.getElementById('printTanggal').value = strukTerakhir.tanggal || '';
+        document.getElementById('printKasir').value = strukTerakhir.kasir || '';
+        document.getElementById('printMetode').value = metode;
+        document.getElementById('printTotal').value = strukTerakhir.total || 0;
+        document.getElementById('printDibayar').value = isTunai ? (strukTerakhir.dibayar || 0) : '';
+        document.getElementById('printKembalian').value = isTunai ? (strukTerakhir.kembalian || 0) : '';
+        document.getElementById('printItems').value = JSON.stringify(items);
+
+        document.getElementById('formPrintStruk').submit();
+    }
+
+    // Alias: jika tombol Print di POS/struk.blade.php memanggil cetakStruk(),
+    // maka otomatis diarahkan ke print DomPDF. Hapus baris ini jika tombol
+    // sudah diubah langsung ke cetakStrukPdf().
+    window.cetakStruk = cetakStrukPdf;
 
     // -------------------------------------------------------------------------
     // 12. FUNGSI DRAFT TRANSAKSI (LOCAL STORAGE)

@@ -755,6 +755,27 @@
 
     </div>
 
+    {{-- ========================================================= --}}
+    {{-- [TAMBAHAN PRINT] FORM TERSEMBUNYI -> POST KE CONTROLLER    --}}
+    {{-- ========================================================= --}}
+    <form
+        id="formPrintStruk"
+        method="POST"
+        action="{{ route('POS.struk.print') }}"
+        target="_blank"
+        class="hidden"
+    >
+        @csrf
+        <input type="hidden" name="ref_no"    id="printRefNo">
+        <input type="hidden" name="tanggal"   id="printTanggal">
+        <input type="hidden" name="kasir"     id="printKasir">
+        <input type="hidden" name="metode"    id="printMetode">
+        <input type="hidden" name="total"     id="printTotal">
+        <input type="hidden" name="dibayar"   id="printDibayar">
+        <input type="hidden" name="kembalian" id="printKembalian">
+        <input type="hidden" name="items"     id="printItems">
+    </form>
+
 </div>
 
 
@@ -797,6 +818,13 @@
 
 
 <script>
+
+    // ============================================================
+    // [TAMBAHAN PRINT] DATA STRUK YANG SEDANG DIBUKA DI MODAL
+    // ============================================================
+
+    let strukAktif = null;
+
 
     // ============================================================
     // DROPDOWN SORT
@@ -877,6 +905,15 @@
             items = [];
 
         }
+
+
+        // [TAMBAHAN PRINT] simpan transaksi yang sedang dipilih
+        strukAktif = {
+            ref: btn.dataset.ref,
+            tanggal: btn.dataset.tanggal,
+            total: btn.dataset.total,
+            items: items
+        };
 
 
         document.getElementById('strukNoNota').textContent =
@@ -1022,12 +1059,71 @@
 
 
     // ============================================================
-    // PRINT
+    // PRINT (DomPDF) - kirim transaksi terpilih ke Controller
     // ============================================================
 
     function cetakStruk() {
 
-        window.print();
+        if (!strukAktif) {
+
+            alert('Data struk tidak ditemukan.');
+
+            return;
+        }
+
+
+        const items = (strukAktif.items || []).map(function(d) {
+
+            const qty =
+                Number(d.qty ?? d.QTY ?? 1);
+
+            const nama =
+                d.nama ?? d.NAMA ?? '-';
+
+            const harga =
+                d.harga ?? d.HARGA ?? null;
+
+            const subtotal =
+                d.subtotal ??
+                d.SUBTOTAL ??
+                (
+                    harga !== null
+                        ? harga * qty
+                        : null
+                );
+
+            return {
+                nama: nama,
+                qty: qty,
+                subtotal: subtotal
+            };
+
+        });
+
+
+        document.getElementById('printRefNo').value =
+            strukAktif.ref;
+
+        document.getElementById('printTanggal').value =
+            strukAktif.tanggal;
+
+        document.getElementById('printKasir').value =
+            document.getElementById('strukKasir').textContent.trim();
+
+        document.getElementById('printMetode').value = '';
+
+        document.getElementById('printTotal').value =
+            strukAktif.total;
+
+        document.getElementById('printDibayar').value = '';
+
+        document.getElementById('printKembalian').value = '';
+
+        document.getElementById('printItems').value =
+            JSON.stringify(items);
+
+
+        document.getElementById('formPrintStruk').submit();
 
     }
 
