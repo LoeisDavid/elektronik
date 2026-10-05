@@ -42,7 +42,6 @@ class ITMController extends Controller
 
         // ------------------------------------------------------------
         // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
-        //    Dipakai untuk nama di tabel DAN pilihan dropdown di modal.
         // ------------------------------------------------------------
         $KTG = KTG::all();
         $MRK = MRK::all();
@@ -64,8 +63,7 @@ class ITMController extends Controller
         }
 
         // ------------------------------------------------------------
-        // 3. Ambil semua ITM: kolom seperlunya, tanpa hydrate model
-        //    (toBase) dan tanpa query per baris.
+        // 3. Ambil semua ITM
         // ------------------------------------------------------------
         $semuaRow = [];
 
@@ -176,6 +174,7 @@ class ITMController extends Controller
             'KTG'        => $KTG,
             'SPP'        => $SPP,
             'GD'         => $GD,
+            'stokList'   => session('stok_list', []),   // <-- BARU: list kode menunggu di-generate
         ]);
     }
 
@@ -318,6 +317,7 @@ class ITMController extends Controller
 
     // ================================================================
     // TAMBAH STOK (1 input = 1 baris ITMDT = ITM.STOK + 1)
+    // Setiap simpan, kode BC Out ditambahkan ke array session 'stok_list'
     // ================================================================
     public function tambahStok(Request $request)
     {
@@ -332,6 +332,17 @@ class ITMController extends Controller
             'stok_hrb.required' => 'Harga beli wajib diisi.',
             'stok_bc.required'  => 'Kode barcode wajib diisi.',
         ]);
+
+        // Kalau list belum di-generate, barang tidak boleh diganti
+        $listAktif = session('stok_list', []);
+
+        if (!empty($listAktif) && $listAktif[0]['itm'] !== $data['stok_itm']) {
+            return back()
+                ->withInput(['stok_itm' => $listAktif[0]['itm']] + $request->only(['stok_gd', 'stok_hrb']))
+                ->withErrors([
+                    'stok_itm' => 'Masih ada ' . count($listAktif) . ' kode untuk "' . $listAktif[0]['des'] . '". Generate barcode dulu sebelum mengganti barang.',
+                ], 'stok');
+        }
 
         if (!ITM::where('ITM', $data['stok_itm'])->exists()) {
             throw ValidationException::withMessages(['stok_itm' => 'Barang tidak ditemukan.'])
@@ -359,10 +370,51 @@ class ITMController extends Controller
             ITM::where('ITM', $data['stok_itm'])->increment('STOK');
         });
 
+        $namaItem   = ITM::where('ITM', $data['stok_itm'])->value('DES');
+        $namaGudang = GD::where('GD', $data['stok_gd'])->value('DES');
+
+        // Tambah ke array session (bertahan sampai di-generate)
+        session()->push('stok_list', [
+            'itm'    => $data['stok_itm'],
+            'des'    => $namaItem,
+            'gd'     => $namaGudang,
+            'bc_in'  => $data['stok_bc'],
+            'bc_out' => $bcOut,
+        ]);
+
         // Pilihan barang, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
-        return back()
-            ->withInput($request->only(['stok_itm', 'stok_gd', 'stok_hrb']))
-            ->with('stok_ok', 'Stok tersimpan. BC Out: ' . $bcOut);
+        return back()->withInput($request->only(['stok_itm', 'stok_gd', 'stok_hrb']));
+    }
+
+    // ================================================================
+    // GENERATE: pindahkan list ke halaman print, lalu kosongkan list
+    // ================================================================
+    public function generate()
+    {
+        $list = session('stok_list', []);
+
+        if (empty($list)) {
+            return back()->withErrors(['stok_list' => 'Belum ada stok yang ditambahkan.'], 'stok');
+        }
+
+        session()->put('cetak_list', $list);
+        session()->forget('stok_list');
+
+        return redirect()->route('inventory.item.cetak');
+    }
+
+    // ================================================================
+    // HALAMAN PRINT
+    // ================================================================
+    public function cetak()
+    {
+        $cetak = session('cetak_list', []);
+
+        if (empty($cetak)) {
+            return redirect()->route('inventory.item');
+        }
+
+        return view('Inventory.cetakBarcode', ['cetak' => $cetak]);
     }
 
     /**
@@ -381,7 +433,8 @@ class ITMController extends Controller
         return $kode;
     }
 
-    public function destroy($id){
+    public function destroy($id)
+    {
         $item = ITM::where('ITM', $id)->firstOrFail();
         $item->delete();
 

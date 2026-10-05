@@ -343,7 +343,7 @@
         <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold mb-5">Tambah Merk</h2>
 
-            <form method="POST" action="{{ route('inventory.merk.store') }}" class="space-y-4">
+            <form method="POST" id="formTambah" action="{{ route('inventory.merk.store') }}" class="space-y-4">
                 @csrf
 
                 {{-- Kode Merk --}}
@@ -382,6 +382,7 @@
                     </button>
                     <button
                         type="submit"
+                        id="btnTambah"
                         class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer"
                     >
                         Simpan
@@ -514,6 +515,22 @@
         document.getElementById('editMerkModal').classList.add('hidden');
         document.getElementById('editMerkModal').classList.remove('flex');
     }
+
+    // Mencegah double submit (ditaruh di luar fungsi agar aktif otomatis)
+    document.getElementById('formTambah').addEventListener('submit', function (event) {
+        const btn = document.getElementById('btnTambah');
+        
+        // 1. Cek apakah tombol sudah dalam kondisi disabled
+        if (btn.disabled) {
+            event.preventDefault();
+            return;
+        }
+
+        // 2. Matikan tombol dan ganti teksnya agar user tahu sedang memproses
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed'); // Opsional: Tambah efek visual redup Tailwind
+        btn.innerText = 'Menyimpan...';
+    });
 </script>
 @endpush
 @endsection
