@@ -208,13 +208,6 @@
             {{-- Judul Modal --}}
             <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode</h3>
 
-            {{-- Area Kamera Scanner (Kotak Abu-Abu Gelap) --}}
-            <div class="w-full h-52 bg-[#596172] rounded-xl relative overflow-hidden flex flex-col items-center justify-center text-white shadow-inner">
-                {{-- Garis Animasi Laser Merah --}}
-                <div class="w-full h-0.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)] animate-pulse"></div>
-                <span class="text-xs text-white/70 mt-2 font-medium">Arahkan barcode ke kamera</span>
-            </div>
-
             {{-- Form Input Manual Kode Barcode --}}
             <form action="{{ route('POS.scan') }}" method="POST">
                 @csrf
@@ -1210,6 +1203,7 @@
         }).catch(err => console.error('Gagal sinkronisasi session cart:', err));
     }
 
+    let html5QrcodeScanner = null;
     // -------------------------------------------------------------------------
     // 7. FUNGSI MODAL SCAN BARCODE
     // -------------------------------------------------------------------------

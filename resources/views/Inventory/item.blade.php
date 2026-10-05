@@ -27,7 +27,7 @@
         : '';
 
     // Modal otomatis terbuka lagi setelah simpan stok / error validasi
-    $bukaStok   = session('stok_ok') || $errors->hasBag('stok');
+    $bukaStok   = !empty($stokList) || $errors->hasBag('stok');
     $bukaTambah = $errors->hasBag('tambah');
 
 
@@ -47,27 +47,6 @@
 ?>
 
 <div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 space-y-4">
-
-    {{-- ========================================================= --}}
-    {{-- ALERT --}}
-    {{-- ========================================================= --}}
-    <?php if (session('success')): ?>
-        <div class="bg-green-50 border border-green-300 text-green-700 text-sm rounded-lg px-4 py-2.5">
-            <?= e(session('success')) ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (session('error')): ?>
-        <div class="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-4 py-2.5">
-            <?= e(session('error')) ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($errors->hasBag('edit')): ?>
-        <div class="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-4 py-2.5">
-            <?= e($errors->getBag('edit')->first()) ?>
-        </div>
-    <?php endif; ?>
 
     {{-- ========================================================= --}}
     {{-- STAT CARDS --}}
@@ -207,20 +186,37 @@
                                 <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
-                                    {{-- DROPDOWN AKSI (HTML murni: <details>) --}}
-                                    <details class="relative inline-block text-left">
-                                        <summary
-                                            title="Aksi Item"
-                                            class="list-none [&::-webkit-details-marker]:hidden h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors cursor-pointer"
+                                {{-- DROPDOWN AKSI (HTML murni: <details>) --}}
+                                <div class="relative inline-block">
+
+                                    {{-- BUTTON AKSI --}}
+                                    <button
+                                        type="button"
+                                        onclick="toggleActionMenu(this)"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                                        title="Aksi Sales"
+                                    >
+                                        <svg
+                                            class="w-4 h-4 text-primary-db"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="2"
                                         >
-                                            <svg class="w-4 h-4 text-primary-db" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                                            </svg>
-                                        </summary>
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                            />
+                                        </svg>
+                                    </button>
 
-                                        <div class="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-2xl py-1 z-[999] text-left">
 
-                                            {{-- DETAIL --}}
+                                    {{-- ACTION MENU --}}
+                                    <div
+                                        class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden"
+                                    >
+                                        {{-- DETAIL --}}
                                             <a
                                                 href="<?= e(route('inventory.item.show', $r->itm)) ?>"
                                                 class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
@@ -232,47 +228,77 @@
                                                 <span>Detail</span>
                                             </a>
 
-                                            {{-- EDIT --}}
-                                            <button
-                                                type="button"
-                                                data-action="<?= e(route('inventory.item.update', $r->itm)) ?>"
-                                                data-itm="<?= e($r->itm) ?>"
-                                                data-des="<?= e($r->des) ?>"
-                                                data-hrg="<?= e($r->hrg) ?>"
-                                                data-ktg="<?= e($r->ktg) ?>"
-                                                data-mrk="<?= e($r->mrk) ?>"
-                                                data-spp="<?= e($r->spp) ?>"
-                                                onclick="openEditModal(this)"
-                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                        {{-- EDIT --}}
+                                        <button
+                                            type="button"
+                                            data-itm="{{ $r->itm }}"
+                                            data-des="{{ $r->des }}"
+                                            data-hrg="{{ $r->hrg }}"
+                                            data-ktg="{{ $r->ktg }}"
+                                            data-mrk="{{ $r->mrk }}"
+                                            data-spp="{{ $r->spp }}"
+                                            data-action="{{ route('inventory.item.update', ['id' => $r->itm]) }}"
+                                            onclick="openEditModal(this)"
+                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                        >
+
+                                            <svg
+                                                class="w-3.5 h-3.5 text-gray-600"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="2"
                                             >
-                                                <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                                />
+                                            </svg>
+
+                                            <span>Edit</span>
+
+                                        </button>
+
+
+                                        {{-- HAPUS --}}
+                                        <form
+                                            method="POST"
+                                            action="{{ route('inventory.item.destroy', ['id' => $r->itm]) }}"
+                                        >
+
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                onclick="return confirm('Hapus Item ini?')"
+                                                class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                            >
+
+                                                <svg
+                                                    class="w-3.5 h-3.5"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                    stroke-width="2"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16"
+                                                    />
                                                 </svg>
-                                                <span>Edit</span>
+
+                                                <span>Hapus</span>
+
                                             </button>
 
-                                            {{-- DELETE --}}
-                                            <form
-                                                method="POST"
-                                                action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>"
-                                            >
-                                                @csrf
-                                                @method('DELETE')
+                                        </form>
 
-                                                <button
-                                                    type="submit"
-                                                    onclick="return confirm('Hapus barang ini?')"
-                                                    class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
-                                                >
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" />
-                                                    </svg>
-                                                    <span>Hapus</span>
-                                                </button>
-                                            </form>
+                                    </div>
 
-                                        </div>
-                                    </details>
+                                </div>
 
                                 </td>
                             </tr>
@@ -373,7 +399,6 @@
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <?= $galat('stok', 'stok_itm') ?>
                 </div>
 
                 {{-- GUDANG & HARGA BELI --}}
@@ -436,21 +461,32 @@
                             Simpan
                         </button>
                     </div>
-                    <?= $galat('stok', 'stok_bc') ?>
 
-                    <?php if (session('stok_ok')): ?>
-                        <span class="text-green-600 text-xs mt-1 block"><?= e(session('stok_ok')) ?></span>
+                    <?php if (!empty($stokList)): ?>
+                        <div class="mt-2 border border-gray-300 bg-white rounded-lg max-h-32 overflow-y-auto divide-y divide-gray-100">
+                            <?php foreach ($stokList as $s): ?>
+                                <div class="px-3 py-1.5 text-xs flex items-center justify-between gap-2">
+                                    <span class="truncate"><?= e($s['des']) ?> · <?= e($s['gd']) ?></span>
+                                    <span class="font-mono text-green-600"><?= e($s['bc_out']) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-1"><?= count($stokList) ?> kode menunggu di-generate</p>
                     <?php endif; ?>
+                    <?= $galat('stok', 'stok_itm') ?>
                 </div>
 
-                <button
-                    type="button"
-                    onclick="tutupModal('tambahStokModal')"
-                    class="w-full py-2 px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center"
-                >
-                    Batal
-                </button>
+            </form>
 
+            <form method="POST" action="<?= e(route('inventory.item.generate')) ?>" class="mt-3">
+                @csrf
+                <button
+                    type="submit"
+                    <?= empty($stokList) ? 'disabled' : '' ?>
+                    class="w-full py-2 px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Generate Barcode<?= !empty($stokList) ? ' (' . count($stokList) . ')' : '' ?>
+                </button>
             </form>
         </div>
     </div>
@@ -469,7 +505,7 @@
 
             <h2 class="text-xl font-bold mb-6">Tambah Barang</h2>
 
-            <form method="POST" action="<?= e(route('inventory.item.store')) ?>" class="space-y-6">
+            <form method="POST" id="formTambah" action="<?= e(route('inventory.item.store')) ?>" class="space-y-6">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -528,8 +564,10 @@
                             class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
                         Batal
                     </button>
-                    <button type="submit"
-                            class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
+                    <button 
+                    type="submit"
+                    id="btnTambahITM"
+                    class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
                         Simpan
                     </button>
                 </div>
@@ -633,6 +671,31 @@
         m.classList.add('flex');
     }
 
+    // ---------- Menu aksi ----------
+    function toggleActionMenu(button) {
+        const menu = button.parentElement.querySelector('.action-menu');
+
+        document.querySelectorAll('.action-menu').forEach(function (item) {
+            if (item !== menu) item.classList.add('hidden');
+        });
+
+        menu.classList.toggle('hidden');
+    }
+
+    // ---------- Tutup menu/dropdown saat klik di luar ----------
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.action-menu') && !event.target.closest('button[onclick="toggleActionMenu(this)"]')) {
+            document.querySelectorAll('.action-menu').forEach(function (menu) {
+                menu.classList.add('hidden');
+            });
+        }
+
+        if (!event.target.closest('#containerFilterSales')) {
+            document.getElementById('panelFilterSales').classList.add('hidden');
+            document.getElementById('arrowSalesSort').classList.remove('rotate-180');
+        }
+    });
+
     function tutupModal(id) {
         const m = document.getElementById(id);
         m.classList.remove('flex');
@@ -671,6 +734,22 @@
         if (e.key === 'Escape') {
             ['tambahStokModal', 'tambahITMModal', 'editITMModal'].forEach(tutupModal);
         }
+    });
+
+    // Mencegah double submit (ditaruh di luar fungsi agar aktif otomatis)
+    document.getElementById('formTambah').addEventListener('submit', function (event) {
+        const btn = document.getElementById('btnTambahITM');
+        
+        // 1. Cek apakah tombol sudah dalam kondisi disabled
+        if (btn.disabled) {
+            event.preventDefault();
+            return;
+        }
+
+        // 2. Matikan tombol dan ganti teksnya agar user tahu sedang memproses
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed'); // Opsional: Tambah efek visual redup Tailwind
+        btn.innerText = 'Menyimpan...';
     });
 </script>
 

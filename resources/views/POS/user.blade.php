@@ -576,6 +576,7 @@
 
             <form
                 method="POST"
+                id="formTambah"
                 action="{{ route('POS.user.store') }}"
                 class="space-y-5"
             >
@@ -689,6 +690,7 @@
 
                     <button
                         type="submit"
+                        id="btnTambah"
                         class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer transition-colors"
                     >
                         Simpan
@@ -936,6 +938,22 @@
         modal.classList.remove('flex');
         modal.classList.add('hidden');
     }
+
+    // Mencegah double submit (ditaruh di luar fungsi agar aktif otomatis)
+    document.getElementById('formTambah').addEventListener('submit', function (event) {
+        const btn = document.getElementById('btnTambah');
+        
+        // 1. Cek apakah tombol sudah dalam kondisi disabled
+        if (btn.disabled) {
+            event.preventDefault();
+            return;
+        }
+
+        // 2. Matikan tombol dan ganti teksnya agar user tahu sedang memproses
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed'); // Opsional: Tambah efek visual redup Tailwind
+        btn.innerText = 'Menyimpan...';
+    });
 
 </script>
 
