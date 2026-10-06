@@ -13,6 +13,7 @@ use App\Http\Controllers\KASController;
 use App\Http\Controllers\SPPController;
 use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
+use App\Http\Controllers\OpnameStokController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -110,8 +111,8 @@ Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
     Route::post('gudang', [App\Http\Controllers\GDController::class, 'store'])->name('gudang.store');
     Route::put('gudang/{gd}', [App\Http\Controllers\GDController::class, 'update'])->name('gudang.update');
     Route::get('gudang/{gd}/show', [App\Http\Controllers\GDController::class, 'show'])->name('gudang.show');
+    Route::get('gudang/{gd}/barang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
     Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
-    Route::get('daftarBarang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
 
     Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
     Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
@@ -123,7 +124,8 @@ Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
     Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->name('supplier.destroy');
 
     // Cek Stok
-    Route::get('opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
+    Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
+Route::get('/cek-stok/mulai', [OpnameStokController::class, 'pull'])->name('opname.pull');
 });
 
 

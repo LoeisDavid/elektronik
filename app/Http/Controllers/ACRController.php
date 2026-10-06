@@ -10,29 +10,30 @@ class ACRController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ACR::query();
+        try {
+            $query = ACR::query();
 
-        if ($request->filled('keyword')) {
-            $keyword = $request->keyword;
-            $query->where('REF_NO', 'LIKE', "%{$keyword}%")
-                //   ->orWhere('BRT', 'LIKE', "%{$keyword}%")
-                //   ->orWhere('DT', 'LIKE', "%{$keyword}%")
-                ;
-        }
+            if ($request->filled('keyword')) {
+                $keyword = $request->keyword;
+                $query->where('REF_NO', 'LIKE', "%{$keyword}%")
+                    //   ->orWhere('BRT', 'LIKE', "%{$keyword}%")
+                    //   ->orWhere('DT', 'LIKE', "%{$keyword}%")
+                    ;
+            }
 
-        if ($request->sort == 'terbaru') {
-            $query->orderBy('DT', 'desc');
-        } else if($request->sort == 'terlama') {
-            $query->orderBy('DT', 'asc');
-        } else if($request->sort == 'termahal') {
-            $query->orderBy('BRT', 'desc');
-        } else if($request->sort == 'termurah') {
-            $query->orderBy('BRT', 'asc');
-        } else {
-            $query->orderBy('DT', 'desc');
-        }
+            if ($request->sort == 'terbaru') {
+                $query->orderBy('DT', 'desc');
+            } else if($request->sort == 'terlama') {
+                $query->orderBy('DT', 'asc');
+            } else if($request->sort == 'termahal') {
+                $query->orderBy('BRT', 'desc');
+            } else if($request->sort == 'termurah') {
+                $query->orderBy('BRT', 'asc');
+            } else {
+                $query->orderBy('DT', 'desc');
+            }
 
-        $data = $query->paginate(10)->withQueryString();
+            $data = $query->paginate(10)->withQueryString();
 
         foreach ($data as $acr) {
             $detail = [];
@@ -120,10 +121,19 @@ class ACRController extends Controller
             abort(422, 'Data detail struk tidak valid.');
         }
 
-        $items = [];
-        foreach ($itemsRaw as $d) {
-            if (!is_array($d)) {
-                continue;
+            $items = [];
+            foreach ($itemsRaw as $d) {
+                if (!is_array($d)) {
+                    continue;
+                }
+
+                $items[] = [
+                    'nama'     => (string) ($d['nama'] ?? '-'),
+                    'qty'      => (int) ($d['qty'] ?? 1),
+                    'subtotal' => isset($d['subtotal']) && $d['subtotal'] !== null
+                                    ? (float) $d['subtotal']
+                                    : null,
+                ];
             }
 
             $items[] = [
@@ -135,7 +145,6 @@ class ACRController extends Controller
                                     ? (float) $d['subtotal']
                                     : null,
             ];
-        }
 
         $struk = [
             'ref_no'          => $request->input('ref_no'),
@@ -156,11 +165,11 @@ class ACRController extends Controller
         // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item
         $tinggi = 420 + (count($items) * 36);
 
-        $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
-            ->setPaper([0, 0, 226.77, $tinggi], 'portrait');
+            $namaFile = 'struk-' . preg_replace('/[^A-Za-z0-9_-]/', '', $struk['ref_no']) . '.pdf';
 
-        $namaFile = 'struk-' . preg_replace('/[^A-Za-z0-9_-]/', '', $struk['ref_no']) . '.pdf';
-
-        return $pdf->stream($namaFile);
+            return $pdf->stream($namaFile);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan struk');
+        }
     }
 }

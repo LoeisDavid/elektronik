@@ -102,14 +102,23 @@
         </div>
 
         {{-- TAMBAH GUDANG --}}
-        <button
-            type="button"
-            onclick="bukaModal('tambahGudangModal')"
-            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
-        >
-            <span class="text-lg leading-none font-bold">+</span>
-            <span>Tambah Gudang</span>
-        </button>
+        <div class="flex items-center gap-2">
+            <a 
+                href="{{ route('inventory.opname') }}"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            >
+                <span>Cek stok</span>
+            </a>
+
+            <button
+                type="button"
+                onclick="bukaModal('tambahGudangModal')"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            >
+                <span class="text-lg leading-none font-bold">+</span>
+                <span>Tambah Gudang</span>
+            </button>
+        </div>
 
     </div>
 

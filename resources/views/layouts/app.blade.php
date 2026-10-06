@@ -120,6 +120,32 @@
             @endif
         });
     </script>
+    <script>
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+
+            if (!form.matches('form')) {
+                return;
+            }
+
+            // Cegah submit kedua
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+
+            // Disable tombol submit
+            const buttons = form.querySelectorAll(
+                'button[type="submit"], input[type="submit"]'
+            );
+
+            buttons.forEach(button => {
+                button.disabled = true;
+            });
+        });
+        </script>
 
     @stack('scripts')
 </body>

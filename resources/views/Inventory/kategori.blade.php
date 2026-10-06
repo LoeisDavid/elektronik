@@ -346,19 +346,6 @@
             <form method="POST" id="formTambah" action="{{ route('inventory.kategori.store') }}" class="space-y-4">
                 @csrf
 
-                {{-- Kode Kategori --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Kode Kategori</label>
-                    <input
-                        type="text"
-                        name="KTG"
-                        placeholder="Contoh: KTG0000001"
-                        maxlength="10"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                </div>
-
                 {{-- Nama Kategori --}}
                 <div>
                     <label class="block text-sm font-semibold mb-1">Nama Kategori</label>
