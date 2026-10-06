@@ -102,15 +102,17 @@
             >
         </div>
 
-        <select
-            id="filterStatus"
-            class="bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
-        >
-            <option value="semua">Status: Semua</option>
-            <option value="checking">Status: Checking</option>
-            <option value="belum_terjual">Status: Belum Terjual</option>
-            <option value="sudah_terjual">Status: Sudah Terjual</option>
-        </select>
+        <div class="w-48">
+            <select
+                id="filterStatus"
+                class="searchable-select bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
+            >
+                <option value="semua">Status: Semua</option>
+                <option value="checking">Status: Checking</option>
+                <option value="belum_terjual">Status: Belum Terjual</option>
+                <option value="sudah_terjual">Status: Sudah Terjual</option>
+            </select>
+        </div>
     </div>
 
     {{-- ================= TABLE (VIRTUAL SCROLL) ================= --}}
@@ -385,6 +387,9 @@ document.addEventListener('DOMContentLoaded', function () {
         cariTimer = setTimeout(() => terapkanFilter(), 150);
     });
     filterStatus.addEventListener('change', () => terapkanFilter());
+    if (typeof jQuery !== 'undefined') {
+        $(filterStatus).on('change', () => terapkanFilter());
+    }
 
     /* =====================================================================
        3. HITUNG STATUS

@@ -123,9 +123,9 @@
 
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold rounded-t-lg">
-                        <th class="py-2.5 px-4 font-semibold text-center rounded-tl-lg">Kode Supplier</th>
-                        <th class="py-2.5 px-4 font-semibold text-center">Nama Supplier</th>
-                        <th class="py-2.5 px-4 font-semibold text-center">Nomor Telepon</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Kode Supplier</th>
+                        <th class="py-2.5 px-4 font-semibold">Nama Supplier</th>
+                        <th class="py-2.5 px-4 font-semibold">Nomor Telepon</th>
                         <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
@@ -134,9 +134,9 @@
                     <?php if (count($data) > 0): ?>
                         <?php foreach ($data as $supplier): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4 font-medium text-center"><?= e($supplier->SPP) ?></td>
-                                <td class="py-3.5 px-4 text-center"><?= e($supplier->DES) ?></td>
-                                <td class="py-3.5 px-4 text-center font-mono"><?= e($supplier->TLP) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($supplier->SPP) ?></td>
+                                <td class="py-3.5 px-4"><?= e($supplier->DES) ?></td>
+                                <td class="py-3.5 px-4"><?= e($supplier->TLP) ?></td>
 
                                 <td class="py-3.5 px-4 text-center overflow-visible">
 

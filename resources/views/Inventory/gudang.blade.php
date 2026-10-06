@@ -50,7 +50,7 @@
     {{-- ========================================================= --}}
     <div class="flex items-center justify-between gap-3 mb-4">
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
 
             {{-- SEARCH --}}
             <form action="<?= e(route('inventory.gudang')) ?>" method="GET" class="relative w-64 md:w-80">
@@ -75,7 +75,7 @@
 
             {{-- SORT (HTML murni: <details> + link) --}}
             <details class="relative group">
-                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-[170px]">
+                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3.5 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-[170px]">
                     <span>Urutkan: <?= e($opsiSort[$sort]) ?></span>
                     <svg class="w-4 h-4 text-gray-600 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />

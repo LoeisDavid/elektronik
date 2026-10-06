@@ -188,6 +188,11 @@ class ITMController extends Controller
     public function store(Request $request)
     {
         try {
+            if ($request->has('HRG')) {
+                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+            }
+
             $data = $request->validateWithBag('tambah', [
                 'DES' => 'required|string|max:150',
                 'MRK' => 'required|string|max:10',
@@ -314,6 +319,11 @@ class ITMController extends Controller
     public function update(Request $request, string $id)
     {
         try {
+            if ($request->has('HRG')) {
+                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+            }
+
             $data = $request->validateWithBag('edit', [
                 'DES' => 'required|string|max:150',
                 'MRK' => 'required|string|max:10',
@@ -337,6 +347,11 @@ class ITMController extends Controller
     public function tambahStok(Request $request)
     {
         try {
+            if ($request->has('stok_hrb')) {
+                $cleanHrb = preg_replace('/[^\d]/', '', (string) $request->input('stok_hrb'));
+                $request->merge(['stok_hrb' => $cleanHrb !== '' ? (float) $cleanHrb : null]);
+            }
+
             $data = $request->validateWithBag('stok', [
                 'stok_itm' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',

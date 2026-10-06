@@ -16,6 +16,114 @@
 
     <!-- Vite Styles & Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- jQuery & Select2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Styling Custom Modern untuk Select2 -->
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+        .select2-container--default .select2-selection--single {
+            background-color: #ffffff;
+            border: 1px solid #94a3b8;
+            border-radius: 0.75rem; /* rounded-xl */
+            height: 42px;
+            padding: 5px 12px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #101D36;
+            box-shadow: 0 0 0 1px #101D36;
+            outline: none;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #0f172a;
+            line-height: normal;
+            padding-left: 0;
+            padding-right: 24px;
+            font-weight: 500;
+            width: 100%;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100%;
+            top: 0;
+            right: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #64748b transparent transparent transparent;
+            border-width: 5px 4px 0 4px;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #64748b transparent;
+            border-width: 0 4px 5px 4px;
+        }
+        .select2-dropdown {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            font-family: inherit;
+            font-size: 0.875rem;
+            overflow: hidden;
+            z-index: 999999 !important;
+        }
+        .select2-search--dropdown {
+            padding: 8px 10px;
+        }
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            outline: none;
+            width: 100%;
+        }
+        .select2-search--dropdown .select2-search__field:focus {
+            border-color: #101D36;
+            box-shadow: 0 0 0 1px #101D36;
+        }
+        .select2-results__option {
+            padding: 8px 14px;
+            font-size: 0.875rem;
+            color: #1e293b;
+            cursor: pointer;
+        }
+        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #101D36;
+            color: #ffffff;
+        }
+        .select2-container--default .select2-results__option--selected {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            margin-right: 18px;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+            color: #ef4444;
+        }
+    </style>
+
     @stack('styles')
 </head>
 <body class="h-screen w-screen bg-light-bg font-montserrat text-heading-dark antialiased relative">
@@ -121,6 +229,70 @@
         });
     </script>
     <script>
+        // =========================================================
+        // HELPER GLOBAL FORMAT RUPIAH
+        // =========================================================
+        function formatRupiah(number) {
+            if (number === null || number === undefined || isNaN(number) || number === '') return 'Rp 0';
+            return 'Rp ' + Math.round(Number(number)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function formatInputRupiah(input) {
+            if (!input) return;
+            let rawVal = input.value.replace(/\D/g, '');
+            if (!rawVal) {
+                input.value = '';
+                return;
+            }
+            let numVal = parseFloat(rawVal) || 0;
+            input.value = formatRupiah(numVal);
+        }
+
+        // Inisialisasi otomatis semua field nominal / rupiah
+        function initRupiahInputs() {
+            document.querySelectorAll('.input-rupiah, input[data-type="rupiah"]').forEach(function(input) {
+                if (!input.dataset.rupiahBound) {
+                    input.dataset.rupiahBound = 'true';
+                    input.addEventListener('input', function() {
+                        formatInputRupiah(this);
+                    });
+                    if (input.value && !input.value.toString().trim().startsWith('Rp')) {
+                        let num = parseFloat(input.value.toString().replace(/\D/g, ''));
+                        if (!isNaN(num) && num > 0) {
+                            input.value = formatRupiah(num);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inisialisasi otomatis semua selectbox dengan search menggunakan jQuery Select2
+        function initSearchableSelects() {
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                $('select.searchable-select, select.select2, select[data-searchable="true"]').each(function() {
+                    let $select = $(this);
+                    if (!$select.hasClass("select2-hidden-accessible")) {
+                        let parentModal = $select.closest('.fixed, .modal, [id*="Modal"]');
+                        $select.select2({
+                            width: '100%',
+                            placeholder: $select.find('option[disabled]').text() || $select.data('placeholder') || 'Pilih...',
+                            allowClear: Boolean($select.data('allow-clear')),
+                            dropdownParent: parentModal.length ? parentModal : $(document.body)
+                        });
+
+                        $select.on('select2:select', function () {
+                            this.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initRupiahInputs();
+            initSearchableSelects();
+        });
+
         document.addEventListener('submit', function (e) {
             const form = e.target;
 
@@ -134,6 +306,13 @@
                 return;
             }
 
+            // Bersihkan format Rupiah sebelum dikirim ke backend Laravel controller
+            form.querySelectorAll('.input-rupiah, input[data-type="rupiah"]').forEach(input => {
+                if (input.value) {
+                    input.value = input.value.replace(/\D/g, '');
+                }
+            });
+
             form.dataset.submitting = 'true';
 
             // Disable tombol submit
@@ -145,7 +324,7 @@
                 button.disabled = true;
             });
         });
-        </script>
+    </script>
 
     @stack('scripts')
 </body>
