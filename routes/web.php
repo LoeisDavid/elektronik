@@ -13,6 +13,7 @@ use App\Http\Controllers\KASController;
 use App\Http\Controllers\SPPController;
 use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
+use App\Http\Controllers\OpnameStokController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -41,6 +42,7 @@ Route::get('/user', function () {
 
 Route::prefix('POS')->name('POS.')->group(function () {
     Route::get('kasir', [kasirController::class, 'index'])->name('kasir');
+    Route::get('search-items', [kasirController::class, 'searchItems'])->name('search-items');
     Route::match(['get', 'post'], 'scan', [kasirController::class, 'scan'])->name('scan');
     Route::post('cart/sync', [kasirController::class, 'syncCart'])->name('cart.sync');
     Route::post('cart/clear', [kasirController::class, 'clearCart'])->name('cart.clear');
@@ -49,7 +51,7 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('tutup-kasir', [kasirController::class, 'tutupKasir'])->name('tutup-kasir');
     Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
 
-Route::post('/struk/print', [ACRController::class, 'print'])->name('struk.print');
+    Route::post('/struk/print', [ACRController::class, 'print'])->name('struk.print');
 
     // customer
     Route::get('customer', [CSTController::class, 'index'])->name('customer');
@@ -122,7 +124,8 @@ Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
     Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->name('supplier.destroy');
 
     // Cek Stok
-    Route::get('opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
+    Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
+Route::get('/cek-stok/mulai', [OpnameStokController::class, 'pull'])->name('opname.pull');
 });
 
 

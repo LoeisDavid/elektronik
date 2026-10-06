@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('CST', 10);
             $table->string('SLS', 10);
             $table->decimal('BRT', 16, 2);
+            $table->double('PAY', 12, 2);
+            $table->float('TOT_POT', 12, 2);
+            $table->tinyInteger('JNS');
             $table->integer('POT_1')->nullable();
             $table->integer('POT_2')->nullable();
             $table->decimal('POT_R', 10, 2)->nullable();

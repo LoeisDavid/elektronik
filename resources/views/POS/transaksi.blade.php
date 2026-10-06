@@ -277,6 +277,16 @@
                             $tglFmt = $item->DT
                                 ? \Carbon\Carbon::parse($item->DT)->format('d/m/Y')
                                 : '-';
+                            $tglDisplay = $item->DT
+                                ? \Carbon\Carbon::parse($item->DT)->translatedFormat('d M Y')
+                                : '-';
+                            $waktuDisplay = $item->created_at
+                                ? \Carbon\Carbon::parse($item->created_at)->format('H.i')
+                                : ($item->DT ? \Carbon\Carbon::parse($item->DT)->format('H.i') : '00.00');
+                            $isTunai = ($item->JNS != 2);
+                            $metodeDisplay = $isTunai ? 'Tunai' : 'Non-Tunai / QRIS';
+                            $dibayar = (float) ($item->PAY ?? $item->BRT ?? 0);
+                            $kembalian = max(0, $dibayar - (float) ($item->BRT ?? 0));
 
                             $detailArr = collect($item->detail ?? [])->values();
                         @endphp
@@ -308,8 +318,18 @@
                                     type="button"
                                     onclick="openStrukModal(this)"
                                     data-ref="{{ $item->REF_NO }}"
-                                    data-tanggal="{{ $tglFmt }}"
+                                    data-tanggal="{{ $tglDisplay }}"
+                                    data-waktu="{{ $waktuDisplay }}"
+                                    data-kasir="{{ $item->USER ?? 'Kasir' }}"
+                                    data-metode="{{ $metodeDisplay }}"
+                                    data-subtotal="{{ $item->subtotal_calc ?? $item->BRT ?? 0 }}"
+                                    data-diskon-item="{{ $item->item_discount_calc ?? 0 }}"
+                                    data-diskon-global-pct="{{ (float) ($item->POT_1 ?? 0) }}"
+                                    data-diskon-global="{{ $item->global_discount_calc ?? 0 }}"
+                                    data-voucher="{{ $item->voucher_calc ?? 0 }}"
                                     data-total="{{ $item->BRT ?? 0 }}"
+                                    data-dibayar="{{ $dibayar }}"
+                                    data-kembalian="{{ $kembalian }}"
                                     data-detail="{{ json_encode($detailArr) }}"
                                     class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-100 rounded-lg text-xs font-semibold text-black cursor-pointer transition-colors"
                                 >
@@ -584,7 +604,7 @@
 
 
     {{-- ========================================================= --}}
-    {{-- MODAL STRUK --}}
+    {{-- MODAL STRUK (SESUAI DESAIN KASIR / POMELO)                --}}
     {{-- ========================================================= --}}
 
     <div
@@ -593,162 +613,112 @@
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4"
     >
 
+        <!-- Card Modal -->
         <div
             onclick="event.stopPropagation()"
-            class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-100 animate-fade-in"
+            class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-4 border border-gray-100 animate-fade-in"
         >
 
-            {{-- AREA STRUK --}}
-            <div
-                id="areaStrukPrint"
-                class="bg-white p-4 rounded-xl border border-dashed border-gray-300 text-xs font-sans text-gray-800 space-y-3"
-            >
+            <!-- Judul Modal -->
+            <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Struk</h3>
 
+            <!-- Tampilan Kertas Struk Sesuai Mockup Kasir -->
+            <div id="areaStrukPrint" class="bg-white p-5 rounded-2xl border border-dashed border-gray-300 text-xs font-sans text-gray-800 space-y-3">
+
+                <!-- Header Toko / Brand Name -->
                 <div class="text-center space-y-1">
-
-                    <h2
-                        class="text-xl font-extrabold text-black tracking-wider uppercase"
-                        id="strukNamaToko"
-                    >
-                        NamaToko
-                    </h2>
-
-                    <p
-                        class="text-[11px] text-gray-500 leading-tight"
-                        id="strukAlamatToko"
-                    >
-                        Medokan Ayu, Kec. Rungkut, Surabaya<br>
-                        No Telp: 0881-0268-77983
-                    </p>
-
+                    <h2 class="text-2xl font-serif font-extrabold text-black tracking-tight" id="strukNamaToko">Pomelo.</h2>
+                    <p class="text-[11px] text-gray-400 font-medium mt-1">No. Transaksi</p>
+                    <p id="strukNoNota" class="text-sm font-bold text-gray-900 font-mono tracking-wider">-</p>
                 </div>
-
 
                 <div class="border-b border-dashed border-gray-300 my-2"></div>
 
-
-                <div class="space-y-1 text-gray-600">
-
-                    <div class="flex justify-between">
-                        <span>No. Transaksi</span>
-                        <span
-                            id="strukNoNota"
-                            class="font-semibold text-gray-900"
-                        >
-                            -
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <span>Tanggal</span>
-                        <span id="strukTanggal">
-                            -
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <span>Dilayani oleh</span>
-                        <span id="strukKasir">
-                            User 2
-                        </span>
-                    </div>
-
+                <!-- Detail Transaksi (Kiri) -->
+                <div class="space-y-0.5 text-xs text-gray-500 font-medium">
+                    <p id="strukTanggal">-</p>
+                    <p id="strukWaktu">-</p>
+                    <p>Dilayani oleh: <span id="strukKasir" class="text-gray-800 font-semibold">Kasir</span></p>
                 </div>
-
 
                 <div class="border-b border-dashed border-gray-300 my-2"></div>
 
-
-                <div
-                    id="strukListProduk"
-                    class="space-y-2"
-                ></div>
-
+                <!-- Item / Produk -->
+                <div id="strukListProduk" class="space-y-2.5">
+                    <!-- Diisi secara dinamis via JavaScript -->
+                </div>
 
                 <div class="border-b border-dashed border-gray-300 my-2"></div>
 
-
-                <div class="space-y-1.5 pt-1">
-
-                    <div class="flex justify-between text-sm font-bold text-black">
-
-                        <span>
-                            Total
-                        </span>
-
-                        <span
-                            id="strukTotal"
-                            class="text-base"
-                        >
-                            Rp 0
-                        </span>
-
+                <!-- Rincian Subtotal, Diskon & Total -->
+                <div class="space-y-1.5 pt-0.5 text-xs">
+                    <!-- Subtotal -->
+                    <div class="flex justify-between text-gray-600">
+                        <span>Subtotal</span>
+                        <span id="strukSubtotal" class="font-semibold text-gray-900">Rp 0</span>
                     </div>
 
-                </div>
+                    <!-- Diskon Per Item (Tampil jika ada) -->
+                    <div id="wrapperStrukDiskonItem" class="hidden justify-between text-gray-600">
+                        <span>Diskon Per Item</span>
+                        <span id="strukDiskonItem" class="font-semibold text-red-600">- Rp 0</span>
+                    </div>
 
+                    <!-- Diskon Global (Tampil jika ada) -->
+                    <div id="wrapperStrukDiskonGlobal" class="hidden justify-between text-gray-600">
+                        <span id="labelStrukDiskonGlobal">Diskon Global</span>
+                        <span id="strukDiskonGlobal" class="font-semibold text-red-600">- Rp 0</span>
+                    </div>
+
+                    <!-- Voucher Global (Tampil jika ada) -->
+                    <div id="wrapperStrukVoucher" class="hidden justify-between text-gray-600">
+                        <span>Voucher</span>
+                        <span id="strukVoucher" class="font-semibold text-red-600">- Rp 0</span>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
+                        <span>Total</span>
+                        <span id="strukTotal" class="text-base font-extrabold text-black">Rp 0</span>
+                    </div>
+
+                    <!-- Metode Pembayaran -->
+                    <div class="flex justify-between text-gray-600 pt-0.5">
+                        <span>Pembayaran</span>
+                        <span id="strukMetode" class="font-semibold text-gray-900">Tunai</span>
+                    </div>
+
+                    <!-- Rincian Tunai (Dibayar & Kembali) -->
+                    <div id="wrapperDetailTunai" class="hidden space-y-1 pt-0.5 text-gray-600">
+                        <div class="flex justify-between">
+                            <span>Dibayar</span>
+                            <span id="strukDibayar" class="font-semibold text-gray-900">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Kembali</span>
+                            <span id="strukKembali" class="font-semibold text-gray-900">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-
-            {{-- TOMBOL --}}
-            <div class="grid grid-cols-2 gap-3 pt-2">
-
+            <!-- Tombol Aksi (Tutup & Print Struk) -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
                 <button
                     type="button"
-                    onclick="downloadStruk()"
-                    class="w-full bg-white border active:bg-black text-black rounded-xl py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2"
-                >
-
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="1em"
-                        height="1em"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            d="M0 0h24v24H0z"
-                            fill="none"
-                        />
-
-                        <path
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.877a2 2 0 0 0 1.94-1.515L22 17"
-                        />
-                    </svg>
-
-                    Download
-
+                    onclick="closeStrukModal()"
+                    class="w-full bg-white border border-gray-400 hover:bg-gray-100 active:bg-gray-200 text-gray-900 rounded-xl py-2.5 text-center text-xs font-bold transition-colors cursor-pointer shadow-xs">
+                    Tutup
                 </button>
-
-
                 <button
                     type="button"
                     onclick="cetakStruk()"
-                    class="w-full bg-primary-db hover:bg-primary-sdb active:bg-black text-white rounded-xl py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2"
-                >
-
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4h2m0 0h10m-6 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                        />
+                    class="w-full bg-[#1A1F36] hover:bg-black active:bg-black text-white rounded-xl py-2.5 text-center text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                     </svg>
-
                     Print Struk
-
                 </button>
-
             </div>
 
         </div>
@@ -766,14 +736,19 @@
         class="hidden"
     >
         @csrf
-        <input type="hidden" name="ref_no"    id="printRefNo">
-        <input type="hidden" name="tanggal"   id="printTanggal">
-        <input type="hidden" name="kasir"     id="printKasir">
-        <input type="hidden" name="metode"    id="printMetode">
-        <input type="hidden" name="total"     id="printTotal">
-        <input type="hidden" name="dibayar"   id="printDibayar">
-        <input type="hidden" name="kembalian" id="printKembalian">
-        <input type="hidden" name="items"     id="printItems">
+        <input type="hidden" name="ref_no"          id="printRefNo">
+        <input type="hidden" name="tanggal"         id="printTanggal">
+        <input type="hidden" name="waktu"           id="printWaktu">
+        <input type="hidden" name="kasir"           id="printKasir">
+        <input type="hidden" name="metode"          id="printMetode">
+        <input type="hidden" name="subtotal"        id="printSubtotal">
+        <input type="hidden" name="discount_item"   id="printDiscountItem">
+        <input type="hidden" name="discount_global" id="printDiscountGlobal">
+        <input type="hidden" name="voucher"         id="printVoucher">
+        <input type="hidden" name="total"           id="printTotal">
+        <input type="hidden" name="dibayar"         id="printDibayar">
+        <input type="hidden" name="kembalian"       id="printKembalian">
+        <input type="hidden" name="items"           id="printItems">
     </form>
 
 </div>
@@ -896,104 +871,136 @@
         let items = [];
 
         try {
-
-            items =
-                JSON.parse(btn.dataset.detail || '[]');
-
+            items = JSON.parse(btn.dataset.detail || '[]');
         } catch (e) {
-
             items = [];
-
         }
 
+        const refNo = btn.dataset.ref || '-';
+        const tanggal = btn.dataset.tanggal || '-';
+        const waktu = btn.dataset.waktu || '00.00';
+        const kasir = btn.dataset.kasir || 'Kasir';
+        const metode = btn.dataset.metode || 'Tunai';
+        const subtotal = parseFloat(btn.dataset.subtotal) || 0;
+        const diskonItem = parseFloat(btn.dataset.diskonItem) || 0;
+        const diskonGlobalPct = parseFloat(btn.dataset.diskonGlobalPct) || 0;
+        const diskonGlobal = parseFloat(btn.dataset.diskonGlobal) || 0;
+        const voucher = parseFloat(btn.dataset.voucher) || 0;
+        const total = parseFloat(btn.dataset.total) || 0;
+        const dibayar = parseFloat(btn.dataset.dibayar) || 0;
+        const kembalian = parseFloat(btn.dataset.kembalian) || 0;
 
-        // [TAMBAHAN PRINT] simpan transaksi yang sedang dipilih
         strukAktif = {
-            ref: btn.dataset.ref,
-            tanggal: btn.dataset.tanggal,
-            total: btn.dataset.total,
+            ref: refNo,
+            tanggal: tanggal,
+            waktu: waktu,
+            kasir: kasir,
+            metode: metode,
+            subtotal: subtotal,
+            diskonItem: diskonItem,
+            diskonGlobalPct: diskonGlobalPct,
+            diskonGlobal: diskonGlobal,
+            voucher: voucher,
+            total: total,
+            dibayar: dibayar,
+            kembalian: kembalian,
             items: items
         };
 
+        document.getElementById('strukNoNota').textContent = refNo;
+        document.getElementById('strukTanggal').textContent = tanggal;
+        document.getElementById('strukWaktu').textContent = waktu;
+        document.getElementById('strukKasir').textContent = kasir;
+        document.getElementById('strukMetode').textContent = metode;
 
-        document.getElementById('strukNoNota').textContent =
-            btn.dataset.ref;
-
-        document.getElementById('strukTanggal').textContent =
-            btn.dataset.tanggal;
-
-        document.getElementById('strukTotal').textContent =
-            formatRupiah(btn.dataset.total);
-
-
-        const list =
-            document.getElementById('strukListProduk');
-
+        // Render List Produk
+        const list = document.getElementById('strukListProduk');
         list.innerHTML = '';
 
-
         if (!Array.isArray(items) || items.length === 0) {
-
-            list.innerHTML =
-                '<p class="text-gray-400 text-center">' +
-                'Tidak ada detail produk' +
-                '</p>';
-
+            list.innerHTML = '<p class="text-gray-400 text-center py-2">Tidak ada detail produk</p>';
         } else {
-
             items.forEach(function(d) {
-
-                const qty =
-                    Number(d.qty ?? d.QTY ?? 1);
-
-                const nama =
-                    d.nama ?? d.NAMA ?? '-';
-
-                const harga =
-                    d.harga ?? d.HARGA ?? null;
-
-                const subtotal =
-                    d.subtotal ??
-                    d.SUBTOTAL ??
-                    (
-                        harga !== null
-                            ? harga * qty
-                            : null
-                    );
-
-
-                const hargaHtml =
-                    subtotal !== null
-                        ? '<span class="font-semibold text-gray-900">' +
-                          formatRupiah(subtotal) +
-                          '</span>'
-                        : '';
-
+                const qty = Number(d.qty ?? d.QTY ?? 1);
+                const nama = d.nama ?? d.NAMA ?? '-';
+                const harga = d.price ?? d.harga ?? d.HARGA ?? 0;
+                const discInfo = d.discount_info || '';
+                const subtotalItem = d.subtotal ?? (harga * qty);
 
                 list.innerHTML +=
-                    '<div class="flex justify-between items-start">' +
-
-                        '<p class="font-semibold text-gray-900">' +
-                            escapeHtml(qty) +
-                            'x ' +
-                            escapeHtml(nama) +
-                        '</p>' +
-
-                        hargaHtml +
-
+                    '<div class="flex justify-between items-start text-xs pt-1">' +
+                        '<div class="min-w-0 pr-2">' +
+                            '<p class="font-bold text-gray-900 truncate">' + escapeHtml(nama) + '</p>' +
+                            '<p class="text-[11px] text-gray-500 font-medium">' + qty + 'x ' + formatRupiah(harga) + '</p>' +
+                            (discInfo ? '<p class="text-[10.5px] text-red-600 font-medium mt-0.5">' + escapeHtml(discInfo) + '</p>' : '') +
+                        '</div>' +
+                        '<span class="font-bold text-gray-900 shrink-0 text-right">' + formatRupiah(subtotalItem) + '</span>' +
                     '</div>';
-
             });
-
         }
 
+        // Subtotal
+        document.getElementById('strukSubtotal').textContent = formatRupiah(subtotal);
 
-        const modal =
-            document.getElementById('modalStrukPembayaran');
+        // Diskon Per Item
+        const elWrapDiscItem = document.getElementById('wrapperStrukDiskonItem');
+        const elDiscItem = document.getElementById('strukDiskonItem');
+        if (diskonItem > 0) {
+            elDiscItem.textContent = '- ' + formatRupiah(diskonItem);
+            elWrapDiscItem.classList.remove('hidden');
+            elWrapDiscItem.classList.add('flex');
+        } else {
+            elWrapDiscItem.classList.remove('flex');
+            elWrapDiscItem.classList.add('hidden');
+        }
 
+        // Diskon Global
+        const elWrapDiscGlobal = document.getElementById('wrapperStrukDiskonGlobal');
+        const elDiscGlobal = document.getElementById('strukDiskonGlobal');
+        const elLabelDiscGlobal = document.getElementById('labelStrukDiskonGlobal');
+        if (diskonGlobal > 0) {
+            if (diskonGlobalPct > 0) {
+                elLabelDiscGlobal.textContent = 'Diskon Global (' + diskonGlobalPct + '%)';
+            } else {
+                elLabelDiscGlobal.textContent = 'Diskon Global';
+            }
+            elDiscGlobal.textContent = '- ' + formatRupiah(diskonGlobal);
+            elWrapDiscGlobal.classList.remove('hidden');
+            elWrapDiscGlobal.classList.add('flex');
+        } else {
+            elWrapDiscGlobal.classList.remove('flex');
+            elWrapDiscGlobal.classList.add('hidden');
+        }
+
+        // Voucher
+        const elWrapVoucher = document.getElementById('wrapperStrukVoucher');
+        const elVoucher = document.getElementById('strukVoucher');
+        if (voucher > 0) {
+            elVoucher.textContent = '- ' + formatRupiah(voucher);
+            elWrapVoucher.classList.remove('hidden');
+            elWrapVoucher.classList.add('flex');
+        } else {
+            elWrapVoucher.classList.remove('flex');
+            elWrapVoucher.classList.add('hidden');
+        }
+
+        // Total
+        document.getElementById('strukTotal').textContent = formatRupiah(total);
+
+        // Detail Tunai (Dibayar & Kembali)
+        const elWrapTunai = document.getElementById('wrapperDetailTunai');
+        const isTunai = (metode || '').toLowerCase().includes('tunai') || (metode || '').toLowerCase().includes('cash');
+        if (isTunai) {
+            document.getElementById('strukDibayar').textContent = formatRupiah(dibayar);
+            document.getElementById('strukKembali').textContent = formatRupiah(kembalian);
+            elWrapTunai.classList.remove('hidden');
+        } else {
+            elWrapTunai.classList.add('hidden');
+        }
+
+        const modal = document.getElementById('modalStrukPembayaran');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
     }
 
 
@@ -1081,25 +1088,25 @@
                 d.nama ?? d.NAMA ?? '-';
 
             const harga =
-                d.harga ?? d.HARGA ?? null;
+                d.price ?? d.harga ?? d.HARGA ?? 0;
+
+            const discInfo =
+                d.discount_info || '';
 
             const subtotal =
-                d.subtotal ??
-                d.SUBTOTAL ??
-                (
-                    harga !== null
-                        ? harga * qty
-                        : null
-                );
+                d.subtotal ?? (harga * qty);
 
             return {
                 nama: nama,
                 qty: qty,
+                price: harga,
+                discount_info: discInfo,
                 subtotal: subtotal
             };
 
         });
 
+        const isTunai = (strukAktif.metode || '').toLowerCase().includes('tunai') || (strukAktif.metode || '').toLowerCase().includes('cash');
 
         document.getElementById('printRefNo').value =
             strukAktif.ref;
@@ -1107,17 +1114,35 @@
         document.getElementById('printTanggal').value =
             strukAktif.tanggal;
 
-        document.getElementById('printKasir').value =
-            document.getElementById('strukKasir').textContent.trim();
+        document.getElementById('printWaktu').value =
+            strukAktif.waktu;
 
-        document.getElementById('printMetode').value = '';
+        document.getElementById('printKasir').value =
+            strukAktif.kasir;
+
+        document.getElementById('printMetode').value =
+            strukAktif.metode;
+
+        document.getElementById('printSubtotal').value =
+            strukAktif.subtotal;
+
+        document.getElementById('printDiscountItem').value =
+            strukAktif.diskonItem;
+
+        document.getElementById('printDiscountGlobal').value =
+            strukAktif.diskonGlobal;
+
+        document.getElementById('printVoucher').value =
+            strukAktif.voucher;
 
         document.getElementById('printTotal').value =
             strukAktif.total;
 
-        document.getElementById('printDibayar').value = '';
+        document.getElementById('printDibayar').value =
+            isTunai ? strukAktif.dibayar : '';
 
-        document.getElementById('printKembalian').value = '';
+        document.getElementById('printKembalian').value =
+            isTunai ? strukAktif.kembalian : '';
 
         document.getElementById('printItems').value =
             JSON.stringify(items);

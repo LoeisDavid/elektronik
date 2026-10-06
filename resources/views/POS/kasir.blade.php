@@ -44,155 +44,189 @@
 
 
     {{-- ===================================================================== --}}
-    {{-- BAGIAN TENGAH: KATALOG PRODUK & TOOLBAR                               --}}
+    {{-- BAGIAN UTAMA: SCAN, KERANJANG, DAN BAR TOTAL (SESUAI MOCKUP)          --}}
     {{-- ===================================================================== --}}
     <div id="mainCenterSection" class="{{ !empty($isKasirOpen) ? 'flex' : 'hidden' }} flex-1 flex-col h-full overflow-hidden bg-secondary-bw">
-        {{-- ----------------------------------------------------------------- --}}
-        {{-- A. SUB-VIEW 1: KATALOG PRODUK NORMAL                              --}}
-        {{-- ----------------------------------------------------------------- --}}
-        <div id="viewKatalogNormal" class="flex-1 flex flex-col h-full overflow-hidden">
-            {{-- TOOLBAR ATAS (PENCARIAN, FILTER, DAN TOMBOL SCAN BARCODE) --}}
-            <div class="p-4 pb-2 flex items-center justify-between gap-3 flex-shrink-0 z-10">
-                
-                {{-- Kiri: Input Pencarian & Tombol Filter --}}
-                <div class="flex items-center gap-2 flex-1 max-w-md">
-                    <div class="relative flex-1 group">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                        </span>
-                        <input
-                            type="text"
-                            id="searchInput"
-                            onkeyup="filterProdukKatalog()"
-                            placeholder="Cari produk"
-                            class="w-full bg-secondary-bw border border-[#E2E8F0] rounded-lg pl-10 pr-4 py-2 text-sm text-[#2D3748] placeholder-gray-400 focus:outline-none focus:border-[#2D8CFF] focus:ring-1 focus:ring-[#2D8CFF] shadow-xs transition-all" />
-                    </div>
 
-                    <button
-                        type="button"
-                        class="h-9 w-9 bg-white border border-[#E2E8F0] hover:bg-gray-50 rounded-lg flex items-center justify-center text-gray-700 shadow-xs cursor-pointer transition-colors"
-                        title="Filter Produk">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.539.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.378-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                        </svg>
-                    </button>
-                </div>
+        {{-- ----------------------------------------------------------------- --}}
+        {{-- AREA ATAS: INPUT SCAN + DAFTAR KERANJANG (SCROLL DI DALAM LIST)   --}}
+        {{-- ----------------------------------------------------------------- --}}
+        <div id="viewKatalogNormal" class="flex-1 min-h-0 flex flex-col overflow-hidden px-6 pt-6">
 
-                {{-- Kanan: Tombol Buka Modal Scan Barcode --}}
-                <button
-                    type="button"
-                    onclick="bukaModalBarcode()"
-                    class="h-9 px-3 bg-secondary-bw border border-[#E2E8F0] hover:bg-gray-50 text-[#2D3748] rounded-lg flex items-center justify-center shadow-xs cursor-pointer transition-colors"
-                    title="Scan Barcode">
-                    <svg class="w-5 h-5 text-current" fill="currentColor" viewBox="0 0 24 24">
+            {{-- 1. INPUT SCAN BARCODE / PENCARIAN PRODUK ITM --}}
+            <div class="relative flex-shrink-0" id="containerSearchUtama">
+                <form
+                    id="formScanUtama"
+                    action="{{ route('POS.scan') }}"
+                    method="POST"
+                    onsubmit="return handleScanSubmit(event)"
+                    class="flex items-center gap-3 bg-white border border-black rounded-2xl pl-5 pr-3 py-3">
+                    @csrf
+                    <svg class="w-5 h-5 text-black flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4zm4 0h1v16h-1V4zm2 0h2v16h-2V4zm3 0h1v16h-1V4z" />
                     </svg>
-                </button>
-            </div>
+                    <input
+                        type="text"
+                        name="BC_OUT"
+                        id="inputScanUtama"
+                        autocomplete="off"
+                        oninput="handleSearchItmInput(this.value)"
+                        onkeydown="handleSearchItmKeydown(event)"
+                        onfocus="handleSearchItmFocus()"
+                        placeholder="Cari nama, harga, kode produk (ITM) / scan barcode..."
+                        class="flex-1 min-w-0 bg-transparent text-base text-black placeholder-gray-500 outline-none" />
 
-        </div>
-    </div>
-
-    {{-- ===================================================================== --}}
-    {{-- BAGIAN KANAN: PANEL ORDER / KERANJANG BELANJA                         --}}
-    {{-- ===================================================================== --}}
-    <div id="rightOrderPanel" class="w-80 lg:w-96 bg-white border-l border-black {{ !empty($isKasirOpen) ? 'flex' : 'hidden' }} flex-col h-full z-10">
-
-        {{-- 1. HEADER ORDER & TOMBOL DRAFT TRANSAKSI --}}
-        <div class="p-4 py-3 flex items-center justify-between border-y border-black bg-secondary-bw">
-            <h2 class="text-xl font-bold text-black tracking-tight">Order</h2>
-            
-            {{-- Tombol Draft Transaksi --}}
-            <button 
-                type="button" 
-                onclick="modalDraftTransaksi()" 
-                class="bg-primary-db hover:bg-primary-sdb text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors cursor-pointer">
-                Draft Transaksi
-            </button>
-        </div>
-
-        {{-- 2. DAFTAR ITEM KERANJANG (DIRENDER OTOMATIS OLEH JAVASCRIPT) --}}
-        <div id="cartItemsList" class="flex-1 overflow-y-auto divide-y divide-gray-200">
-            {{-- Item keranjang di-render via JavaScript --}}
-        </div>
-
-        {{-- 3. RINGKASAN PEMBAYARAN & ACTION BUTTONS --}}
-        <div class="border-t border-black bg-white">
-            
-            {{-- Rincian Biaya (Subtotal, Diskon, Metode Pembayaran) --}}
-            <div class="p-4 space-y-2.5">
-                {{-- Subtotal --}}
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-black font-medium">Subtotal</span>
-                    <span id="labelSubtotal" class="font-bold text-black">Rp 0</span>
-                </div>
-
-                {{-- Diskon --}}
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-black font-medium">Diskon</span>
-                    <div onclick="modalDiskonGlobal()" class="flex items-center gap-1 cursor-pointer group">
-                        <span id="labelDiskonGlobal" class="font-bold text-black">Rp 0</span>
-                        <svg class="w-4 h-4 text-gray-500 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    {{-- Tombol Clear Search --}}
+                    <button
+                        type="button"
+                        id="btnClearSearch"
+                        onclick="clearSearchItm()"
+                        class="hidden p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                    </div>
-                </div>
+                    </button>
 
-                {{-- Metode Pembayaran --}}
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-black font-medium">Metode Pembayaran</span>
-                    <div onclick="modalMetodePembayaran()" class="flex items-center gap-1 cursor-pointer group">
-                        <span id="metodePembayaran" class="font-bold text-black">Cash</span>
-                        <svg class="w-4 h-4 text-gray-500 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    {{-- Tombol Scan -> membuka modal barcode --}}
+                    <button
+                        type="button"
+                        onclick="bukaModalBarcode()"
+                        class="h-12 px-7 bg-primary-db hover:bg-primary-sdb text-white text-sm font-bold rounded-xl flex items-center gap-2.5 cursor-pointer transition-colors flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                         </svg>
+                        Scan
+                    </button>
+                </form>
+
+                {{-- PANEL HASIL PENCARIAN ITM (DI ATAS CONTAINER KERANJANG) --}}
+                <div
+                    id="panelHasilSearchItm"
+                    class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-300 z-50 max-h-88 overflow-y-auto divide-y divide-gray-100">
+                    <div id="loadingSearchItm" class="hidden p-4 text-center text-sm text-gray-500 font-medium">
+                        <div class="inline-flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>Mencari di tabel ITM...</span>
+                        </div>
                     </div>
+                    <div id="listHasilSearchItm" class="divide-y divide-gray-100"></div>
                 </div>
             </div>
 
-            {{-- Total Akhir --}}
-            <div class="flex items-center justify-between px-4 py-3 border-t border-black bg-white">
-                <span class="text-2xl font-bold text-black">Total</span>
-                <span id="labelGrandTotal" class="text-2xl font-bold text-black">Rp 0</span>
-            </div>
+            {{-- 2. INFO ITEM TERAKHIR YANG DITAMBAHKAN (DIISI VIA JAVASCRIPT) --}}
+            <p id="infoItemTerakhir" class="hidden flex-shrink-0 items-center gap-2 mt-3 text-sm text-black">
+                <span class="w-2 h-2 rounded-full bg-black flex-shrink-0"></span>
+                <span id="infoItemTerakhirText"></span>
+            </p>
 
-            {{-- Footer Action Buttons (Reload, Reset, Konfirmasi) --}}
-            <div class="flex items-stretch border-t border-black">
-                {{-- Tombol Reload / Refresh --}}
-                <button 
-                    type="button" 
+            {{-- 3. JUDUL KERANJANG + KOSONGKAN --}}
+            <div class="flex items-baseline justify-between flex-shrink-0 mt-6">
+                <div class="flex items-baseline gap-4">
+                    <h2 class="text-lg font-bold text-black tracking-tight">Keranjang</h2>
+                    <span id="labelJumlahItem" class="text-sm text-gray-500">0 item</span>
+                </div>
+                <button
+                    type="button"
                     onclick="resetKeranjang()"
-                    class="w-14 h-14 flex items-center justify-center border-r border-black hover:bg-gray-100 text-black transition-colors cursor-pointer"
-                    title="Reload Keranjang">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M20.985 19.644v-4.992m0 0h-4.992m4.992 0L17.2 18.008a9 9 0 11.236-11.282" />
-                    </svg>
-                </button>
-
-                {{-- Tombol Simpan Draft / Arsip --}}
-                <button 
-                    type="button" 
-                    onclick="modalTambahArsip()"
-                    class="w-14 h-14 flex items-center justify-center border-r text-black transition-colors cursor-pointer"
-                    title="Simpan Draft">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125v4.125m3-4.125v4.125M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                    </svg>
-                </button>
-
-                {{-- Tombol Utama Konfirmasi --}}
-                <button 
-                    type="button" 
-                    onclick="prosesPembayaran()"
-                    class="flex-1 bg-primary-db hover:bg-primary-sdb text-white font-bold text-xl transition-colors cursor-pointer flex items-center justify-center">
-                    Konfirmasi
+                    class="text-sm font-medium text-black hover:underline cursor-pointer">
+                    Kosongkan keranjang
                 </button>
             </div>
 
+            {{-- 4. HEADER KOLOM TABEL (grid harus sama dengan baris item di script) --}}
+            <div class="flex-shrink-0 grid grid-cols-[minmax(0,3.2fr)_1.3fr_1fr_1fr_1.4fr_56px] gap-4 items-center px-6 mt-4 mb-2 text-xs font-medium text-gray-600">
+                <span class="pl-[72px]">BARANG</span>
+                <span>HARGA</span>
+                <span>DISKON</span>
+                <span>VOUCHER</span>
+                <span class="text-right">SUBTOTAL</span>
+                <span class="text-center">AKSI</span>
+            </div>
+
+            {{-- 5. DAFTAR ITEM KERANJANG (DIRENDER OTOMATIS OLEH JAVASCRIPT) --}}
+            <div id="cartItemsList" class="flex-1 min-h-0 overflow-y-auto space-y-3 pb-4">
+                {{-- Item keranjang di-render via JavaScript --}}
+            </div>
         </div>
 
+        {{-- ----------------------------------------------------------------- --}}
+        {{-- BAR BAWAH: TOTAL, RINCIAN, DAN TOMBOL AKSI                        --}}
+        {{-- (id rightOrderPanel dipertahankan agar JS buka/tutup kasir aman)  --}}
+        {{-- ----------------------------------------------------------------- --}}
+        <div id="rightOrderPanel" class="flex-shrink-0 flex items-center justify-between gap-6 bg-white border-t border-black px-6 py-4">
+
+            {{-- Kiri: Total + rincian --}}
+            <div class="min-w-0">
+                <span class="block text-xs text-gray-600">TOTAL</span>
+                <span id="labelGrandTotal" class="block text-3xl font-bold text-black tracking-tight leading-tight">Rp 0</span>
+                <p class="mt-1 text-xs text-gray-500 flex flex-wrap items-center gap-x-2">
+                    <span>Subtotal <span id="labelSubtotal">Rp 0</span></span>
+                    <span>·</span>
+                    <button type="button" onclick="modalDiskonGlobal()" class="hover:text-black cursor-pointer">
+                        Diskon − <span id="labelDiskonGlobal">Rp 0</span>
+                    </button>
+                    <span>·</span>
+                    <button type="button" onclick="modalDiskonGlobal()" class="hover:text-black cursor-pointer">
+                        Voucher − <span id="labelVoucherGlobal">Rp 0</span>
+                    </button>
+                </p>
+                {{-- Dipertahankan untuk JS (nilai metode pembayaran aktif) --}}
+                <span id="metodePembayaran" class="hidden">Cash</span>
+            </div>
+
+            {{-- Kanan: Tombol aksi --}}
+            <div class="flex items-center gap-3 shrink-0">
+                {{-- Simpan Draft / Arsip --}}
+                <button
+                    type="button"
+                    onclick="modalTambahArsip()"
+                    title="Simpan Draft"
+                    class="w-11 h-11 flex items-center justify-center bg-white border border-black rounded-xl text-black hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3M2.25 13.5v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" />
+                    </svg>
+                </button>
+
+                {{-- Draft Transaksi --}}
+                <button
+                    type="button"
+                    onclick="modalDraftTransaksi()"
+                    class="h-11 px-4 flex items-center gap-2 bg-white border border-black rounded-xl text-xs font-semibold text-black hover:bg-gray-100 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                    </svg>
+                    Draft Transaksi
+                </button>
+
+                {{-- Toggle Tunai / Non-tunai --}}
+                <button
+                    type="button"
+                    id="btnMetodeTunai"
+                    onclick="pilihMetodePembayaran('Cash')"
+                    class="h-11 px-8 rounded-xl border border-black text-sm font-bold transition-colors cursor-pointer bg-primary-db text-white">
+                    Tunai
+                </button>
+                <button
+                    type="button"
+                    id="btnMetodeNonTunai"
+                    onclick="modalMetodePembayaran()"
+                    class="h-11 px-6 rounded-xl border border-gray-400 text-sm font-medium transition-colors cursor-pointer bg-white text-gray-500 hover:bg-gray-50">
+                    Non-tunai
+                </button>
+
+                {{-- Konfirmasi & Bayar --}}
+                <button
+                    type="button"
+                    onclick="prosesPembayaran()"
+                    class="h-11 px-6 bg-primary-db hover:bg-primary-sdb text-white text-sm font-bold rounded-xl transition-colors cursor-pointer">
+                    Konfirmasi &amp; Bayar
+                </button>
+            </div>
+        </div>
     </div>
 
     {{-- ===================================================================== --}}
@@ -249,81 +283,42 @@
         <!-- Card Modal -->
         <div 
             onclick="event.stopPropagation()"
-            class="w-full max-w-md bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
+            class="w-full max-w-lg bg-[#F8FAFC] rounded-3xl p-6 shadow-2xl space-y-4 border border-gray-200">
             
-            <!-- Judul Modal -->
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-black tracking-tight">Draft Transaksi</h3>
-                <button type="button" onclick="tutupModalDraftTransaksi()" class="text-gray-400 hover:text-black">✕</button>
+            <!-- Header Modal -->
+            <div class="flex items-start justify-between pb-2 border-b border-gray-300">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-black tracking-tight">Draft Transaksi</h3>
+                    <p id="draftCountText" class="text-xs text-gray-500 font-medium mt-1">0 transaksi tersimpan</p>
+                </div>
+                <button 
+                    type="button" 
+                    onclick="tutupModalDraftTransaksi()" 
+                    class="w-8 h-8 flex items-center justify-center border border-gray-400 rounded-lg text-black hover:bg-gray-200 transition-colors font-bold text-sm cursor-pointer">
+                    ✕
+                </button>
             </div>
 
-            <!-- Container List Draft -->
-            <div id="listDraftContainer" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <!-- Container List Draft (Max Height setara 4 Item, Scrollbar Khusus List) -->
+            <div id="listDraftContainer" class="space-y-3 max-h-[360px] overflow-y-auto pr-1">
                 <!-- Diisi via JavaScript dari localStorage -->
             </div>
 
-        </div>
-    </div>
-
-    <!-- Modal Diskon Per Item -->
-    <div
-        id="modalDiskonItem"
-        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
-            <!-- Judul Modal -->
-            <h3 class="text-xl font-bold text-black tracking-tight">Diskon Per Item</h3>
-
-            <!-- Form Input -->
-            <div class="space-y-3">
-                <!-- Input Diskon (%) -->
-                <div>
-                    <label for="inputDiskonItem" class="block text-sm font-semibold text-black mb-1">
-                        Diskon (%)
-                    </label>
-                    <input
-                        type="number"
-                        id="inputDiskonItem"
-                        min="0"
-                        max="100"
-                        placeholder="Contoh: 20"
-                        class="w-full bg-white border border-gray-300 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium focus:border-black" />
-                </div>
-
-                <!-- Input Voucher Nominal (Rp) -->
-                <div>
-                    <label for="inputVoucherItem" class="block text-sm font-semibold text-black mb-1">
-                        Voucher (Rp)
-                    </label>
-                    <input
-                        type="number"
-                        id="inputVoucherItem"
-                        min="0"
-                        step="1000"
-                        placeholder="Contoh: 20000"
-                        class="w-full bg-white border border-gray-300 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium focus:border-black" />
-                </div>
-            </div>
-
-            <!-- Tombol Aksi (Batal & Terapkan) -->
-            <div class="grid grid-cols-2 gap-3 pt-2">
-                <button
-                    type="button"
-                    onclick="tutupModalDiskonItem()"
-                    class="w-full bg-white border border-gray-300 hover:bg-gray-100 text-black rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
-                    Batal
-                </button>
-                <button
-                    type="button"
-                    onclick="simpanDiskonItem()"
-                    class="w-full bg-primary-db hover:bg-primary-sdb text-white rounded-xl py-2.5 text-center text-sm font-bold transition-colors cursor-pointer">
-                    Terapkan
+            <!-- Footer Modal -->
+            <div class="pt-3 border-t border-gray-300 flex items-center justify-between">
+                <span class="text-xs text-gray-400 font-medium">Klik Lanjutkan untuk memuat draft ke keranjang</span>
+                <button 
+                    type="button" 
+                    onclick="tutupModalDraftTransaksi()" 
+                    class="px-6 py-2 bg-white border border-gray-800 hover:bg-gray-100 text-black rounded-xl text-sm font-bold transition-colors cursor-pointer">
+                    Tutup
                 </button>
             </div>
 
         </div>
     </div>
-    <!-- end: Modal Diskon Per Item -->
+
+
 
     <!-- Modal Buka Kasir -->
     <div
@@ -415,6 +410,7 @@
                         id="inputDiskon"
                         min="0"
                         max="100"
+                        oninput="if(parseFloat(this.value) > 100) this.value = 100; if(parseFloat(this.value) < 0) this.value = 0;"
                         placeholder="0%"
                         class="w-full bg-white placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium border" />
                 </div>
@@ -500,17 +496,6 @@
                         JAGO
                     </button>
                 </div>
-            </div>
-
-            <!-- Opsi Pembayaran Tunai -->
-            <div class="space-y-2 pt-1">
-                <span class="block text-sm font-semibold text-black">Tunai</span>
-                <button
-                    type="button"
-                    onclick="pilihMetodePembayaran('Cash')"
-                    class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
-                    Cash
-                </button>
             </div>
 
             <!-- Tombol Batal -->
@@ -767,14 +752,19 @@
         target="_blank"
         class="hidden">
         @csrf
-        <input type="hidden" name="ref_no"    id="printRefNo">
-        <input type="hidden" name="tanggal"   id="printTanggal">
-        <input type="hidden" name="kasir"     id="printKasir">
-        <input type="hidden" name="metode"    id="printMetode">
-        <input type="hidden" name="total"     id="printTotal">
-        <input type="hidden" name="dibayar"   id="printDibayar">
-        <input type="hidden" name="kembalian" id="printKembalian">
-        <input type="hidden" name="items"     id="printItems">
+        <input type="hidden" name="ref_no"          id="printRefNo">
+        <input type="hidden" name="tanggal"         id="printTanggal">
+        <input type="hidden" name="waktu"           id="printWaktu">
+        <input type="hidden" name="kasir"           id="printKasir">
+        <input type="hidden" name="metode"          id="printMetode">
+        <input type="hidden" name="subtotal"        id="printSubtotal">
+        <input type="hidden" name="discount_item"   id="printDiscountItem">
+        <input type="hidden" name="discount_global" id="printDiscountGlobal">
+        <input type="hidden" name="voucher"         id="printVoucher">
+        <input type="hidden" name="total"           id="printTotal">
+        <input type="hidden" name="dibayar"         id="printDibayar">
+        <input type="hidden" name="kembalian"       id="printKembalian">
+        <input type="hidden" name="items"           id="printItems">
     </form>
 
 </div>
@@ -795,6 +785,12 @@
     let currentGrandTotal = 0;
     let activePaymentMethod = 'Cash';
     let selectedBankName = '';
+
+    // State draft transaksi (dideklarasikan di awal agar aman dipakai semua fungsi)
+    let isLoadedFromDraft = false;
+    let activeDraftIndex = null; // Menampung indeks draft yang sedang diisi
+    let currentDraftPelanggan = '';
+    let currentDraftSales = '';
 
     // [TAMBAHAN PRINT] Menampung data struk transaksi terakhir (untuk print DomPDF)
     let strukTerakhir = null;
@@ -877,7 +873,7 @@
                     viewAwal.classList.remove('flex');
                 }
 
-                // Tampilkan panel tengah (katalog) & panel kanan (order)
+                // Tampilkan area utama (scan & keranjang) & bar total
                 const mainCenter = document.getElementById('mainCenterSection');
                 if (mainCenter) {
                     mainCenter.classList.remove('hidden');
@@ -898,6 +894,9 @@
 
                 tutupModalBukaKasir();
                 renderCart();
+
+                const inputScan = document.getElementById('inputScanUtama');
+                if (inputScan) inputScan.focus();
             } else {
                 alert(data.message || 'Gagal membuka kasir!');
             }
@@ -979,7 +978,7 @@
                     viewAwal.classList.add('flex');
                 }
 
-                // Sembunyikan panel kasir aktif
+                // Sembunyikan area kasir aktif
                 const mainCenter = document.getElementById('mainCenterSection');
                 if (mainCenter) {
                     mainCenter.classList.add('hidden');
@@ -999,6 +998,7 @@
                 }
 
                 tutupModalTutupKasir();
+                hapusDraft();
                 alert('Kasir berhasil ditutup.');
             } else {
                 alert(data.message || 'Gagal menutup kasir!');
@@ -1015,7 +1015,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // 3. FUNGSI RENDER TAMPILAN KERANJANG DI PANEL KANAN
+    // 3. FUNGSI RENDER TAMPILAN KERANJANG (BARIS KARTU SESUAI MOCKUP)
     // -------------------------------------------------------------------------
     function renderCart() {
         const container = document.getElementById('cartItemsList');
@@ -1023,14 +1023,23 @@
 
         const keys = Object.keys(cartData);
 
+        // Jumlah item di judul "Keranjang"
+        const elJumlah = document.getElementById('labelJumlahItem');
+        if (elJumlah) elJumlah.innerText = hitungTotalQty() + ' item';
+
         // Jika keranjang kosong
         if (keys.length === 0) {
             container.innerHTML = `
-                <div class="p-8 text-center text-gray-900">
+                <div class="p-10 text-center text-gray-900 bg-white border border-dashed border-gray-400 rounded-2xl">
                     <p class="text-sm font-medium">Keranjang masih kosong</p>
                     <p class="text-xs mt-1 text-gray-500">Scan barcode unit produk untuk memulai</p>
                 </div>
             `;
+            const info = document.getElementById('infoItemTerakhir');
+            if (info) {
+                info.classList.add('hidden');
+                info.classList.remove('flex');
+            }
             hitungRingkasan();
             return;
         }
@@ -1050,67 +1059,75 @@
             const itemTotal = priceAfterDiscount * qty;
 
             html += `
-                <div class="px-4 py-3 bg-secondary-bw w-full group transition-colors border-b border-black">
-                    {{-- Baris Atas: Nama Produk, Deskripsi, Tombol Diskon (%) & Hapus (X) --}}
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-baseline gap-1.5 flex-wrap">
-                                <span class="font-bold text-sm text-black">${escapeHtml(item.name)}</span>
-                                <span class="text-xs text-[#6B7280] truncate">${escapeHtml(item.description || '')}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                <span class="text-[11px] text-gray-500">Barcode: ${escapeHtml(item.code || key)}</span>
-                                ${itemDiscountPct > 0 ? `<span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Diskon ${itemDiscountPct}%</span>` : ''}
-                                ${itemDiscountVoucher > 0 ? `<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Pot. ${formatRupiah(itemDiscountVoucher)}</span>` : ''}
-                            </div>
+                <div class="grid grid-cols-[minmax(0,3.2fr)_1.3fr_1fr_1fr_1.4fr_56px] gap-4 items-center bg-white border border-black rounded-2xl px-5 py-4">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-14 h-14 flex-shrink-0 rounded-xl border border-black flex items-center justify-center text-black">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125v4.125m3-4.125v4.125M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
                         </div>
-                        
-                        {{-- Tombol Aksi: Diskon Item (% dan Rp) dan Hapus Item --}}
-                        <div class="flex items-center gap-2 flex-shrink-0 text-xs font-semibold text-gray-600">
-                            <button 
-                                type="button" 
-                                onclick="modalDiskonItem('${key}')" 
-                                class="hover:text-black transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-gray-100" 
-                                title="Beri Diskon Item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24">
-                                    <path d="M0 0h24v24H0z" fill="none" />
-                                    <g fill="none">
-                                        <path d="m11.878 22.02l-9.9-9.899l9.9-9.9l9.192.708l.707 9.192z" />
-                                        <path d="M14 7.17A2 2 0 1 1 16.828 10A2 2 0 0 1 14 7.17" />
-                                        <path stroke="currentColor" stroke-width="2" d="m11.878 22.02l-9.9-9.899l9.9-9.9l9.192.708l.707 9.192z" />
-                                        <path stroke="currentColor" stroke-width="2" d="M14 7.17A2 2 0 1 1 16.828 10A2 2 0 0 1 14 7.17Z" />
-                                    </g>
-                                </svg>
-                            </button>
-                            <button 
-                                type="button" 
-                                onclick="hapusItem('${key}')" 
-                                class="hover:text-red-600 transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-red-50 font-bold" 
-                                title="Hapus Item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24">
-                                    <path d="M0 0h24v24H0z" fill="none" />
-                                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16l-1.58 14.22A2 2 0 0 1 16.432 22H7.568a2 2 0 0 1-1.988-1.78zm3.345-2.853A2 2 0 0 1 9.154 2h5.692a2 2 0 0 1 1.81 1.147L18 6H6zM2 6h20m-12 5v5m4-5v5" />
-                                </svg>
-                            </button>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-black truncate" title="${escapeHtml(item.description || '')}">${escapeHtml(item.name)}</p>
+                            <p class="text-[11px] text-gray-500 font-mono truncate">${escapeHtml(item.code || key)}${qty > 1 ? ' · x' + qty : ''}</p>
                         </div>
                     </div>
 
-                    {{-- Baris Bawah: Detail Harga --}}
-                    <div class="mt-2 flex items-center justify-between text-xs">
-                        <div class="text-gray-500">
-                            ${(itemDiscountPct > 0 || itemDiscountVoucher > 0) ? `<span class="line-through text-gray-400 mr-1">${formatRupiah(itemPrice)}</span>` : ''}
-                            <span>${formatRupiah(priceAfterDiscount)}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-bold text-sm text-black font-number">${formatRupiah(itemTotal)}</span>
-                        </div>
+                    <span class="text-sm text-gray-600">${formatRupiah(itemPrice)}</span>
+
+                    {{-- Input Diskon Langsung (%) --}}
+                    <div class="relative w-24">
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value="${itemDiscountPct > 0 ? itemDiscountPct : ''}"
+                            placeholder="0"
+                            title="Diskon (%)"
+                            oninput="ubahDiskonItemLangsung('${key}', this)"
+                            class="w-full h-8 bg-white border border-black rounded-lg px-2.5 pr-6 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
                     </div>
+
+                    {{-- Input Voucher Langsung (Rp) --}}
+                    <div class="relative w-28">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-500 pointer-events-none">Rp</span>
+                        <input
+                            type="number"
+                            min="0"
+                            step="500"
+                            value="${itemDiscountVoucher > 0 ? itemDiscountVoucher : ''}"
+                            placeholder="0"
+                            title="Voucher (Rp)"
+                            oninput="ubahVoucherItemLangsung('${key}', this.value)"
+                            class="w-full h-8 bg-white border border-black rounded-lg pl-7 pr-2.5 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    </div>
+
+                    <span id="subtotalItem-${key}" class="text-right text-lg font-bold text-black font-number">${formatRupiah(itemTotal)}</span>
+
+                    <button
+                        type="button"
+                        onclick="hapusItem('${key}')"
+                        title="Hapus Item"
+                        class="mx-auto w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center justify-center cursor-pointer transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </button>
                 </div>
             `;
         });
 
         container.innerHTML = html;
         hitungRingkasan();
+    }
+
+    // Total qty seluruh item di keranjang
+    function hitungTotalQty() {
+        let total = 0;
+        Object.keys(cartData).forEach(k => {
+            total += (parseInt(cartData[k].qty) || 1);
+        });
+        return total;
     }
 
     // -------------------------------------------------------------------------
@@ -1135,29 +1152,28 @@
         // Hitung diskon transaksi global
         const diskonTransaksiNominal = subtotal * (discountPercent / 100);
 
-        // Hitung Grand Total (Subtotal - Voucher Global - Diskon Transaksi Global)
+        // Grand Total = Subtotal - Voucher Global - Diskon Transaksi Global
         let grandTotal = Math.max(0, subtotal - voucherAmount - diskonTransaksiNominal);
         currentGrandTotal = grandTotal;
 
-        // Perbarui teks di layar Order
+        // Perbarui teks di bar total
         const elSubtotal = document.getElementById('labelSubtotal');
         if (elSubtotal) elSubtotal.innerText = formatRupiah(subtotal);
 
+        // Label di blade sudah diawali "Diskon −" / "Voucher −", jadi cukup nominalnya
         const elDiskonGlobal = document.getElementById('labelDiskonGlobal');
-        if (elDiskonGlobal) {
-            const totalPotonganGlobal = diskonTransaksiNominal + voucherAmount;
-            if (totalPotonganGlobal > 0) {
-                elDiskonGlobal.innerText = '-' + formatRupiah(totalPotonganGlobal);
-            } else {
-                elDiskonGlobal.innerText = 'Rp 0';
-            }
-        }
+        if (elDiskonGlobal) elDiskonGlobal.innerText = formatRupiah(diskonTransaksiNominal);
+
+        const elVoucherGlobal = document.getElementById('labelVoucherGlobal');
+        if (elVoucherGlobal) elVoucherGlobal.innerText = formatRupiah(voucherAmount);
 
         const elGrandTotal = document.getElementById('labelGrandTotal');
         if (elGrandTotal) elGrandTotal.innerText = formatRupiah(grandTotal);
 
         const elMetode = document.getElementById('metodePembayaran');
         if (elMetode) elMetode.innerText = activePaymentMethod;
+
+        updateTombolMetode();
     }
 
     // -------------------------------------------------------------------------
@@ -1228,44 +1244,69 @@
     }
 
     // -------------------------------------------------------------------------
-    // 8. FUNGSI DISKON PER ITEM
+    // 8. FUNGSI EDIT DISKON & VOUCHER PER ITEM LANGSUNG DI CARD
     // -------------------------------------------------------------------------
-    function modalDiskonItem(key) {
-        activeItemKeyForDiscount = key;
-        const currentDiscountPct = cartData[key] ? (cartData[key].discount || 0) : 0;
-        const currentDiscountVch = cartData[key] ? (cartData[key].discount_voucher || 0) : 0;
+    let syncCartDebounceTimer = null;
 
-        document.getElementById('inputDiskonItem').value = currentDiscountPct || '';
-        document.getElementById('inputVoucherItem').value = currentDiscountVch || '';
+    function ubahDiskonItemLangsung(key, inputEl) {
+        if (!cartData[key]) return;
+        let rawVal = (typeof inputEl === 'object' && inputEl !== null) ? inputEl.value : inputEl;
+        let val = parseFloat(rawVal) || 0;
 
-        const modal = document.getElementById('modalDiskonItem');
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('inputDiskonItem').focus();
+        if (val > 100) {
+            val = 100;
+            if (typeof inputEl === 'object' && inputEl !== null) {
+                inputEl.value = 100;
+            }
+        } else if (val < 0) {
+            val = 0;
+            if (typeof inputEl === 'object' && inputEl !== null) {
+                inputEl.value = 0;
+            }
+        }
+
+        cartData[key].discount = val;
+
+        updateSubtotalBarisItem(key);
+        hitungRingkasan();
+        triggerSyncCartDebounced();
+    }
+
+    function ubahVoucherItemLangsung(key, rawVal) {
+        if (!cartData[key]) return;
+        let val = parseFloat(rawVal) || 0;
+        val = Math.max(0, val);
+        cartData[key].discount_voucher = val;
+
+        updateSubtotalBarisItem(key);
+        hitungRingkasan();
+        triggerSyncCartDebounced();
+    }
+
+    function updateSubtotalBarisItem(key) {
+        const item = cartData[key];
+        if (!item) return;
+
+        const itemDiscountPct = parseFloat(item.discount) || 0;
+        const itemDiscountVoucher = parseFloat(item.discount_voucher) || 0;
+        const itemPrice = parseFloat(item.price) || 0;
+        const qty = parseInt(item.qty) || 1;
+
+        const discFromPct = itemPrice * (itemDiscountPct / 100);
+        const priceAfterDiscount = Math.max(0, itemPrice - discFromPct - itemDiscountVoucher);
+        const itemTotal = priceAfterDiscount * qty;
+
+        const el = document.getElementById('subtotalItem-' + key);
+        if (el) {
+            el.innerText = formatRupiah(itemTotal);
         }
     }
 
-    function tutupModalDiskonItem() {
-        const modal = document.getElementById('modalDiskonItem');
-        if (modal) {
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-        activeItemKeyForDiscount = null;
-    }
-
-    function simpanDiskonItem() {
-        const pct = parseFloat(document.getElementById('inputDiskonItem').value) || 0;
-        const vch = parseFloat(document.getElementById('inputVoucherItem').value) || 0;
-
-        if (activeItemKeyForDiscount && cartData[activeItemKeyForDiscount]) {
-            cartData[activeItemKeyForDiscount].discount = Math.min(100, Math.max(0, pct));
-            cartData[activeItemKeyForDiscount].discount_voucher = Math.max(0, vch);
-            renderCart();
+    function triggerSyncCartDebounced() {
+        clearTimeout(syncCartDebounceTimer);
+        syncCartDebounceTimer = setTimeout(() => {
             simpanKeSession();
-        }
-        tutupModalDiskonItem();
+        }, 400);
     }
 
     // -------------------------------------------------------------------------
@@ -1333,14 +1374,36 @@
         const elMetode = document.getElementById('metodePembayaran');
         if (elMetode) elMetode.innerText = method;
 
+        updateTombolMetode();
         modalTutupMetodePembayaran();
+    }
+
+    // Sinkronkan tampilan toggle Tunai / Non-tunai di bar total
+    function updateTombolMetode() {
+        const btnTunai = document.getElementById('btnMetodeTunai');
+        const btnNon = document.getElementById('btnMetodeNonTunai');
+        if (!btnTunai || !btnNon) return;
+
+        const aktif = ['bg-primary-db', 'text-white', 'border-black', 'font-bold'];
+        const nonaktif = ['bg-white', 'text-gray-500', 'border-gray-400', 'font-medium'];
+
+        const isTunai = (activePaymentMethod.toLowerCase() === 'cash' || activePaymentMethod.toLowerCase() === 'tunai');
+
+        btnTunai.classList.remove(...(isTunai ? nonaktif : aktif));
+        btnTunai.classList.add(...(isTunai ? aktif : nonaktif));
+
+        btnNon.classList.remove(...(isTunai ? aktif : nonaktif));
+        btnNon.classList.add(...(isTunai ? nonaktif : aktif));
+
+        // Jika non-tunai, tampilkan nama bank di tombol
+        btnNon.innerText = isTunai ? 'Non-tunai' : activePaymentMethod;
     }
 
     // -------------------------------------------------------------------------
     // 11. FUNGSI MODAL KONFIRMASI PEMBAYARAN (NT & T) SESUAI DESAIN
     // -------------------------------------------------------------------------
 
-    // Buka Modal Konfirmasi Pembayaran saat tombol Konfirmasi di Order diklik
+    // Buka Modal Konfirmasi Pembayaran saat tombol "Konfirmasi & Bayar" diklik
     function prosesPembayaran() {
         const keys = Object.keys(cartData);
         if (keys.length === 0) {
@@ -1349,10 +1412,7 @@
         }
 
         // Hitung total item qty
-        let totalItems = 0;
-        keys.forEach(k => {
-            totalItems += (parseInt(cartData[k].qty) || 1);
-        });
+        const totalItems = hitungTotalQty();
 
         // Update Subtitle: "Selesaikan transaksi sebesar Rp [Total], untuk [X] item?"
         const subtitleEl = document.getElementById('konfirmasiSubtitle');
@@ -1492,10 +1552,16 @@
                 // 3. Tampilkan Pop-up Struk Pembayaran
                 tampilModalStruk({
                     ref_no: data.ref_no,
-                    tanggal: data.tanggal || new Date().toLocaleString('id-ID'),
+                    tanggal: data.tanggal || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    waktu: data.waktu || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.'),
                     kasir: data.kasir || 'Kasir',
                     metode: activePaymentMethod,
                     items: Object.values(cartData),
+                    subtotal: data.subtotal,
+                    item_discount: data.item_discount,
+                    discount_percent: discountPercent,
+                    discount_global: data.discount_global,
+                    voucher: voucherAmount,
                     total: data.grand_total || currentGrandTotal,
                     dibayar: nominalBayarClean,
                     kembalian: data.kembalian || 0
@@ -1519,7 +1585,7 @@
         });
     }
 
-    // 2. Tampilkan dan Populasikan Data Struk
+    // Tampilkan dan Populasikan Data Struk Sesuai Desain
     function tampilModalStruk(transaksiData) {
         if (!transaksiData) return;
 
@@ -1529,40 +1595,127 @@
         // 1. Fill data header & info transaksi
         const elNoNota = document.getElementById('strukNoNota');
         const elTanggal = document.getElementById('strukTanggal');
+        const elWaktu = document.getElementById('strukWaktu');
         const elKasir = document.getElementById('strukKasir');
+        const elSubtotal = document.getElementById('strukSubtotal');
         const elTotal = document.getElementById('strukTotal');
         const elMetode = document.getElementById('strukMetode');
 
         if (elNoNota) elNoNota.innerText = transaksiData.ref_no || '-';
-        if (elTanggal) elTanggal.innerText = transaksiData.tanggal || new Date().toLocaleString('id-ID');
+        if (elTanggal) elTanggal.innerText = transaksiData.tanggal || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        if (elWaktu) elWaktu.innerText = transaksiData.waktu || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
         if (elKasir) elKasir.innerText = transaksiData.kasir || 'Kasir';
-        if (elTotal) elTotal.innerText = formatRupiah(transaksiData.total || 0);
         if (elMetode) elMetode.innerText = (transaksiData.metode || 'Tunai').toUpperCase();
 
-        // 2. Render daftar produk yang dibeli
+        // 2. Render daftar produk yang dibeli + hitung breakdown diskon
         const listContainer = document.getElementById('strukListProduk');
-        if (listContainer) {
-            listContainer.innerHTML = ''; // Clear item dummy
-            
-            const items = Array.isArray(transaksiData.items) 
-                ? transaksiData.items 
-                : Object.values(transaksiData.items || {});
+        let rawSubtotal = 0;
+        let totalItemDisc = 0;
 
+        const items = Array.isArray(transaksiData.items) 
+            ? transaksiData.items 
+            : Object.values(transaksiData.items || {});
+
+        if (listContainer) {
+            listContainer.innerHTML = '';
+            
             items.forEach(item => {
-                const qty = item.qty || 1;
+                const qty = parseInt(item.qty) || 1;
                 const nama = item.nama_produk || item.name || 'Produk';
-                const subtotal = item.subtotal || (item.price * qty) || 0;
+                const price = parseFloat(item.price) || 0;
+                const discPct = parseFloat(item.discount) || 0;
+                const discVch = parseFloat(item.discount_voucher) || 0;
+
+                const discPctNominal = price * (discPct / 100);
+                const itemDiscUnit = discPctNominal + discVch;
+                const itemSubtotal = Math.max(0, (price - itemDiscUnit) * qty);
+
+                rawSubtotal += (price * qty);
+                totalItemDisc += (itemDiscUnit * qty);
+
+                let discInfoText = '';
+                if (discPct > 0 && discVch > 0) {
+                    discInfoText = `Diskon: -${discPct}% -${formatRupiah(discVch)}`;
+                } else if (discPct > 0) {
+                    discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)})`;
+                } else if (discVch > 0) {
+                    discInfoText = `Voucher item: -${formatRupiah(discVch)}`;
+                }
 
                 listContainer.innerHTML += `
-                    <div class="flex justify-between items-start text-xs">
-                        <div>
-                            <p class="font-semibold text-gray-900">${qty}x ${nama}</p>
+                    <div class="flex justify-between items-start text-xs pt-1">
+                        <div class="min-w-0 pr-2">
+                            <p class="font-bold text-gray-900 truncate">${escapeHtml(nama)}</p>
+                            <p class="text-[11px] text-gray-500 font-medium">${qty}x ${formatRupiah(price)}</p>
+                            ${discInfoText ? `<p class="text-[10.5px] text-red-600 font-medium mt-0.5">${escapeHtml(discInfoText)}</p>` : ''}
                         </div>
-                        <span class="font-semibold text-gray-900">${formatRupiah(subtotal)}</span>
+                        <span class="font-bold text-gray-900 shrink-0 text-right">${formatRupiah(itemSubtotal)}</span>
                     </div>
                 `;
             });
         }
+
+        // Subtotal kotor sebelum diskon apapun
+        const finalSubtotal = transaksiData.subtotal !== undefined ? parseFloat(transaksiData.subtotal) : rawSubtotal;
+        if (elSubtotal) elSubtotal.innerText = formatRupiah(finalSubtotal);
+
+        // Diskon per item
+        const finalItemDisc = transaksiData.item_discount !== undefined ? parseFloat(transaksiData.item_discount) : totalItemDisc;
+        const wrapperDiscItem = document.getElementById('wrapperStrukDiskonItem');
+        const elDiscItem = document.getElementById('strukDiskonItem');
+        if (wrapperDiscItem && elDiscItem) {
+            if (finalItemDisc > 0) {
+                elDiscItem.innerText = `- ${formatRupiah(finalItemDisc)}`;
+                wrapperDiscItem.classList.remove('hidden');
+                wrapperDiscItem.classList.add('flex');
+            } else {
+                wrapperDiscItem.classList.add('hidden');
+                wrapperDiscItem.classList.remove('flex');
+            }
+        }
+
+        // Diskon global (%)
+        const globalPct = parseFloat(transaksiData.discount_percent) || 0;
+        const subtotalAfterItem = Math.max(0, finalSubtotal - finalItemDisc);
+        const finalGlobalDisc = transaksiData.discount_global !== undefined 
+            ? parseFloat(transaksiData.discount_global) 
+            : (subtotalAfterItem * (globalPct / 100));
+
+        const wrapperDiscGlobal = document.getElementById('wrapperStrukDiskonGlobal');
+        const labelDiscGlobal = document.getElementById('labelStrukDiskonGlobal');
+        const elDiscGlobal = document.getElementById('strukDiskonGlobal');
+        if (wrapperDiscGlobal && elDiscGlobal) {
+            if (finalGlobalDisc > 0) {
+                if (labelDiscGlobal) labelDiscGlobal.innerText = globalPct > 0 ? `Diskon Global (${globalPct}%)` : 'Diskon Global';
+                elDiscGlobal.innerText = `- ${formatRupiah(finalGlobalDisc)}`;
+                wrapperDiscGlobal.classList.remove('hidden');
+                wrapperDiscGlobal.classList.add('flex');
+            } else {
+                wrapperDiscGlobal.classList.add('hidden');
+                wrapperDiscGlobal.classList.remove('flex');
+            }
+        }
+
+        // Voucher global (Rp)
+        const finalVoucher = parseFloat(transaksiData.voucher) || 0;
+        const wrapperVoucher = document.getElementById('wrapperStrukVoucher');
+        const elVoucher = document.getElementById('strukVoucher');
+        if (wrapperVoucher && elVoucher) {
+            if (finalVoucher > 0) {
+                elVoucher.innerText = `- ${formatRupiah(finalVoucher)}`;
+                wrapperVoucher.classList.remove('hidden');
+                wrapperVoucher.classList.add('flex');
+            } else {
+                wrapperVoucher.classList.add('hidden');
+                wrapperVoucher.classList.remove('flex');
+            }
+        }
+
+        // Grand Total
+        const finalGrandTotal = transaksiData.total !== undefined 
+            ? parseFloat(transaksiData.total) 
+            : Math.max(0, subtotalAfterItem - finalGlobalDisc - finalVoucher);
+        if (elTotal) elTotal.innerText = formatRupiah(finalGrandTotal);
 
         // 3. Handle Rincian Pembayaran Tunai (Uang Diterima & Kembalian)
         const wrapperTunai = document.getElementById('wrapperDetailTunai');
@@ -1576,7 +1729,7 @@
 
         if (isTunai && wrapperTunai) {
             wrapperTunai.classList.remove('hidden');
-            if (elDibayar) elDibayar.innerText = formatRupiah(transaksiData.dibayar || 0);
+            if (elDibayar) elDibayar.innerText = formatRupiah(transaksiData.dibayar || finalGrandTotal);
             if (elKembali) elKembali.innerText = formatRupiah(transaksiData.kembalian || 0);
         } else if (wrapperTunai) {
             wrapperTunai.classList.add('hidden');
@@ -1590,7 +1743,7 @@
         }
     }
 
-    // 3. Fungsi Tutup Modal Struk
+    // Fungsi Tutup Modal Struk
     function tutupModalStruk() {
         const modal = document.getElementById('modalStrukPembayaran');
         if (modal) {
@@ -1619,32 +1772,60 @@
             ? strukTerakhir.items
             : Object.values(strukTerakhir.items || {});
 
+        let rawSubtotal = 0;
+        let totalItemDisc = 0;
+
         const items = rawItems.map(function (item) {
             const qty = parseInt(item.qty) || 1;
             const nama = item.nama_produk || item.name || 'Produk';
+            const price = parseFloat(item.price) || 0;
+            const pct = parseFloat(item.discount) || 0;
+            const vch = parseFloat(item.discount_voucher) || 0;
+            const itemDiscUnit = (price * (pct / 100)) + vch;
+            const hargaAkhir = Math.max(0, price - itemDiscUnit);
+            const subtotal = hargaAkhir * qty;
 
-            let subtotal;
-            if (item.subtotal !== undefined && item.subtotal !== null) {
-                subtotal = parseFloat(item.subtotal) || 0;
-            } else {
-                // Hitung harga setelah diskon item (sama seperti perhitungan di keranjang)
-                const price = parseFloat(item.price) || 0;
-                const pct = parseFloat(item.discount) || 0;
-                const vch = parseFloat(item.discount_voucher) || 0;
-                const hargaAkhir = Math.max(0, price - (price * (pct / 100)) - vch);
-                subtotal = hargaAkhir * qty;
+            rawSubtotal += (price * qty);
+            totalItemDisc += (itemDiscUnit * qty);
+
+            let discInfo = '';
+            if (pct > 0 && vch > 0) {
+                discInfo = `${pct}% + ${formatRupiah(vch)}`;
+            } else if (pct > 0) {
+                discInfo = `${pct}%`;
+            } else if (vch > 0) {
+                discInfo = `${formatRupiah(vch)}`;
             }
 
-            return { nama: nama, qty: qty, subtotal: subtotal };
+            return { 
+                nama: nama, 
+                qty: qty, 
+                price: price, 
+                discount_info: discInfo, 
+                subtotal: subtotal 
+            };
         });
 
-        const metode = strukTerakhir.metode || '';
+        const metode = strukTerakhir.metode || 'Tunai';
         const isTunai = metode.toLowerCase() === 'cash' || metode.toLowerCase() === 'tunai';
+
+        const finalSubtotal = strukTerakhir.subtotal !== undefined ? strukTerakhir.subtotal : rawSubtotal;
+        const finalItemDisc = strukTerakhir.item_discount !== undefined ? strukTerakhir.item_discount : totalItemDisc;
+        const globalPct = parseFloat(strukTerakhir.discount_percent) || 0;
+        const finalGlobalDisc = strukTerakhir.discount_global !== undefined 
+            ? strukTerakhir.discount_global 
+            : Math.max(0, (finalSubtotal - finalItemDisc) * (globalPct / 100));
+        const finalVoucher = parseFloat(strukTerakhir.voucher) || 0;
 
         document.getElementById('printRefNo').value = strukTerakhir.ref_no || '';
         document.getElementById('printTanggal').value = strukTerakhir.tanggal || '';
+        document.getElementById('printWaktu').value = strukTerakhir.waktu || '';
         document.getElementById('printKasir').value = strukTerakhir.kasir || '';
         document.getElementById('printMetode').value = metode;
+        document.getElementById('printSubtotal').value = finalSubtotal;
+        document.getElementById('printDiscountItem').value = finalItemDisc;
+        document.getElementById('printDiscountGlobal').value = finalGlobalDisc;
+        document.getElementById('printVoucher').value = finalVoucher;
         document.getElementById('printTotal').value = strukTerakhir.total || 0;
         document.getElementById('printDibayar').value = isTunai ? (strukTerakhir.dibayar || 0) : '';
         document.getElementById('printKembalian').value = isTunai ? (strukTerakhir.kembalian || 0) : '';
@@ -1726,65 +1907,109 @@
     }
 
     function renderDraftList() {
-        const container = document.getElementById('listDraftContainer');
-        if (!container) return;
+    const container = document.getElementById('listDraftContainer');
+    const countText = document.getElementById('draftCountText');
+    if (!container) return;
 
-        const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
-        if (drafts.length === 0) {
-            container.innerHTML = `
-                <div class="p-6 text-center text-gray-500 text-sm">
-                    Belum ada draft transaksi yang disimpan.
-                </div>
-            `;
-            return;
-        }
+    const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
 
-        let html = '';
-        drafts.forEach((d, idx) => {
-            html += `
-                <div class="flex items-center justify-between p-3.5 bg-white border border-gray-800 rounded-xl">
-                    <div>
-                        <h4 class="font-bold text-black text-sm">${escapeHtml(d.pelanggan)}</h4>
-                        <span class="text-xs text-gray-400 font-medium">${escapeHtml(d.time)}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onclick="hapusDraft(${idx})"
-                            class="px-3 py-1.5 bg-white border border-gray-800 hover:bg-gray-100 text-black rounded-lg text-xs font-semibold transition-colors cursor-pointer">
-                            Hapus
-                        </button>
-                        <button
-                            type="button"
-                            onclick="muatDraft(${idx})"
-                            class="px-4 py-1.5 bg-[#0F1D3A] hover:bg-[#0A1428] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer">
-                            Muat
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+    // Update teks jumlah draft
+    if (countText) {
+        countText.innerText = `${drafts.length} transaksi tersimpan`;
     }
 
-    // Variabel global untuk menampung data draft aktif
-    let isLoadedFromDraft = false;
-    let activeDraftIndex = null; // Menampung indeks draft yang sedang diisi
-    let currentDraftPelanggan = '';
-    let currentDraftSales = '';
+    if (drafts.length === 0) {
+        container.innerHTML = `
+            <div class="p-8 text-center text-gray-400 text-sm font-medium">
+                Belum ada draft transaksi yang disimpan.
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    drafts.forEach((d, idx) => {
+        // Hitung total item qty dari objek cart
+        let totalItems = 0;
+        let grandTotal = 0;
+        if (d.cart && typeof d.cart === 'object') {
+            Object.values(d.cart).forEach(item => {
+                const qty = parseInt(item.qty) || 1;
+                totalItems += qty;
+                const price = parseFloat(item.price) || 0;
+                grandTotal += (price * qty);
+            });
+        }
+
+        // Tampilkan info ringkasan
+        const itemInfo = `${totalItems} item`;
+        const totalFormatted = formatRupiah ? formatRupiah(grandTotal) : `Rp ${grandTotal.toLocaleString('id-ID')}`;
+
+        html += `
+            <div class="flex items-center justify-between p-3.5 bg-white border border-gray-800 rounded-2xl shadow-xs hover:border-black transition-all">
+                <!-- Info Kiri (Ikon + Detail) -->
+                <div class="flex items-center gap-3.5">
+                    <!-- Icon Box Tray -->
+                    <div class="w-10 h-10 border border-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-50">
+                        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                        </svg>
+                    </div>
+
+                    <!-- Text Details -->
+                    <div>
+                        <h4 class="font-bold text-black text-sm leading-tight">${escapeHtml(d.pelanggan || 'Pelanggan Umum')}</h4>
+                        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-medium mt-0.5">
+                            <span>${itemInfo}</span>
+                            <span>•</span>
+                            <span>${totalFormatted}</span>
+                            <span>•</span>
+                            <span>${escapeHtml(d.time || '')}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Kanan (Lanjutkan & Hapus) -->
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button
+                        type="button"
+                        onclick="muatDraft(${idx})"
+                        class="px-5 py-2 bg-[#0F1D3A] hover:bg-[#0A1428] active:bg-black text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs">
+                        Lanjutkan
+                    </button>
+                    <button
+                        type="button"
+                        onclick="hapusDraft(${idx})"
+                        class="w-9 h-9 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                        title="Hapus Draft">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
 
     function muatDraft(index) {
         let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
         if (drafts[index]) {
-            cartData = drafts[index].cart || {};
-            voucherAmount = drafts[index].voucher || 0;
-            discountPercent = drafts[index].discount_percent || 0;
+            const draft = drafts[index];
+            cartData = draft.cart || {};
+            voucherAmount = draft.voucher || 0;
+            discountPercent = draft.discount_percent || 0;
 
             // Simpan pelanggan dan sales dari draft ke variabel global
             isLoadedFromDraft = true;
-            activeDraftIndex = index; // Simpan indeks draft
-            currentDraftPelanggan = drafts[index].pelanggan || '';
-            currentDraftSales = drafts[index].sales || '';
+            currentDraftPelanggan = draft.pelanggan || '';
+            currentDraftSales = draft.sales || '';
+
+            // Hapus draft dari daftar tersimpan (localStorage) karena sudah dimuat
+            drafts.splice(index, 1);
+            localStorage.setItem('pos_drafts', JSON.stringify(drafts));
 
             renderCart();
             simpanKeSession();
@@ -1794,7 +2019,11 @@
 
     function hapusDraft(index) {
         let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
-        drafts.splice(index, 1);
+        if (index !== undefined) {
+            drafts.splice(index, 1);
+        } else {
+            drafts = [];
+        }
         localStorage.setItem('pos_drafts', JSON.stringify(drafts));
         renderDraftList();
         resetKeranjang(true);
@@ -1818,22 +2047,18 @@
         if (event.key === 'Escape') {
             tutupModalDraftTransaksi();
             tutupModalBarcode();
-            tutupModalDiskonItem();
             tutupModalDiskonGlobal();
             modalTutupMetodePembayaran();
             tutupModalTambahArsip();
             tutupModalTutupKasir();
             tutupModalKonfirmasiPembayaran();
+            tutupPanelSearchItm();
         }
     });
 
     // -------------------------------------------------------------------------
-    // 13. FILTER PENCARIAN & HELPER
+    // 13. HELPER
     // -------------------------------------------------------------------------
-    function filterProdukKatalog() {
-        // Implementasi pencarian lokal jika katalog produk dirender
-    }
-
     function formatRupiah(number) {
         return 'Rp ' + Math.round(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
@@ -1848,10 +2073,210 @@
             .replace(/'/g, "&#039;");
     }
 
+    // -------------------------------------------------------------------------
+    // 14. INFO ITEM TERAKHIR (SETELAH SCAN) + INISIALISASI
+    // -------------------------------------------------------------------------
+
+    // Scan memakai form submit (halaman reload), jadi simpan jumlah item sebelum submit
+    document.addEventListener('submit', function (e) {
+        if (e.target.querySelector && e.target.querySelector('[name="BC_OUT"]')) {
+            sessionStorage.setItem('scanJumlahSebelum', String(hitungTotalQty()));
+        }
+    });
+
+    function tampilInfoItemTerakhir() {
+        const keys = Object.keys(cartData);
+        const el = document.getElementById('infoItemTerakhir');
+        const txt = document.getElementById('infoItemTerakhirText');
+        if (!el || !txt || keys.length === 0) return;
+
+        const key = keys[keys.length - 1];
+        const item = cartData[key];
+        txt.innerText = (item.code || key) + ' · ' + (item.name || '') + ' — ditambahkan ke keranjang';
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+    }
+
+    // -------------------------------------------------------------------------
+    // 15. LIVE SEARCH ITM (BERDASARKAN NAMA/DES, HARGA/HRG, DAN KODE/ITM)
+    // -------------------------------------------------------------------------
+    let searchItmDebounceTimer = null;
+    let searchResultItems = [];
+
+    function handleSearchItmInput(val) {
+        val = val.trim();
+        const btnClear = document.getElementById('btnClearSearch');
+        if (btnClear) {
+            if (val.length > 0) {
+                btnClear.classList.remove('hidden');
+            } else {
+                btnClear.classList.add('hidden');
+            }
+        }
+
+        clearTimeout(searchItmDebounceTimer);
+        if (val.length < 1) {
+            tutupPanelSearchItm();
+            searchResultItems = [];
+            return;
+        }
+
+        searchItmDebounceTimer = setTimeout(() => {
+            fetchSearchItm(val);
+        }, 200);
+    }
+
+    function handleSearchItmFocus() {
+        const val = (document.getElementById('inputScanUtama')?.value || '').trim();
+        if (val.length > 0 && searchResultItems.length > 0) {
+            bukaPanelSearchItm();
+        }
+    }
+
+    function handleSearchItmKeydown(e) {
+        if (e.key === 'Escape') {
+            tutupPanelSearchItm();
+        }
+    }
+
+    function clearSearchItm() {
+        const input = document.getElementById('inputScanUtama');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        const btnClear = document.getElementById('btnClearSearch');
+        if (btnClear) btnClear.classList.add('hidden');
+        tutupPanelSearchItm();
+        searchResultItems = [];
+    }
+
+    function bukaPanelSearchItm() {
+        const panel = document.getElementById('panelHasilSearchItm');
+        if (panel) panel.classList.remove('hidden');
+    }
+
+    function tutupPanelSearchItm() {
+        const panel = document.getElementById('panelHasilSearchItm');
+        if (panel) panel.classList.add('hidden');
+    }
+
+    function fetchSearchItm(q) {
+        const panel = document.getElementById('panelHasilSearchItm');
+        const list = document.getElementById('listHasilSearchItm');
+        const loading = document.getElementById('loadingSearchItm');
+
+        if (!panel || !list) return;
+
+        bukaPanelSearchItm();
+        if (loading) loading.classList.remove('hidden');
+        list.innerHTML = '';
+
+        fetch('{{ route('POS.search-items') }}?q=' + encodeURIComponent(q))
+            .then(res => res.json())
+            .then(data => {
+                if (loading) loading.classList.add('hidden');
+                if (data.success && Array.isArray(data.items)) {
+                    searchResultItems = data.items;
+                    renderSearchItmResults(data.items);
+                } else {
+                    searchResultItems = [];
+                    renderSearchItmResults([]);
+                }
+            })
+            .catch(err => {
+                if (loading) loading.classList.add('hidden');
+                console.error('Error search ITM:', err);
+                list.innerHTML = '<div class="p-4 text-center text-sm text-red-500 font-medium">Gagal memuat hasil pencarian.</div>';
+            });
+    }
+
+    function renderSearchItmResults(items) {
+        const list = document.getElementById('listHasilSearchItm');
+        if (!list) return;
+
+        if (items.length === 0) {
+            list.innerHTML = '<div class="p-5 text-center text-sm text-gray-500 font-medium">Tidak ada produk ditemukan di tabel ITM.</div>';
+            return;
+        }
+
+        let html = `
+            <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-semibold tracking-wide uppercase">
+                <span>Informasi Produk &amp; Harga (Tabel ITM)</span>
+                <span>${items.length} produk ditemukan</span>
+            </div>
+        `;
+
+        items.forEach(item => {
+            const availableCount = item.available_count || 0;
+            const inStock = availableCount > 0;
+
+            let badgeStok = '';
+            if (inStock) {
+                badgeStok = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Stok: ${availableCount} unit</span>`;
+            } else {
+                badgeStok = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Stok Habis</span>`;
+            }
+
+            html += `
+                <div class="flex items-center justify-between p-3.5 hover:bg-gray-50/80 transition-colors">
+                    <div class="min-w-0 flex-1 pr-4">
+                        <div class="flex items-center gap-2 flex-wrap mb-1">
+                            <span class="text-sm font-bold text-gray-900">${escapeHtml(item.des)}</span>
+                            <span class="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded font-mono font-medium">${escapeHtml(item.itm)}</span>
+                            ${badgeStok}
+                        </div>
+                        <p class="text-xs text-gray-500">Kode: <span class="font-mono text-gray-700">${escapeHtml(item.itm)}</span></p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <span class="text-[11px] text-gray-400 font-medium block">Harga Satuan</span>
+                        <span class="text-base font-extrabold text-black font-number">${formatRupiah(item.hrg)}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+    }
+
+    function handleScanSubmit(event) {
+        const input = document.getElementById('inputScanUtama');
+        const val = input ? input.value.trim() : '';
+
+        if (!val) {
+            event.preventDefault();
+            return false;
+        }
+
+        // Form submit langsung ke POS.scan untuk scan barcode BC_OUT / input manual
+        return true;
+    }
+
+    // Klik di luar search panel untuk menutup
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('containerSearchUtama');
+        if (container && !container.contains(e.target)) {
+            tutupPanelSearchItm();
+        }
+    });
+
     // Inisialisasi awal saat DOM siap
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         if (isKasirOpen) {
             renderCart();
+
+            // Tampilkan info hanya jika halaman dimuat setelah scan yang menambah item
+            const sebelum = sessionStorage.getItem('scanJumlahSebelum');
+            if (sebelum !== null) {
+                sessionStorage.removeItem('scanJumlahSebelum');
+                if (hitungTotalQty() > parseInt(sebelum)) {
+                    tampilInfoItemTerakhir();
+                }
+            }
+
+            // Fokus ke kolom scan agar scanner fisik langsung bisa dipakai
+            const inputScan = document.getElementById('inputScanUtama');
+            if (inputScan) inputScan.focus();
         }
     });
 </script>
