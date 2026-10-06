@@ -150,32 +150,34 @@
 
 {{-- ================= MODAL: SCAN / INPUT KODE ================= --}}
 <div id="modalScan" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-    <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6 max-h-[92vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-bold text-[#0D1C43]">Scan / Input Kode Barang</h2>
-            <button id="btnCloseScan" type="button" class="text-[#6B7280] hover:text-[#0D1C43] text-xl leading-none">&times;</button>
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 max-h-[92vh] overflow-y-auto border border-gray-200 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-[#0D1C43]">Scan Barcode / Kamera Opname Stok</h2>
+            <button id="btnCloseScan" type="button" class="text-gray-400 hover:text-[#0D1C43] text-2xl font-bold leading-none cursor-pointer">&times;</button>
         </div>
 
         {{-- Kamera: live (HTTPS/localhost) atau foto (HTTP) --}}
-        <div class="mb-3">
+        <div class="w-full">
             @include('inventory.partials.barcode-camera', ['cameraId' => 'opname'])
         </div>
 
         {{-- Scanner fisik / ketik manual. type="text": kode diterima sebagai string --}}
         <form id="formScan" class="space-y-3">
-            <input
-                type="text"
-                id="inputKode"
-                inputmode="text"
-                autocomplete="off"
-                autocapitalize="off"
-                spellcheck="false"
-                placeholder="Scan barcode atau ketik kode lalu Enter..."
-                class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
-            >
-            <button type="submit" class="w-full bg-[#0D1C43] text-white text-xs font-semibold py-2.5 rounded-md hover:bg-[#22396F]">
-                Cek Kode
-            </button>
+            <div class="flex items-center gap-2">
+                <input
+                    type="text"
+                    id="inputKode"
+                    inputmode="text"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    placeholder="Scan barcode atau ketik kode manual..."
+                    class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
+                >
+                <button type="submit" class="bg-[#0D1C43] hover:bg-[#22396F] text-white text-sm font-semibold px-6 py-2.5 rounded-xl cursor-pointer transition-colors">
+                    Cek Kode
+                </button>
+            </div>
         </form>
 
         {{-- Feedback hasil scan terakhir --}}

@@ -234,16 +234,24 @@
     {{-- ===================================================================== --}}
     <div
         id="modalBarcode"
-        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
+        class="fixed inset-0 bg-black/50 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
         
         {{-- Card Modal --}}
-        <div class="w-full max-w-sm bg-[#F7F8FC] rounded-2xl p-5 shadow-2xl space-y-4 border border-[#E2E8F0]">
+        <div class="w-full max-w-2xl bg-[#F7F8FC] rounded-2xl p-6 shadow-2xl space-y-4 border border-[#E2E8F0] max-h-[92vh] overflow-y-auto">
             
-            {{-- Judul Modal --}}
-            <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode</h3>
+            {{-- Header Modal --}}
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode Kamera</h3>
+                <button
+                    type="button"
+                    onclick="tutupModalBarcode()"
+                    class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none cursor-pointer">
+                    &times;
+                </button>
+            </div>
 
             {{-- KAMERA: live (HTTPS/localhost/HTTP) atau foto --}}
-            <div>
+            <div class="w-full">
                 @include('inventory.partials.barcode-camera', ['cameraId' => 'kasir'])
             </div>
 
@@ -259,13 +267,13 @@
                         autocomplete="off"
                         autocapitalize="off"
                         spellcheck="false"
-                        placeholder="Atau ketik kode manual..."
+                        placeholder="Atau scan / ketik kode barcode manual..."
                         required
-                        class="flex-1 bg-secondary-bw border border-[#2D3748] rounded-lg px-3.5 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
+                        class="flex-1 bg-white border border-[#2D3748] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#101D36]" />
                     
                     <button
                         type="submit"
-                        class="bg-[#242F40] hover:bg-[#1A1F36] active:bg-black text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                        class="bg-[#101D36] hover:bg-[#1A2C50] active:bg-black text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer">
                         Cari
                     </button>
                 </div>
@@ -276,8 +284,8 @@
                 <button
                     type="button"
                     onclick="tutupModalBarcode()"
-                    class="w-full bg-secondary-bw hover:bg-gray-50 active:bg-gray-100 border border-[#2D3748] rounded-lg py-2.5 text-center text-sm font-semibold text-black transition-colors cursor-pointer">
-                    Batal
+                    class="w-full bg-white hover:bg-gray-100 active:bg-gray-200 border border-slate-300 rounded-xl py-2.5 text-center text-sm font-semibold text-black transition-colors cursor-pointer">
+                    Tutup
                 </button>
             </div>
         </div>

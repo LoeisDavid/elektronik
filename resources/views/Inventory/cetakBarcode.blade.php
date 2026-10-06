@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="bar">
-        <a href="{{ route('inventory.item') }}">← Kembali</a>
+        <a href="{{ url()->previous() ?: route('inventory.item') }}">← Kembali</a>
         <button type="button" onclick="window.print()">Print</button>
     </div>
 

@@ -37,38 +37,49 @@
     $libSrc = asset('js/html5-qrcode.min.js');
 @endphp
 
-<div id="bcam-{{ $cid }}" class="bcam w-full rounded-lg overflow-hidden border border-slate-300 bg-white" data-bcam="{{ $cid }}">
+<div id="bcam-{{ $cid }}" class="bcam w-full rounded-2xl overflow-hidden border border-slate-300 bg-white shadow-inner" data-bcam="{{ $cid }}">
 
     {{-- Area preview kamera live --}}
-    <div id="bcam-{{ $cid }}-reader" class="hidden w-full bg-black"></div>
+    <div id="bcam-{{ $cid }}-reader" class="hidden w-full bg-black min-h-[260px] md:min-h-[340px] flex items-center justify-center overflow-hidden"></div>
 
     {{-- Tampilan saat kamera belum aktif --}}
-    <div data-bcam-idle class="h-28 bg-slate-100 flex flex-col items-center justify-center gap-1.5 text-slate-500 px-4 text-center">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-        </svg>
-        <span class="text-xs">Arahkan kamera ke barcode</span>
+    <div data-bcam-idle class="h-48 md:h-64 bg-slate-100 flex flex-col items-center justify-center gap-3 text-slate-500 px-4 text-center">
+        <div class="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-700">Area Pemindaian Barcode</p>
+            <span class="text-xs text-slate-500">Klik "Kamera live" untuk menyalakan pemindai kamera</span>
+        </div>
     </div>
 
     {{-- Tombol kontrol --}}
-    <div class="flex items-center gap-2 p-2 border-t border-slate-200 bg-white">
+    <div class="flex items-center gap-3 p-3 border-t border-slate-200 bg-slate-50">
         <button type="button" data-bcam-live
-                class="flex-1 py-1.5 px-3 rounded-md text-xs font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                class="flex-1 py-2.5 px-4 rounded-xl text-xs md:text-sm font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition-colors cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+            </svg>
             Kamera live
         </button>
         <button type="button" data-bcam-photo
-                class="flex-1 py-1.5 px-3 rounded-md text-xs font-semibold text-[#0D1C43] bg-white border border-[#0D1C43] hover:bg-slate-50 transition-colors cursor-pointer">
+                class="flex-1 py-2.5 px-4 rounded-xl text-xs md:text-sm font-semibold text-[#0D1C43] bg-white border border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
             Foto barcode
         </button>
         <button type="button" data-bcam-stop
-                class="hidden py-1.5 px-3 rounded-md text-xs font-semibold text-[#D02231] bg-white border border-[#D02231] hover:bg-[#D02231]/10 transition-colors cursor-pointer">
-            Stop
+                class="hidden py-2.5 px-4 rounded-xl text-xs md:text-sm font-semibold text-white bg-[#D02231] hover:bg-red-700 transition-colors cursor-pointer shadow-sm">
+            Stop Kamera
         </button>
     </div>
 
     {{-- Pesan status --}}
-    <p data-bcam-msg class="hidden px-3 pb-2 text-[11px] leading-snug"></p>
+    <p data-bcam-msg class="hidden px-4 py-2 text-xs font-medium leading-snug bg-slate-50 border-t border-slate-100"></p>
 
     {{-- Input foto: membuka kamera bawaan HP, jalan di HTTP --}}
     <input type="file" accept="image/*" capture="environment" class="hidden" data-bcam-file>
@@ -76,6 +87,19 @@
     {{-- Host tersembunyi yang dibutuhkan library untuk decode foto --}}
     <div id="bcam-{{ $cid }}-filehost" class="hidden"></div>
 </div>
+
+<style>
+    .bcam video {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 380px !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+    .bcam [id$="-reader"] {
+        border-radius: 0.5rem;
+    }
+</style>
 
 @once
 <script src="{{ $libSrc }}"></script>
@@ -180,12 +204,15 @@
             experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         });
 
-        // Kotak scan melebar: cocok untuk barcode 1D
+        // Kotak scan melebar: cocok untuk barcode 1D panjang maupun QR code
         var cfg = {
-            fps: 10,
+            fps: 15,
             qrbox: function (w, h) {
-                return { width: Math.floor(w * 0.85), height: Math.floor(Math.min(h * 0.8, w * 0.4)) };
-            }
+                var boxWidth = Math.floor(w * 0.90);
+                var boxHeight = Math.floor(Math.min(h * 0.75, Math.max(160, w * 0.50)));
+                return { width: boxWidth, height: boxHeight };
+            },
+            aspectRatio: 1.777778
         };
 
         setRunningUI(st, true);
