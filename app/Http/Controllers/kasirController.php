@@ -148,6 +148,67 @@ class kasirController extends Controller
     }
 
     /**
+     * Pencarian produk dari tabel ITM (berdasarkan Nama/DES, Harga/HRG, dan Kode/ITM).
+     * Mengembalikan juga stok unit BC_OUT yang tersedia (ada di ITMDT dan belum terjual di STS).
+     */
+    public function searchItems(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+        if ($q === '') {
+            return response()->json([
+                'success' => true,
+                'items'   => []
+            ]);
+        }
+
+        // Cari di tabel ITM berdasarkan DES (nama), ITM (kode), atau HRG (harga)
+        $items = ITM::where(function ($query) use ($q) {
+            $query->where('DES', 'LIKE', "%{$q}%")
+                  ->orWhere('ITM', 'LIKE', "%{$q}%")
+                  ->orWhere('HRG', 'LIKE', "%{$q}%");
+        })
+        ->limit(20)
+        ->get();
+
+        if ($items->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'items'   => []
+            ]);
+        }
+
+        $itemCodes = $items->pluck('ITM')->toArray();
+
+        // Cari unit BC_OUT dari ITMDT yang belum terjual (tidak ada di STS)
+        $availableUnits = ITMDT::whereIn('ITM', $itemCodes)
+            ->whereNotIn('BC_OUT', function ($query) {
+                $query->select('BC_OUT')->from('sts');
+            })
+            ->select('ITM', 'BC_OUT')
+            ->get()
+            ->groupBy('ITM');
+
+        $results = [];
+        foreach ($items as $item) {
+            $units = $availableUnits->get($item->ITM, collect());
+            $bcs = $units->pluck('BC_OUT')->values()->toArray();
+
+            $results[] = [
+                'itm'             => $item->ITM,
+                'des'             => $item->DES ?? $item->ITM,
+                'hrg'             => (float) ($item->HRG ?? 0),
+                'available_count' => count($bcs),
+                'available_bcs'   => $bcs,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'items'   => $results
+        ]);
+    }
+
+    /**
      * Memproses input scan barcode manual:
      * Setiap fisik barang memiliki barcode unik (BC_OUT). Meskipun tipe barang sama,
      * jika BC_OUT berbeda maka dianggap sebagai barang yang berbeda di dalam keranjang.
@@ -157,7 +218,7 @@ class kasirController extends Controller
         $code = trim($request->input('BC_OUT') ?? $request->input('code') ?? '');
 
         if (!$code) {
-            return redirect()->route('POS.kasir')->with('error', 'Barcode tidak boleh kosong!');
+            return redirect()->route('POS.kasir')->with('error', 'Barcode atau kode produk tidak boleh kosong!');
         }
 
         $cart = session()->get('cart', []);
@@ -174,26 +235,30 @@ class kasirController extends Controller
 
         // 1. Cek di tabel ITMDT berdasarkan barcode keluar (BC_OUT)
         $itmdt = ITMDT::where('BC_OUT', $code)->first();
-        if (!$itmdt) {
-            return redirect()->route('POS.kasir')->with('error', 'Barcode tidak ditemukan!');
-        }
         $item = null;
 
         if ($itmdt) {
             $item = ITM::where('ITM', $itmdt->ITM)->first();
         } else {
-            // 2. Jika bukan BC_OUT, cek apakah kode adalah kode produk ITM
-            $item = ITM::where('ITM', $code)->first();
+            // 2. Jika bukan BC_OUT, cek apakah kode adalah kode produk ITM (atau nama ITM)
+            $item = ITM::where('ITM', $code)->orWhere('DES', $code)->first();
             if ($item) {
-                // Cari BC_OUT dari ITMDT yang belum ada di keranjang
+                // Cari BC_OUT dari ITMDT yang belum ada di keranjang dan belum ada di STS
                 $existingBcOuts = array_keys($cart);
                 $availableItmdt = ITMDT::where('ITM', $item->ITM)
+                    ->whereNotIn('BC_OUT', function ($query) {
+                        $query->select('BC_OUT')->from('sts');
+                    })
                     ->whereNotIn('BC_OUT', $existingBcOuts)
                     ->first();
 
                 if ($availableItmdt) {
                     $code = $availableItmdt->BC_OUT;
+                } else {
+                    return redirect()->route('POS.kasir')->with('error', 'Stok barang untuk produk "' . ($item->DES ?? $item->ITM) . '" sudah habis atau sudah ada di keranjang!');
                 }
+            } else {
+                return redirect()->route('POS.kasir')->with('error', 'Kode barang atau barcode "' . $code . '" tidak ditemukan!');
             }
         }
 
@@ -214,20 +279,7 @@ class kasirController extends Controller
             return redirect()->route('POS.kasir')->with('success', 'Produk "' . ($item->DES ?? $code) . '" (Barcode: ' . $code . ') berhasil ditambahkan!');
         }
 
-        // 4. Fallback jika kode barcode custom / dummy pengujian
-        $cart[$code] = [
-            'id' => 'ITM_' . substr($code, 0, 8),
-            'code' => $code,
-            'name' => 'Produk ' . $code,
-            'description' => 'Merek: ' . $code,
-            'price' => 5000000,
-            'qty' => 1,
-            'discount' => 0,
-            'discount_voucher' => 0
-        ];
-
-        session()->put('cart', $cart);
-        return redirect()->route('POS.kasir')->with('success', 'Barcode "' . $code . '" berhasil ditambahkan ke keranjang!');
+        return redirect()->route('POS.kasir')->with('error', 'Produk tidak ditemukan!');
     }
 
     /**
@@ -236,8 +288,8 @@ class kasirController extends Controller
     public function bayar(Request $request)
     {
         $cart = $request->input('cart', session()->get('cart', []));
-        $voucherAmount = (float) ($request->input('voucher', session()->get('voucher', 0)));
-        $discountPercent = (float) ($request->input('discount_percent', session()->get('discount_percent', 0)));
+        $voucherAmount = max(0, (float) ($request->input('voucher', session()->get('voucher', 0))));
+        $discountPercent = min(100, max(0, (float) ($request->input('discount_percent', session()->get('discount_percent', 0)))));
         $paymentMethod = $request->input('payment_method', 'tunai');
         $bankName = $request->input('bank_name', null);
         $nominalBayar = (float) ($request->input('nominal_bayar', 0));
@@ -255,14 +307,14 @@ class kasirController extends Controller
         $subtotal = 0;
         $totalItemDiscountNominal = 0;
         foreach ($cart as $item) {
-            $itemPrice = (float) ($item['price'] ?? 0);
-            $itemDiscountPct = (float) ($item['discount'] ?? 0);
-            $itemDiscountVoucher = (float) ($item['discount_voucher'] ?? 0);
-            $qty = (int) ($item['qty'] ?? 1);
+            $itemPrice = max(0, (float) ($item['price'] ?? 0));
+            $itemDiscountPct = min(100, max(0, (float) ($item['discount'] ?? 0)));
+            $itemDiscountVoucher = max(0, (float) ($item['discount_voucher'] ?? 0));
+            $qty = max(1, (int) ($item['qty'] ?? 1));
 
             $discFromPct = $itemPrice * ($itemDiscountPct / 100);
             $priceAfterDiscount = max(0, $itemPrice - $discFromPct - $itemDiscountVoucher);
-            
+
             $subtotal += ($priceAfterDiscount * $qty);
             $totalItemDiscountNominal += (($discFromPct + $itemDiscountVoucher) * $qty);
         }
@@ -311,16 +363,23 @@ class kasirController extends Controller
             $user = auth()->user()?->USERNAME ?? 'admin';
 
             // 2. Simpan Header Transaksi ke Tabel ACR
+            $isTunai = in_array(strtolower($paymentMethod), ['tunai', 'cash']);
+            $totalAllPotongan = $totalItemDiscountNominal + $voucherAmount + $diskonTransaksiNominal;
+            $payAmount = $isTunai ? max($grandTotal, $nominalBayar) : $grandTotal;
+
             $acr = ACR::create([
-                'REF_NO' => $refNo,
-                'DT'     => now()->toDateString(),
-                'CST'    => substr($cst, 0, 10),
-                'SLS'    => substr($sls, 0, 10),
-                'BRT'    => $grandTotal,
-                'POT_1'  => (int) $discountPercent,
-                'POT_2'  => null,
-                'POT_R'  => ($voucherAmount + $totalItemDiscountNominal) > 0 ? ($voucherAmount + $totalItemDiscountNominal) : null,
-                'USER'   => substr($user, 0, 10),
+                'REF_NO'  => $refNo,
+                'DT'      => now()->toDateString(),
+                'CST'     => substr($cst, 0, 10),
+                'SLS'     => substr($sls, 0, 10),
+                'BRT'     => $grandTotal,
+                'PAY'     => $payAmount,
+                'TOT_POT' => $totalAllPotongan,
+                'JNS'     => $isTunai ? 1 : 2,
+                'POT_1'   => (int) $discountPercent,
+                'POT_2'   => null,
+                'POT_R'   => ($voucherAmount + $totalItemDiscountNominal) > 0 ? ($voucherAmount + $totalItemDiscountNominal) : null,
+                'USER'    => substr($user, 0, 10),
             ]);
 
             // 3. Simpan Rincian Barang ke Tabel STS (Setiap unit barang memiliki BC_OUT berbeda)
@@ -356,7 +415,6 @@ class kasirController extends Controller
             $today = now()->toDateString();
             $kas = KAS::where('TGL', $today)->whereNull('TGLK')->first() ?? KAS::where('TGL', $today)->first();
             if ($kas) {
-                $isTunai = in_array(strtolower($paymentMethod), ['tunai', 'cash']);
                 if ($isTunai) {
                     $kas->DBT = ($kas->DBT ?? 0) + $grandTotal;
                     $kas->AKHT = ($kas->AWLT ?? 0) + $kas->DBT - ($kas->CRT ?? 0);
@@ -375,11 +433,20 @@ class kasirController extends Controller
             $kembalian = max(0, $nominalBayar - $grandTotal);
 
             return response()->json([
-                'success'     => true,
-                'message'     => 'Pembayaran berhasil disimpan.',
-                'ref_no'      => $refNo,
-                'grand_total' => $grandTotal,
-                'kembalian'   => $kembalian
+                'success'          => true,
+                'message'          => 'Pembayaran berhasil disimpan.',
+                'ref_no'           => $refNo,
+                'subtotal'         => $subtotal + $totalItemDiscountNominal,
+                'item_discount'    => $totalItemDiscountNominal,
+                'discount_percent' => $discountPercent,
+                'discount_global'  => $diskonTransaksiNominal,
+                'voucher'          => $voucherAmount,
+                'grand_total'      => $grandTotal,
+                'dibayar'          => $nominalBayar,
+                'kembalian'        => $kembalian,
+                'kasir'            => $user,
+                'tanggal'          => now()->translatedFormat('d M Y'),
+                'waktu'            => now()->format('H.i'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -396,8 +463,19 @@ class kasirController extends Controller
     public function syncCart(Request $request)
     {
         $cart = $request->input('cart', []);
-        $voucher = $request->input('voucher', 0);
-        $discountPercent = $request->input('discount_percent', 0);
+        $voucher = max(0, (float) $request->input('voucher', 0));
+        $discountPercent = min(100, max(0, (float) $request->input('discount_percent', 0)));
+
+        if (is_array($cart)) {
+            foreach ($cart as $k => $item) {
+                if (isset($item['discount'])) {
+                    $cart[$k]['discount'] = min(100, max(0, (float) $item['discount']));
+                }
+                if (isset($item['discount_voucher'])) {
+                    $cart[$k]['discount_voucher'] = max(0, (float) $item['discount_voucher']);
+                }
+            }
+        }
 
         session()->put('cart', $cart);
         session()->put('voucher', $voucher);

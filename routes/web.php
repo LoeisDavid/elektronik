@@ -41,6 +41,7 @@ Route::get('/user', function () {
 
 Route::prefix('POS')->name('POS.')->group(function () {
     Route::get('kasir', [kasirController::class, 'index'])->name('kasir');
+    Route::get('search-items', [kasirController::class, 'searchItems'])->name('search-items');
     Route::match(['get', 'post'], 'scan', [kasirController::class, 'scan'])->name('scan');
     Route::post('cart/sync', [kasirController::class, 'syncCart'])->name('cart.sync');
     Route::post('cart/clear', [kasirController::class, 'clearCart'])->name('cart.clear');
@@ -49,7 +50,7 @@ Route::prefix('POS')->name('POS.')->group(function () {
     Route::post('tutup-kasir', [kasirController::class, 'tutupKasir'])->name('tutup-kasir');
     Route::get('kas-status', [kasirController::class, 'kasStatus'])->name('kas-status');
 
-Route::post('/struk/print', [ACRController::class, 'print'])->name('struk.print');
+    Route::post('/struk/print', [ACRController::class, 'print'])->name('struk.print');
 
     // customer
     Route::get('customer', [CSTController::class, 'index'])->name('customer');
