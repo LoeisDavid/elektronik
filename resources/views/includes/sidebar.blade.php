@@ -107,7 +107,6 @@
                         ['name' => 'Kategori', 'route' => 'inventory.kategori'],
                         ['name' => 'Supplier', 'route' => 'inventory.supplier'],
                         ['name' => 'Gudang', 'route' => 'inventory.gudang'],
-                        ['name' => 'Cek stok', 'route' => 'inventory.opname-stok'],
                     ];
                 @endphp
 

@@ -1,92 +1,95 @@
 {{--
     =========================================================================
-    HALAMAN: Opname Stok
+    HALAMAN: Cek Stok (Opname Stok)
     =========================================================================
-    Cara pakai:
-    1. Simpan file ini di: resources/views/inventory/opname-stok.blade.php
-       (sesuaikan folder dengan struktur project-mu)
-    2. Di controller, kirim variabel $items berupa array/collection, contoh:
+    Simpan di: resources/views/inventory/opname-stok.blade.php
 
-        $items = DB::table('produk_barcode') // atau tabel apapun sumbernya
-            ->select('kode_barcode', 'nama_barang')
-            ->get()
-            ->map(function ($row) {
-                return [
-                    'kode_barcode' => $row->kode_barcode,
-                    'nama_barang'  => $row->nama_barang,
-                    // status awal HANYA boleh 'checking' atau 'sudah_terjual'
-                    // 'belum_terjual' baru muncul setelah proses scan di halaman ini
-                    'status'       => 'checking',
-                ];
-            });
+    Alur (SATU file untuk dua kondisi):
+    1. route('inventory.opname') -> index() render view ini TANPA $items
+       -> tampil layar pembukaan dengan tombol "Mulai".
+    2. Tombol Mulai -> route('inventory.opname.pull') -> pull() render view ini
+       DENGAN $items -> tampil tabel Cek Stok.
+    3. SEMUA perubahan status (checking -> belum_terjual) HANYA terjadi di
+       browser (JavaScript, in-memory). Tidak ada AJAX, tidak ada simpan ke DB.
+    4. Search & filter status murni JavaScript.
+    5. Daftar SELALU diurutkan: Checking -> Belum Terjual -> Sudah Terjual.
+    6. Selesai -> ringkasan -> Tutup -> redirect ke route('inventory.gudang').
 
-        return view('inventory.opname-stok', compact('items'));
-
-    3. SEMUA perubahan status (checking -> belum_terjual, dsb) HANYA terjadi
-       di browser (JavaScript, in-memory). Tidak ada request AJAX ke server,
-       tidak ada yang disimpan ke database. Refresh halaman = data balik ke
-       kondisi awal yang dikirim controller.
-    4. Search & filter status juga murni JavaScript (tidak ada request ke
-       controller).
-    5. Daftar SELALU diurutkan: Checking -> Belum Terjual -> Sudah Terjual
-       (berlaku saat halaman dibuka, setelah scan berhasil, search, & filter).
+    Palet warna:
+      Kuning  #F2B80C | Hijau #327437 | Abu #6B7280
+      Merah   #D02231 | Navy gelap #0D1C43 | Navy #22396F
+    Font: Montserrat
     =========================================================================
 --}}
 
 @extends('layouts.app') {{-- sesuaikan nama layout kalau bukan 'layouts.app' --}}
 
-@section('title', 'Opname Stok')
+@section('title', 'Cek Stok')
 
 @push('styles')
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    .font-mont { font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif; }
+
     /* Scrollbar tipis biar rapi */
     #opnameScroll::-webkit-scrollbar { width: 8px; height: 8px; }
     #opnameScroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     #opnameScroll::-webkit-scrollbar-track { background: transparent; }
 
-    .row-flash {
-        animation: rowFlash 1s ease-out;
-    }
+    .row-flash { animation: rowFlash 1s ease-out; }
     @keyframes rowFlash {
-        0%   { background-color: #fef08a; }
+        0%   { background-color: #F2B80C55; }
         100% { background-color: transparent; }
     }
 
-    .modal-backdrop {
-        background: rgba(15, 23, 42, 0.55);
-    }
+    .modal-backdrop { background: rgba(13, 28, 67, 0.55); }
 </style>
 @endpush
 
 @section('content')
-<div class="flex-1 flex flex-col h-full min-h-0 bg-light-bg">
+@if (!isset($items))
 
-    {{-- ================= TOP BAR ================= --}}
-    <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shrink-0">
-        <div>
-            <h1 class="text-lg font-semibold text-heading-dark">Opname Stok</h1>
-            <p class="text-xs text-gray-400 mt-0.5" id="statCounter">Memuat data...</p>
+{{-- ================= LAYAR PEMBUKAAN (belum ada data) ================= --}}
+<div class="font-mont flex-1 flex flex-col items-center justify-center h-full min-h-0 bg-[#F7F8FD]">
+
+    @if (session('error'))
+        <div class="mb-4 px-4 py-2 rounded-md border border-[#D02231] bg-[#D02231]/10 text-[#D02231] text-sm font-medium">
+            {{ session('error') }}
         </div>
-        <div class="flex items-center gap-3">
+    @endif
+
+    <a id="btnMulai"
+       href="{{ route('inventory.opname.pull') }}"
+       class="px-12 py-2.5 rounded-md text-base font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition shadow-sm">
+        Mulai
+    </a>
+</div>
+
+@else
+<div class="font-mont flex-1 flex flex-col h-full min-h-0 bg-[#F7F8FD]">
+
+    {{-- ================= TOP BAR: STATISTIK + TOMBOL ================= --}}
+    <div class="flex items-center justify-between px-6 pt-4 shrink-0">
+        <p class="text-xs text-[#6B7280]" id="statCounter">Memuat data...</p>
+        <div class="flex items-center gap-2">
             <button id="btnSelesai"
-                class="px-4 py-2 rounded-lg text-sm font-semibold text-red-600 border border-red-300 bg-red-50 hover:bg-red-100 transition">
+                class="px-4 py-1.5 rounded-md text-xs font-semibold text-[#D02231] border border-[#D02231] bg-white hover:bg-[#D02231]/10 transition">
                 Selesai
             </button>
             <button id="btnScan"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#1e2a4a] hover:bg-[#28365f] transition shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h1v12H4V6zm3 0h1v12H7V6zm3 0h2v12h-2V6zm4 0h1v12h-1V6zm3 0h2v12h-2V6z"/>
-                </svg>
+                class="px-4 py-1.5 rounded-md text-xs font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition shadow-sm">
                 Scan / Input Kode
             </button>
         </div>
     </div>
 
     {{-- ================= SEARCH & FILTER (murni JS) ================= --}}
-    <div class="flex items-center gap-3 px-6 pt-4 shrink-0">
+    <div class="flex items-center gap-3 px-6 pt-3 shrink-0">
         <div class="relative w-64 md:w-80">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
-                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#0D1C43]">
+                <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
             </span>
@@ -95,13 +98,13 @@
                 id="inputCari"
                 autocomplete="off"
                 placeholder="Cari kode / nama barang"
-                class="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1e2a4a]/40 focus:border-[#1e2a4a]"
+                class="w-full bg-white border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
             >
         </div>
 
         <select
             id="filterStatus"
-            class="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#1e2a4a]/40 focus:border-[#1e2a4a] cursor-pointer"
+            class="bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
         >
             <option value="semua">Status: Semua</option>
             <option value="checking">Status: Checking</option>
@@ -111,25 +114,24 @@
     </div>
 
     {{-- ================= TABLE (VIRTUAL SCROLL) ================= --}}
-    <div class="flex-1 min-h-0 px-6 py-4">
+    <div class="flex-1 min-h-0 px-6 py-3">
         <div id="opnameScroll"
-             class="relative h-full overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-sm">
+             class="relative h-full overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm">
 
             {{-- Header sticky --}}
-            <div class="sticky top-0 z-20 grid grid-cols-[70px_220px_1fr_170px] bg-[#1e2a4a] text-white text-xs font-semibold uppercase tracking-wide">
-                <div class="px-4 py-3 min-w-0 truncate">No</div>
+            <div class="sticky top-0 z-20 grid grid-cols-3 bg-[#22396F] text-white text-xs font-semibold text-center">
                 <div class="px-4 py-3 min-w-0 truncate">Kode Barcode</div>
                 <div class="px-4 py-3 min-w-0 truncate">Nama Barang</div>
-                <div class="px-4 py-3 min-w-0 truncate text-center">Status</div>
+                <div class="px-4 py-3 min-w-0 truncate">Status</div>
             </div>
 
-            {{-- Spacer total tinggi semua baris (biar scrollbar proporsional dgn 10.000 data) --}}
+            {{-- Spacer total tinggi semua baris --}}
             <div id="virtualSpacer" class="relative">
                 <div id="virtualRows" class="absolute left-0 right-0"></div>
             </div>
 
             {{-- Kondisi kosong --}}
-            <div id="emptyState" class="hidden text-center text-sm text-gray-400 py-10">
+            <div id="emptyState" class="hidden text-center text-sm text-[#6B7280] py-10">
                 Tidak ada data untuk di-opname.
             </div>
         </div>
@@ -137,11 +139,11 @@
 </div>
 
 {{-- ================= MODAL: SCAN / INPUT KODE ================= --}}
-<div id="modalScan" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+<div id="modalScan" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-semibold text-heading-dark">Scan / Input Kode Barang</h2>
-            <button id="btnCloseScan" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            <h2 class="text-sm font-bold text-[#0D1C43]">Scan / Input Kode Barang</h2>
+            <button id="btnCloseScan" class="text-[#6B7280] hover:text-[#0D1C43] text-xl leading-none">&times;</button>
         </div>
 
         <form id="formScan" class="space-y-3">
@@ -149,49 +151,49 @@
                 type="text"
                 id="inputKode"
                 autocomplete="off"
-                placeholder="Scan barcode atau ketik kode lalu Enter..."
-                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2a4a]/40 focus:border-[#1e2a4a]"
+                placeholder="Scan Barcode atau ketik kode lalu Enter..."
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
             >
-            <button type="submit" class="w-full bg-[#1e2a4a] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[#28365f]">
+            <button type="submit" class="w-full bg-[#0D1C43] text-white text-xs font-semibold py-2.5 rounded-md hover:bg-[#22396F]">
                 Cek Kode
             </button>
         </form>
 
         {{-- Feedback hasil scan terakhir --}}
-        <div id="scanFeedback" class="hidden mt-4 text-sm rounded-lg px-4 py-3"></div>
+        <div id="scanFeedback" class="hidden mt-4 text-xs rounded-md px-4 py-3"></div>
 
-        <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center text-[11px]">
             <div>
-                <div class="font-semibold text-gray-700" id="fbCountChecking">0</div>
-                <div class="text-gray-400">Belum Terscan</div>
+                <div class="font-semibold text-[#6B7280]" id="fbCountChecking">0</div>
+                <div class="text-[#6B7280]">Belum Terscan</div>
             </div>
             <div>
-                <div class="font-semibold text-amber-600" id="fbCountBelum">0</div>
-                <div class="text-gray-400">Belum Terjual</div>
+                <div class="font-semibold text-[#F2B80C]" id="fbCountBelum">0</div>
+                <div class="text-[#F2B80C]">Belum Terjual</div>
             </div>
             <div>
-                <div class="font-semibold text-emerald-600" id="fbCountSudah">0</div>
-                <div class="text-gray-400">Sudah Terjual</div>
+                <div class="font-semibold text-[#327437]" id="fbCountSudah">0</div>
+                <div class="text-[#327437]">Sudah Terjual</div>
             </div>
         </div>
     </div>
 </div>
 
 {{-- ================= MODAL: KONFIRMASI SELESAI ================= --}}
-<div id="modalConfirm" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+<div id="modalConfirm" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6 text-center">
-        <div class="w-12 h-12 mx-auto rounded-full bg-amber-100 flex items-center justify-center mb-3">
-            <span class="text-amber-500 text-2xl">!</span>
+        <div class="w-10 h-10 mx-auto rounded-full border-2 border-[#F2B80C] flex items-center justify-center mb-3">
+            <span class="text-[#F2B80C] text-xl font-bold leading-none">!</span>
         </div>
-        <h2 class="text-base font-semibold text-heading-dark mb-1">Akhiri Sesi Opname Stok?</h2>
-        <p class="text-sm text-gray-500 mb-5">
-            Setelah selesai, sesi opname ini dianggap berakhir. Pastikan semua barang sudah di-scan.
+        <h2 class="text-sm font-bold text-[#0D1C43] mb-1">Akhiri Sesi Cek Stok?</h2>
+        <p class="text-xs text-[#6B7280] mb-5">
+            Setelah selesai, sesi cek stok ini dianggap berakhir. Pastikan semua barang sudah di-scan.
         </p>
         <div class="flex gap-3">
-            <button id="btnBatalSelesai" class="flex-1 py-2.5 rounded-lg text-sm font-semibold border border-gray-300 text-gray-600 hover:bg-gray-50">
+            <button id="btnBatalSelesai" class="flex-1 py-2 rounded-md text-xs font-semibold border border-[#0D1C43] text-[#0D1C43] bg-white hover:bg-gray-50">
                 Batal
             </button>
-            <button id="btnYaSelesai" class="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600">
+            <button id="btnYaSelesai" class="flex-1 py-2 rounded-md text-xs font-semibold border border-[#D02231] bg-[#D02231]/10 text-[#D02231] hover:bg-[#D02231]/20">
                 Ya, Selesai
             </button>
         </div>
@@ -199,44 +201,55 @@
 </div>
 
 {{-- ================= MODAL: RINGKASAN HASIL ================= --}}
-<div id="modalSummary" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+<div id="modalSummary" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
     <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
-        <h2 class="text-base font-semibold text-heading-dark mb-1">Ringkasan Opname Stok</h2>
-        <p class="text-xs text-gray-400 mb-5">Data ini hanya ditampilkan di sesi ini dan tidak disimpan otomatis.</p>
+        <h2 class="text-base font-bold text-[#0D1C43] mb-1">Ringkasan Cek Stok</h2>
+        <p class="text-xs text-[#6B7280] mb-5">Data ini hanya ditampilkan di sesi ini dan tidak disimpan otomatis.</p>
 
         <div class="space-y-2">
-            <div class="flex items-center justify-between px-4 py-3 rounded-lg bg-amber-50">
-                <span class="text-sm text-amber-700 font-medium">Belum Terjual (ditemukan saat scan)</span>
-                <span class="text-lg font-bold text-amber-700" id="sumBelum">0</span>
+            <div class="flex items-center justify-between px-4 py-2.5 rounded-md border border-[#F2B80C] bg-[#F2B80C]/10">
+                <span class="text-xs text-[#F2B80C] font-medium">Belum Terjual (ditemukan saat scan)</span>
+                <span class="text-xs font-semibold text-[#F2B80C]" id="sumBelum">0</span>
             </div>
-            <div class="flex items-center justify-between px-4 py-3 rounded-lg bg-emerald-50">
-                <span class="text-sm text-emerald-700 font-medium">Sudah Terjual</span>
-                <span class="text-lg font-bold text-emerald-700" id="sumSudah">0</span>
+            <div class="flex items-center justify-between px-4 py-2.5 rounded-md border border-[#327437] bg-[#327437]/20">
+                <span class="text-xs text-[#327437] font-medium">Sudah Terjual</span>
+                <span class="text-xs font-semibold text-[#327437]" id="sumSudah">0</span>
             </div>
-            <div class="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-100">
-                <span class="text-sm text-gray-600 font-medium">Tidak Terscan (Checking)</span>
-                <span class="text-lg font-bold text-gray-700" id="sumChecking">0</span>
+            <div class="flex items-center justify-between px-4 py-2.5 rounded-md border border-[#6B7280] bg-gray-100">
+                <span class="text-xs text-[#6B7280] font-medium">Tidak Terscan (Checking)</span>
+                <span class="text-xs font-semibold text-[#6B7280]" id="sumChecking">0</span>
             </div>
-            <div class="flex items-center justify-between px-4 py-1 mt-1">
-                <span class="text-xs text-gray-400">Total Data</span>
-                <span class="text-xs text-gray-500 font-semibold" id="sumTotal">0</span>
+            <div class="flex items-center justify-between px-1 pt-2">
+                <span class="text-xs text-[#0D1C43]">Total Data</span>
+                <span class="text-xs text-[#0D1C43] font-semibold" id="sumTotal">0</span>
             </div>
         </div>
 
-        <button id="btnTutupSummary" class="w-full mt-5 py-2.5 rounded-lg text-sm font-semibold bg-[#1e2a4a] text-white hover:bg-[#28365f]">
+        <button id="btnTutupSummary" class="w-full mt-5 py-2.5 rounded-md text-xs font-semibold bg-[#0D1C43] text-white hover:bg-[#22396F]">
             Tutup
         </button>
     </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')
+@if (!isset($items))
+<script>
+document.getElementById('btnMulai').addEventListener('click', function (e) {
+    // cegah klik ganda selagi data sedang di-pull
+    if (this.dataset.loading) { e.preventDefault(); return; }
+    this.dataset.loading = '1';
+    this.textContent = 'Memuat data...';
+    this.classList.add('opacity-70', 'cursor-wait');
+});
+</script>
+@else
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
     /* =====================================================================
        1. DATA — dikirim dari controller lewat $items, murni diolah di JS
-          (TIDAK ada AJAX, TIDAK ada simpan ke DB)
     ===================================================================== */
     const rawData = @json($items ?? []);
 
@@ -250,10 +263,10 @@ document.addEventListener('DOMContentLoaded', function () {
             : 'checking',
     }));
 
-    // Data yang sedang ditampilkan (hasil search + filter + urut). Diisi saat INIT.
+    // Data yang sedang ditampilkan (hasil search + filter + urut)
     let tampil = stokData.slice();
 
-    // Urutan status: checking dulu, lalu belum terjual, terakhir sudah terjual
+    // Urutan status: checking -> belum terjual -> sudah terjual
     const URUTAN_STATUS = { checking: 0, belum_terjual: 1, sudah_terjual: 2 };
 
     function urutkanData(arr) {
@@ -263,26 +276,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let sesiSelesai = false;   // flag apakah sesi sudah "diselesaikan"
-    let pendingNavHref = null; // menyimpan link yang mau dituju setelah konfirmasi
+    let pendingNavHref = null; // tujuan setelah konfirmasi + ringkasan
+    const URL_GUDANG = @json(route('inventory.gudang')); // tujuan setelah cek stok selesai
 
     /* =====================================================================
-       2. VIRTUAL SCROLL TABLE (biar tetap ringan meski 10.000 baris)
+       2. VIRTUAL SCROLL TABLE
     ===================================================================== */
-    const ROW_HEIGHT = 44;
+    const ROW_HEIGHT = 40;
     const scrollBox   = document.getElementById('opnameScroll');
     const spacer      = document.getElementById('virtualSpacer');
     const rowsWrap    = document.getElementById('virtualRows');
     const emptyState  = document.getElementById('emptyState');
     const HEADER_H    = 40; // tinggi header sticky (approx)
 
+    const BADGE_BASE = 'inline-block min-w-[112px] px-3 py-0.5 text-xs font-semibold rounded border';
+
     const badge = (status) => {
         if (status === 'belum_terjual') {
-            return `<span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-amber-400 text-white">Belum Terjual</span>`;
+            return `<span class="${BADGE_BASE} border-[#F2B80C] bg-[#F2B80C]/10 text-[#F2B80C]">Belum Terjual</span>`;
         }
         if (status === 'sudah_terjual') {
-            return `<span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500 text-white">Sudah Terjual</span>`;
+            return `<span class="${BADGE_BASE} border-[#327437] bg-[#327437]/20 text-[#327437]">Sudah Terjual</span>`;
         }
-        return `<span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-600">Checking</span>`;
+        return `<span class="${BADGE_BASE} border-[#6B7280] bg-white text-[#6B7280]">Checking</span>`;
     };
 
     function renderVisibleRows() {
@@ -308,12 +324,11 @@ document.addEventListener('DOMContentLoaded', function () {
         for (let i = start; i < end; i++) {
             const item = tampil[i];
             html += `
-                <div class="grid grid-cols-[70px_220px_1fr_170px] items-center text-sm border-b border-gray-100 data-row"
+                <div class="grid grid-cols-3 items-center text-center text-xs border-b border-gray-300 data-row"
                      data-idx="${item.idx}" style="height:${ROW_HEIGHT}px;">
-                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-gray-400">${i + 1}</div>
-                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-gray-700 font-medium" title="${item.kode_barcode}">${item.kode_barcode}</div>
-                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-gray-600" title="${item.nama_barang}">${item.nama_barang}</div>
-                    <div class="px-4 min-w-0 truncate text-center">${badge(item.status)}</div>
+                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${item.kode_barcode}">${item.kode_barcode}</div>
+                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${item.nama_barang}">${item.nama_barang}</div>
+                    <div class="px-4 min-w-0 truncate">${badge(item.status)}</div>
                 </div>`;
         }
         rowsWrap.style.transform = `translateY(${start * ROW_HEIGHT}px)`;
@@ -342,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =====================================================================
-       2b. SEARCH & FILTER STATUS + URUTAN (murni JS, tanpa controller)
+       2b. SEARCH & FILTER STATUS + URUTAN (murni JS)
     ===================================================================== */
     const inputCari    = document.getElementById('inputCari');
     const filterStatus = document.getElementById('filterStatus');
@@ -372,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
     filterStatus.addEventListener('change', () => terapkanFilter());
 
     /* =====================================================================
-       3. HITUNG STATUS (dipakai header counter, modal scan, & summary)
+       3. HITUNG STATUS
     ===================================================================== */
     function hitungStatus() {
         const hasil = { checking: 0, belum_terjual: 0, sudah_terjual: 0 };
@@ -396,9 +411,9 @@ document.addEventListener('DOMContentLoaded', function () {
     /* =====================================================================
        4. MODAL: SCAN / INPUT KODE
     ===================================================================== */
-    const modalScan   = document.getElementById('modalScan');
-    const inputKode   = document.getElementById('inputKode');
-    const formScan    = document.getElementById('formScan');
+    const modalScan    = document.getElementById('modalScan');
+    const inputKode    = document.getElementById('inputKode');
+    const formScan     = document.getElementById('formScan');
     const scanFeedback = document.getElementById('scanFeedback');
 
     function openScanModal() {
@@ -414,12 +429,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function showFeedback(type, message) {
         const styles = {
-            success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-            warning: 'bg-red-50 text-red-700 border border-red-200',
-            info:    'bg-blue-50 text-blue-700 border border-blue-200',
-            error:   'bg-gray-100 text-gray-600 border border-gray-200',
+            success: 'bg-[#327437]/10 text-[#327437] border border-[#327437]',
+            warning: 'bg-[#D02231]/10 text-[#D02231] border border-[#D02231]',
+            info:    'bg-[#22396F]/10 text-[#22396F] border border-[#22396F]',
+            error:   'bg-gray-100 text-[#6B7280] border border-[#6B7280]',
         };
-        scanFeedback.className = 'mt-4 text-sm rounded-lg px-4 py-3 ' + styles[type];
+        scanFeedback.className = 'mt-4 text-xs rounded-md px-4 py-3 ' + styles[type];
         scanFeedback.textContent = message;
         scanFeedback.classList.remove('hidden');
     }
@@ -433,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function () {
         );
 
         if (!item) {
-            showFeedback('error', `❌ Kode "${kode}" tidak ditemukan dalam daftar opname.`);
+            showFeedback('error', `❌ Kode "${kode}" tidak ditemukan dalam daftar cek stok.`);
             return;
         }
 
@@ -449,8 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         updateModalScanCounter();
 
-        // hitung ulang + urutkan ulang daftar tampil (checking -> belum terjual -> terjual),
-        // tanpa reset scroll
+        // hitung ulang + urutkan ulang daftar tampil, tanpa reset scroll
         terapkanFilter(false);
 
         // lompat ke baris itu kalau memang sedang tampil (lolos search/filter)
@@ -471,6 +485,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* =====================================================================
        5. MODAL: KONFIRMASI SELESAI + RINGKASAN
+          Setelah ringkasan ditutup -> redirect ke route('inventory.gudang')
+          (atau ke link sidebar yang tadi diklik, kalau selesai lewat navigasi)
     ===================================================================== */
     const modalConfirm = document.getElementById('modalConfirm');
     const modalSummary = document.getElementById('modalSummary');
@@ -499,15 +515,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('btnSelesai').addEventListener('click', () => {
-        pendingNavHref = null; // selesai manual, bukan karena mau pindah halaman
+        pendingNavHref = URL_GUDANG; // selesai manual -> setelah ringkasan, arahkan ke gudang
         openConfirmModal();
     });
-    document.getElementById('btnBatalSelesai').addEventListener('click', closeConfirmModal);
+    document.getElementById('btnBatalSelesai').addEventListener('click', () => {
+        pendingNavHref = null; // batal -> reset tujuan, tetap di halaman
+        closeConfirmModal();
+    });
     document.getElementById('btnYaSelesai').addEventListener('click', selesaikanSesi);
 
     document.getElementById('btnTutupSummary').addEventListener('click', () => {
         modalSummary.classList.add('hidden');
-        // kalau summary ini muncul karena user klik link navigasi, lanjutkan pindah halaman
         if (pendingNavHref) {
             const href = pendingNavHref;
             pendingNavHref = null;
@@ -517,16 +535,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* =====================================================================
        6. INTERCEPT NAVIGASI (klik link sidebar / link lain)
-          -> dianggap "menyelesaikan" sesi opname juga
+          -> dianggap "menyelesaikan" sesi juga
     ===================================================================== */
     document.addEventListener('click', function (e) {
-        if (sesiSelesai) return; // sudah selesai sebelumnya, biarkan navigasi normal
+        if (sesiSelesai) return;
 
         const link = e.target.closest('a[href]');
         if (!link) return;
 
         const href = link.getAttribute('href');
-        // abaikan anchor kosong / javascript: / target blank
         if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank') {
             return;
         }
@@ -544,9 +561,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /* =====================================================================
-       INIT — terapkanFilter() supaya urutan status langsung berlaku
+       INIT
     ===================================================================== */
     terapkanFilter();
 });
 </script>
+@endif
 @endpush

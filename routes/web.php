@@ -13,6 +13,7 @@ use App\Http\Controllers\KASController;
 use App\Http\Controllers\SPPController;
 use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
+use App\Http\Controllers\OpnameStokController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -122,7 +123,8 @@ Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
     Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->name('supplier.destroy');
 
     // Cek Stok
-    Route::get('opname-stok', [App\Http\Controllers\OpnameStokController::class, 'index'])->name('opname-stok');
+    Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
+Route::get('/cek-stok/mulai', [OpnameStokController::class, 'pull'])->name('opname.pull');
 });
 
 
