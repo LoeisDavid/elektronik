@@ -242,14 +242,23 @@
             {{-- Judul Modal --}}
             <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode</h3>
 
+            {{-- KAMERA: live (HTTPS/localhost/HTTP) atau foto --}}
+            <div>
+                @include('inventory.partials.barcode-camera', ['cameraId' => 'kasir'])
+            </div>
+
             {{-- Form Input Manual Kode Barcode --}}
-            <form action="{{ route('POS.scan') }}" method="POST">
+            <form action="{{ route('POS.scan') }}" method="POST" id="formScanKasir">
                 @csrf
                 <div class="flex items-center gap-2">
                     <input
                         type="text"
                         name="BC_OUT"
                         id="inputManualBarcode"
+                        inputmode="text"
+                        autocomplete="off"
+                        autocapitalize="off"
+                        spellcheck="false"
                         placeholder="Atau ketik kode manual..."
                         required
                         class="flex-1 bg-secondary-bw border border-[#2D3748] rounded-lg px-3.5 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#2D8CFF]" />
@@ -1241,7 +1250,36 @@
             modal.classList.remove('flex');
             modal.classList.add('hidden');
         }
+        // Matikan kamera supaya lampu kamera padam
+        if (window.BarcodeCamera) BarcodeCamera.stop('kasir');
     }
+
+    // Sambungkan hasil scan kamera ke form kasir
+    (function () {
+        const camKasir = document.getElementById('bcam-kasir');
+        if (!camKasir) return;
+
+        camKasir.addEventListener('barcode:scan', function (e) {
+            var kode = String(e.detail.code || '').replace(/[\u0000-\u001F\u007F]/g, '').trim();
+            if (!kode) return;
+
+            // Isi ke form manual di modal
+            var inputModal = document.getElementById('inputManualBarcode');
+            if (inputModal) inputModal.value = kode;
+
+            // Juga isi ke input scan utama (karena form submit ke POS.scan)
+            var inputUtama = document.getElementById('inputScanUtama');
+            if (inputUtama) inputUtama.value = kode;
+
+            // Submit form scan kasir
+            var form = document.getElementById('formScanKasir');
+            if (form) {
+                // keepResume: setelah halaman reload, kamera live menyala lagi
+                if (window.BarcodeCamera) BarcodeCamera.stop('kasir', { keepResume: true });
+                form.requestSubmit();
+            }
+        });
+    })();
 
     // -------------------------------------------------------------------------
     // 8. FUNGSI EDIT DISKON & VOUCHER PER ITEM LANGSUNG DI CARD

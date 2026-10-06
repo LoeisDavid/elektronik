@@ -186,7 +186,7 @@
                                 <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
-                                {{-- DROPDOWN AKSI (HTML murni: <details>) --}}
+                                {{-- DROPDOWN AKSI --}}
                                 <div class="relative inline-block">
 
                                     {{-- BUTTON AKSI --}}
@@ -194,7 +194,7 @@
                                         type="button"
                                         onclick="toggleActionMenu(this)"
                                         class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
-                                        title="Aksi Sales"
+                                        title="Aksi Item"
                                     >
                                         <svg
                                             class="w-4 h-4 text-primary-db"
@@ -385,7 +385,7 @@
 
             <h2 class="text-lg font-bold mb-4">Tambah Stok</h2>
 
-            <form method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-3">
+            <form id="formStok" method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-3">
                 @csrf
 
                 {{-- NAMA BARANG --}}
@@ -432,26 +432,25 @@
                     </div>
                 </div>
 
-                {{-- AREA SCAN --}}
-                <div class="w-full h-32 rounded-lg bg-slate-500 flex flex-col items-center justify-center gap-2 text-white/80">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75V16.5zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-                    </svg>
-                    <span class="text-xs">Area scan barcode</span>
-                </div>
+                {{-- SCAN KAMERA (live bila HTTPS/localhost, foto bila HTTP) --}}
+                @include('inventory.partials.barcode-camera', ['cameraId' => 'stok'])
 
                 {{-- BARCODE + SIMPAN --}}
+                {{-- type="text" (bukan number): barcode diterima sebagai string/varchar --}}
                 <div>
                     <div class="flex items-center gap-2">
                         <input
                             id="stokBarcode"
                             type="text"
+                            inputmode="text"
                             name="stok_bc"
                             maxlength="20"
                             required
                             autocomplete="off"
+                            autocapitalize="off"
+                            spellcheck="false"
                             <?= $bukaStok ? 'autofocus' : '' ?>
-                            placeholder="Atau ketik kode manual..."
+                            placeholder="Scan atau ketik kode manual..."
                             class="<?= $inputCls ?>"
                         >
                         <button
@@ -474,6 +473,7 @@
                         <p class="text-[11px] text-gray-500 mt-1"><?= count($stokList) ?> kode menunggu di-generate</p>
                     <?php endif; ?>
                     <?= $galat('stok', 'stok_itm') ?>
+                    <?= $galat('stok', 'stok_bc') ?>
                 </div>
 
             </form>
@@ -564,7 +564,7 @@
                             class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
                         Batal
                     </button>
-                    <button 
+                    <button
                     type="submit"
                     id="btnTambahITM"
                     class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
@@ -662,13 +662,24 @@
 
 
 {{-- ============================================================= --}}
-{{-- JAVASCRIPT: hanya buka/tutup modal --}}
+{{-- JAVASCRIPT: modal, menu aksi, dan sambungan ke scanner kamera --}}
 {{-- ============================================================= --}}
 <script>
     function bukaModal(id) {
         const m = document.getElementById(id);
         m.classList.remove('hidden');
         m.classList.add('flex');
+    }
+
+    function tutupModal(id) {
+        const m = document.getElementById(id);
+        m.classList.remove('flex');
+        m.classList.add('hidden');
+
+        // Modal stok ditutup -> matikan kamera supaya lampu kamera padam
+        if (id === 'tambahStokModal' && window.BarcodeCamera) {
+            BarcodeCamera.stop('stok');
+        }
     }
 
     // ---------- Menu aksi ----------
@@ -682,37 +693,20 @@
         menu.classList.toggle('hidden');
     }
 
-    // ---------- Tutup menu/dropdown saat klik di luar ----------
+    // ---------- Tutup menu aksi saat klik di luar ----------
     document.addEventListener('click', function (event) {
         if (!event.target.closest('.action-menu') && !event.target.closest('button[onclick="toggleActionMenu(this)"]')) {
             document.querySelectorAll('.action-menu').forEach(function (menu) {
                 menu.classList.add('hidden');
             });
         }
-
-        if (!event.target.closest('#containerFilterSales')) {
-            document.getElementById('panelFilterSales').classList.add('hidden');
-            document.getElementById('arrowSalesSort').classList.remove('rotate-180');
-        }
     });
-
-    function tutupModal(id) {
-        const m = document.getElementById(id);
-        m.classList.remove('flex');
-        m.classList.add('hidden');
-    }
 
     function openStokModal() {
         bukaModal('tambahStokModal');
         setTimeout(function () {
             document.getElementById('stokBarcode').focus();
         }, 50);
-    }
-
-    // Tutup menu <details> milik tombol yang diklik
-    function tutupMenu(btn) {
-        const d = btn.closest('details');
-        if (d) d.removeAttribute('open');
     }
 
     function openEditModal(btn) {
@@ -726,7 +720,10 @@
         document.getElementById('editSPP').value = d.spp;
         document.getElementById('editITMForm').action = d.action;
 
-        tutupMenu(btn);
+        // tutup menu aksi baris ini
+        document.querySelectorAll('.action-menu').forEach(function (menu) {
+            menu.classList.add('hidden');
+        });
         bukaModal('editITMModal');
     }
 
@@ -736,19 +733,55 @@
         }
     });
 
-    // Mencegah double submit (ditaruh di luar fungsi agar aktif otomatis)
+    // ---------- Barcode: scanner fisik + kamera, selalu sebagai STRING ----------
+    (function () {
+        const form  = document.getElementById('formStok');
+        const input = document.getElementById('stokBarcode');
+        const cam   = document.getElementById('bcam-stok');
+
+        // Bersihkan karakter kontrol & spasi (sebagian scanner menambah prefix/suffix)
+        function bersihkan(v) {
+            return String(v).replace(/[\u0000-\u001F\u007F]/g, '').trim();
+        }
+
+        // Scanner fisik mengetik cepat lalu Enter -> form submit biasa.
+        // Value dibersihkan dulu tepat sebelum terkirim.
+        form.addEventListener('submit', function () {
+            input.value = bersihkan(input.value);
+        });
+
+        // Hasil dari kamera (live maupun foto)
+        cam.addEventListener('barcode:scan', function (e) {
+            const kode = bersihkan(e.detail.code);
+
+            if (input.maxLength > 0 && kode.length > input.maxLength) {
+                alert('Kode "' + kode + '" terlalu panjang (maks ' + input.maxLength + ' karakter).');
+                return;
+            }
+
+            input.value = kode;
+
+            // Nama barang & gudang harus sudah dipilih; kalau belum, browser
+            // menampilkan pesan validasi dan kode tetap terisi di kolom.
+            if (form.checkValidity()) {
+                // keepResume: setelah halaman reload, kamera live menyala lagi
+                BarcodeCamera.stop('stok', { keepResume: true });
+            }
+            form.requestSubmit();
+        });
+    })();
+
+    // Mencegah double submit
     document.getElementById('formTambah').addEventListener('submit', function (event) {
         const btn = document.getElementById('btnTambahITM');
-        
-        // 1. Cek apakah tombol sudah dalam kondisi disabled
+
         if (btn.disabled) {
             event.preventDefault();
             return;
         }
 
-        // 2. Matikan tombol dan ganti teksnya agar user tahu sedang memproses
         btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed'); // Opsional: Tambah efek visual redup Tailwind
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
         btn.innerText = 'Menyimpan...';
     });
 </script>

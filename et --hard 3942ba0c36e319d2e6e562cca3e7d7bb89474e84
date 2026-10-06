@@ -1,0 +1,622 @@
+[33mcommit dc28b3f48226c18d3b602b03d190a2eff24ac6cf[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m
+Merge: cb72dd3 cc794de
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Oct 6 19:42:07 2026 +0700
+
+    Merge pull request #38 from LoeisDavid/update-view-kasir
+    
+    update view kasir
+
+[33mcommit cc794de0d0597edd0186a558e0d8f0195a60db75[m
+Merge: cb385e7 cb72dd3
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Oct 6 19:37:02 2026 +0700
+
+    Merge branch 'dev' into update-view-kasir
+
+[33mcommit cb385e7b21c80c68600f28221a97d5cf97ce8aca[m[33m ([m[1;31morigin/update-view-kasir[m[33m)[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Oct 6 19:33:48 2026 +0700
+
+    update view kasir
+
+[33mcommit cb72dd3b6b478572e041165332673a0b5faa98c4[m
+Merge: 3942ba0 be9be08
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Oct 6 19:30:47 2026 +0700
+
+    Merge pull request #37 from LoeisDavid/revisi-tampilan
+    
+    fixed: opname stok, detail gudang
+
+[33mcommit be9be08fa1f7cbb3af9693308839aa3147696bc4[m[33m ([m[1;31morigin/revisi-tampilan[m[33m, [m[1;32mrevisi-tampilan[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Tue Oct 6 19:28:54 2026 +0700
+
+    fixed: opname stok, detail gudang
+
+[33mcommit 3942ba0c36e319d2e6e562cca3e7d7bb89474e84[m
+Merge: c7c21c1 a6504a2
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Oct 6 17:46:05 2026 +0700
+
+    Merge pull request #36 from LoeisDavid/tryCatch
+    
+    add: try catch on all controller
+
+[33mcommit a6504a2b338348424777cc37415166acc148a290[m[33m ([m[1;31morigin/tryCatch[m[33m, [m[1;32mtryCatch[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Tue Oct 6 17:44:40 2026 +0700
+
+    add: try catch on all controller
+
+[33mcommit c7c21c1bc2213d3413845f2725e2d30a0ec0c057[m
+Merge: 66d9b4e 7687bca
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Oct 6 13:38:30 2026 +0700
+
+    Merge pull request #35 from LoeisDavid/detailGudang
+    
+    add: view detail gudang and daftar barang on gudang
+
+[33mcommit 7687bca67525250ea99b2797ba21947447da0d3b[m[33m ([m[1;31morigin/detailGudang[m[33m, [m[1;32mdetailGudang[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Tue Oct 6 13:37:11 2026 +0700
+
+    add: view detail gudang and daftar barang on gudang
+
+[33mcommit 66d9b4e037a266c9f46e439b8834813761712691[m
+Merge: 670a2d4 30d1a49
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Mon Oct 5 21:27:13 2026 +0700
+
+    Merge pull request #34 from LoeisDavid/scanner-kasir
+    
+    tambah stock generate
+
+[33mcommit 30d1a4968894794e86308c39f0aa48402dfdaa20[m[33m ([m[1;31morigin/scanner-kasir[m[33m)[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Oct 5 21:21:04 2026 +0700
+
+    tambah stock generate
+
+[33mcommit 670a2d49ea390d92e47a2a2e87cf10805412e21a[m
+Merge: 0f82cec 6a10b5e
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sun Oct 4 23:08:39 2026 +0700
+
+    Merge pull request #33 from LoeisDavid/dompdf
+    
+    add: library dompdf to print struk in transaksi and kasir
+
+[33mcommit 6a10b5e8ed8a18d7d53daf7d99b93749a5202605[m[33m ([m[1;31morigin/dompdf[m[33m, [m[1;32mdompdf[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Sun Oct 4 23:06:42 2026 +0700
+
+    add: library dompdf to print struk in transaksi and kasir
+
+[33mcommit 0f82cec9620eae867e786bba6071cd3ebad82bbf[m
+Merge: ce2b8ce 37c7665
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sat Oct 3 14:30:01 2026 +0700
+
+    Merge pull request #32 from LoeisDavid/select
+    
+    add select
+
+[33mcommit ce2b8ce83e603e1ea942c3c7d859d2d76805a40a[m
+Merge: 339d3e0 7487f90
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sat Oct 3 14:29:18 2026 +0700
+
+    Merge pull request #31 from LoeisDavid/add-feature
+    
+    Add feature
+
+[33mcommit 7487f901781ff7f843b71d9b4eecd2091a65bc07[m[33m ([m[1;31morigin/add-feature[m[33m, [m[1;32madd-feature[m[33m)[m
+Merge: b0dc0f9 339d3e0
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Sat Oct 3 14:27:49 2026 +0700
+
+    merge
+
+[33mcommit b0dc0f91a049ef42fa0367c3855a9f394db065ed[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Sat Oct 3 14:24:38 2026 +0700
+
+    feat: fixed bug
+
+[33mcommit 37c7665a6e5ab0397db10f38f07f34b9d42e2e33[m[33m ([m[1;31morigin/select[m[33m)[m
+Author: nirvalen <nailfadhil07@gmail.com>
+Date:   Fri Oct 2 15:44:55 2026 +0700
+
+    add select
+
+[33mcommit 339d3e08e703f69d33802fec45cf3bb3b98b5d7e[m
+Merge: 3556ab9 3fe5e25
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Thu Oct 1 17:26:50 2026 +0700
+
+    Merge pull request #30 from LoeisDavid/add-feature
+    
+    feat: add auto generate code and view detail item
+
+[33mcommit 3fe5e25c2cd7713b3bfd3130d6da93f70ca5530e[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Thu Oct 1 17:26:00 2026 +0700
+
+    feat: add auto generate code and view detail item
+
+[33mcommit 3556ab9a09cab3dcc4d7c80d1bcae1bf546e1c26[m
+Merge: 9e4e47d b12acf0
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Thu Oct 1 02:29:37 2026 +0700
+
+    Merge pull request #29 from LoeisDavid/feat-filter-logic
+    
+    feat: add filter and logic in all page
+
+[33mcommit 9e4e47d6058a36223fe240fd197cafde71eca30d[m
+Merge: d94ce07 36ef5bb
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Thu Oct 1 02:28:41 2026 +0700
+
+    Merge pull request #28 from LoeisDavid/feat-merek-kategori
+    
+    feat(view merek and kategori): membuat tampilan dan logika dari menu …
+
+[33mcommit b12acf0392836062c75fa7e86e38a7e0a37e7eaf[m[33m ([m[1;31morigin/feat-filter-logic[m[33m, [m[1;32mfeat-filter-logic[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Thu Oct 1 02:27:27 2026 +0700
+
+    feat: add filter and logic in all page
+
+[33mcommit 36ef5bb7d54f138d8a528a7c5fd173cbb7b5c33e[m[33m ([m[1;31morigin/feat-merek-kategori[m[33m)[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Thu Oct 1 01:50:03 2026 +0700
+
+    feat(view merek and kategori): membuat tampilan dan logika dari menu merk dan kategori
+
+[33mcommit d94ce07805ab78755efeacdd82e46af39f80e23b[m
+Merge: e54a9ff e3e2a08
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 22:42:27 2026 +0700
+
+    Merge pull request #27 from LoeisDavid/update-detail-gudang
+    
+    update(view detail gudang): update tampilan gudang
+
+[33mcommit e3e2a086dbc28897bd97da9e0968242bc0d28fd3[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 22:41:21 2026 +0700
+
+    update(view detail gudang): update tampilan gudang
+
+[33mcommit e54a9ffa8ab56acc46c3fe8030ad75da105aba0a[m
+Merge: 7cf620a 356a389
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 21:17:43 2026 +0700
+
+    Merge pull request #26 from LoeisDavid/update-detail-item
+    
+    update(detail item): memperbaiki tampilan detail item mengikuti desai…
+
+[33mcommit 356a389a20f44244944fdac2ec70d48ae16e77e5[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 21:14:54 2026 +0700
+
+    update(detail item): memperbaiki tampilan detail item mengikuti desain terbaru
+
+[33mcommit 7cf620a58d7ced5658d93548f8baf0b3cfa4fc2f[m
+Merge: 01b301a b8417f9
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 16:01:12 2026 +0700
+
+    Merge pull request #25 from LoeisDavid/feat-supplier
+    
+    feat(view supplier): membuat tampilan supplier, menambahkan notifikasi
+
+[33mcommit b8417f9f9056b6c9edc8bc6e475579d45ab747c8[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Wed Sep 30 16:00:00 2026 +0700
+
+    feat(view supplier): membuat tampilan supplier, menambahkan notifikasi
+
+[33mcommit 01b301a979c994257c7d9e4b9ccdfcf1c714f40f[m
+Merge: 60f230d 0700da6
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Sep 29 16:37:41 2026 +0700
+
+    Merge pull request #24 from LoeisDavid/feat-laporan-kas
+    
+    feat(view laporan): membuat tampilan laporan
+
+[33mcommit 0700da627e19d0d156731562cb8dacc06adfcb66[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 16:36:30 2026 +0700
+
+    feat(view laporan): membuat tampilan laporan
+
+[33mcommit 60f230d68f709441638022c49cd1166f90817af5[m
+Merge: b2a0fdd a479d45
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 16:08:06 2026 +0700
+
+    Merge pull request #23 from LoeisDavid/transaksi
+    
+    feat: transaksi view and controller
+
+[33mcommit a479d454ad84a47d61184d9644f1ea1e780e5b83[m
+Merge: 92b2898 b2a0fdd
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Sep 29 16:04:05 2026 +0700
+
+    Merge branch 'dev' into transaksi
+
+[33mcommit 92b2898ceb8b90706dac5d2196f8a00c4f5a7f9b[m[33m ([m[1;31morigin/transaksi[m[33m, [m[1;32mtransaksi[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Tue Sep 29 15:55:31 2026 +0700
+
+    feat: transaksi view and controller
+
+[33mcommit b2a0fddc60d41a78d1aefe34c9b8171d6f3a255d[m
+Merge: 2107fae 82d9e7a
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 00:50:00 2026 +0700
+
+    Merge pull request #22 from LoeisDavid/feat-detail-item
+    
+    feat(view detail item): membuat tampilan detail item
+
+[33mcommit 82d9e7af316a315a9f1d698e93b0149d0bc47eb4[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 00:49:06 2026 +0700
+
+    feat(view detail item): membuat tampilan detail item
+
+[33mcommit 2107fae5e56b6f667f93b80ff5d344b549de4803[m
+Merge: 8f1b239 4ce0a4b
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 00:21:51 2026 +0700
+
+    Merge pull request #21 from LoeisDavid/gudang
+    
+    feat(gudang): membuat tampilan gudang
+
+[33mcommit 4ce0a4b1a937cc9ec43e50c1d8f80afbeb3fb57e[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 29 00:19:56 2026 +0700
+
+    feat(gudang): membuat tampilan gudang
+
+[33mcommit 8f1b2391c3135a763c6c571339437a24b7b23b5c[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 28 22:34:15 2026 +0700
+
+    feat(view Transaction): membuat tampilan transaksi
+
+[33mcommit ff4ec388876de4ba2acd240e858d3333e255c9bc[m
+Merge: 89ae3fb 6b11353
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Mon Sep 28 21:19:19 2026 +0700
+
+    Merge pull request #20 from LoeisDavid/feat-view-user
+    
+    feat(view user): membuat tampilan menu user
+
+[33mcommit 6b11353df893c1f675ad94566956d16c8ce2f8c8[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 28 21:18:05 2026 +0700
+
+    feat(view user): membuat tampilan menu user
+
+[33mcommit 89ae3fb53e1585d7def1ebf59e75e4e7f7a0fb05[m
+Merge: d93e341 005abfa
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 25 23:56:26 2026 +0700
+
+    Merge pull request #19 from LoeisDavid/search-opname-itm
+    
+    add: Searching feature, Opname-stok, ITM page
+
+[33mcommit 005abfa59ffa34461a5b2c72951bbcdf299a6d09[m
+Merge: 7978ba0 d93e341
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 25 23:56:12 2026 +0700
+
+    Merge branch 'dev' into search-opname-itm
+
+[33mcommit d93e3416c4aa236a34189c3291f2bd2d737fb3fa[m
+Merge: c0695fb abd741f
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 25 23:55:25 2026 +0700
+
+    Merge pull request #18 from LoeisDavid/fix-view-master-data
+    
+    fix(view master data)
+
+[33mcommit 7978ba047e08a5dc77b22c95a9eed738e1370fd6[m[33m ([m[1;31morigin/search-opname-itm[m[33m, [m[1;32msearch-opname-itm[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Fri Sep 25 23:54:24 2026 +0700
+
+    add: Searching feature, Opname-stok, ITM page
+
+[33mcommit abd741fc8c32feeea441d103e4d4920fa02d20e2[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 25 23:51:07 2026 +0700
+
+    fix(view master data)
+
+[33mcommit c0695fb2122debcdcefd0749dc49f46dd31fe806[m
+Merge: 64ad188 82e630e
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 25 22:21:24 2026 +0700
+
+    Merge pull request #17 from LoeisDavid/fix-POS-draft
+    
+    fix(POS kas): memperbaiki UIUX kas, dan memperbaiki tampilan sidebar,…
+
+[33mcommit 82e630edcaacf0351babc0512081dcb1c508b469[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 25 22:19:27 2026 +0700
+
+    fix(POS kas): memperbaiki UIUX kas, dan memperbaiki tampilan sidebar, menambahkan struk, memperbaiki tampilan login
+
+[33mcommit 64ad188d2eacd6a186f10e49bfc7a356118624c4[m
+Merge: a09d9b4 7e78c30
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 25 22:09:19 2026 +0700
+
+    Merge pull request #16 from LoeisDavid/master-data
+    
+    add: functions to handle creating and updating master data.
+
+[33mcommit 7e78c301b1bf87991ad7919587b75a28fa1002fe[m[33m ([m[1;31morigin/master-data[m[33m, [m[1;32mmaster-data[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Fri Sep 25 21:40:51 2026 +0700
+
+    add: functions to handle creating and updating master data.
+
+[33mcommit a09d9b49ecd7a06dc45cfa076e4b4b3ef682ef06[m
+Merge: 07f7ced e29a089
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Tue Sep 22 11:59:38 2026 +0700
+
+    Merge pull request #15 from LoeisDavid/feat-POS-kas
+    
+    feat(POS kas): membuat semua fitur POS dan memperbaiki tampilan sesua…
+
+[33mcommit e29a08928a8ee4e59d5dee911f3580e1b663e63e[m[33m ([m[1;31morigin/feat-POS-kas[m[33m)[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Tue Sep 22 11:04:12 2026 +0700
+
+    feat(POS kas): membuat semua fitur POS dan memperbaiki tampilan sesuai dengan design
+
+[33mcommit 07f7cedd9a993543a8095146145563c6a9d2e1f8[m
+Merge: 93ed196 5ff7db4
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 21 15:40:23 2026 +0700
+
+    Merge pull request #14 from LoeisDavid/migration-kas
+    
+    feat(tabel kas): menambahkan tabel kas dan membuat model serta contro…
+
+[33mcommit 5ff7db4d087f96bd1cff1e06ffc631faa6de1d72[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 21 15:39:15 2026 +0700
+
+    feat(tabel kas): menambahkan tabel kas dan membuat model serta controller kas
+
+[33mcommit 93ed196a0bd5721680a375b9760195daeb2c9e9c[m
+Merge: fd46171 be56ee6
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 21 14:25:24 2026 +0700
+
+    Merge pull request #13 from LoeisDavid/feat/setup-css-folder
+    
+    feat(tampilan awal kasir): membuat tampilan awal kasir dan menghapus …
+
+[33mcommit be56ee6bfc5df705bc5442b38342a4d6c9e6422a[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Mon Sep 21 14:24:07 2026 +0700
+
+    feat(tampilan awal kasir): membuat tampilan awal kasir dan menghapus tampilan pembayaran
+
+[33mcommit fd4617140cfcb7fe2a9e6067d2a67e9a553dd73c[m
+Merge: 5147ee8 239be10
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sun Sep 20 01:32:23 2026 +0700
+
+    Merge pull request #12 from LoeisDavid/feat/tampilan-pembayaran
+    
+    feat(tampilan pembayaran): membuat tampilan pembayaran beserta logika…
+
+[33mcommit 239be104d25b3ead662db782dc1d9a49aedb5ebc[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Sun Sep 20 01:28:33 2026 +0700
+
+    feat(tampilan pembayaran): membuat tampilan pembayaran beserta logikanya untuk data ini masuk kedatabase pada tabel ACR dan STS, tetapi masih ada catatan yaitu ketika barang tersebut sudah terjual masih bisa di scan lagi dan masih masuk kedalam cart
+
+[33mcommit 5147ee819f20fdf4e6847afbbfe3e653c9ecde2f[m
+Merge: 26f47f0 c21b467
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sat Sep 19 23:26:17 2026 +0700
+
+    Merge pull request #11 from LoeisDavid/models-relations
+    
+    add relation function model
+
+[33mcommit c21b4676692f8758a2ad5d69030a902456ed50e7[m[33m ([m[1;31morigin/models-relations[m[33m, [m[1;32mmodels-relations[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Sat Sep 19 23:25:18 2026 +0700
+
+    add relation function model
+
+[33mcommit 26f47f0833aca47de6a415bbcfa66a0d858d35c1[m
+Merge: 81215d3 21cc7f9
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Sat Sep 19 17:53:55 2026 +0700
+
+    Merge pull request #10 from LoeisDavid/feat/scan-barcode
+    
+    feat(scan manual barcode): add manual scan barcode in kasir and conne…
+
+[33mcommit 21cc7f9cdf2d84ae103a09f96dfffbf78071980a[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Sat Sep 19 11:44:29 2026 +0700
+
+    feat(scan manual barcode): add manual scan barcode in kasir and connect the cart
+
+[33mcommit 81215d3cce14fd668c4abcd4ea01c55c80f212e2[m
+Merge: a13a7a1 0a2198f
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Sat Sep 19 00:05:49 2026 +0700
+
+    Merge pull request #9 from LoeisDavid/factory-dummy
+    
+    add factory data
+
+[33mcommit 0a2198f0f4d74ba29512fb97010252682501a8ca[m[33m ([m[1;31morigin/factory-dummy[m[33m, [m[1;32mfactory-dummy[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Sat Sep 19 00:04:59 2026 +0700
+
+    add factory data
+
+[33mcommit a13a7a1467a438e8f4bb133f49f4ae23cc431268[m
+Merge: 0210b6b 86f3927
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 22:59:04 2026 +0700
+
+    Merge pull request #8 from LoeisDavid/POS1
+    
+    full POS view
+
+[33mcommit 86f39278ba53f006a24af7db6a14f91c8baad906[m
+Merge: ca94997 0210b6b
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 22:58:50 2026 +0700
+
+    Merge branch 'dev' into POS1
+
+[33mcommit ca94997833c8b9f04e4bf3d329946e81ac8bbb25[m
+Author: nirvalen <nailfadhil07@gmail.com>
+Date:   Fri Sep 18 22:46:55 2026 +0700
+
+    full POS view
+
+[33mcommit 0210b6b09418093cf1c7861339bf1e2a2fdcdb26[m
+Merge: c82feba 408b1a8
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 18:35:03 2026 +0700
+
+    Merge pull request #7 from LoeisDavid/loginPage
+    
+    loginpage awal
+
+[33mcommit c82feba0c968bedcdc6f32046fa4ea0a7c077d35[m
+Merge: 4e1e464 d272619
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 18:32:06 2026 +0700
+
+    Merge pull request #6 from LoeisDavid/feat/function-controller
+    
+    feat(controller): generate functions CRUD in all controller
+
+[33mcommit 408b1a884489e77de07a786099d6b3e3f1e5e78b[m
+Author: nirvalen <nailfadhil07@gmail.com>
+Date:   Fri Sep 18 18:10:52 2026 +0700
+
+    loginpage awal
+
+[33mcommit d272619e3cdceb0f7b1e38a48dfecc18444a6dfb[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 18:09:35 2026 +0700
+
+    feat(controller): generate functions CRUD in all controller
+
+[33mcommit 4e1e4645faf7cb6b91d29d03ad1ccf22e7637f81[m
+Merge: c389827 2ed754a
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 15:24:45 2026 +0700
+
+    Merge pull request #5 from LoeisDavid/feat/create-model-controller-master-data
+    
+    feat/add model and controller for all migrations
+
+[33mcommit 2ed754a7eb2c56d34e3c5e7d3bb40ebedcec2cf6[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 15:23:49 2026 +0700
+
+    feat/add model and controller for all migrations
+
+[33mcommit c389827467634cdaf7b6feeedacfc868b1b50411[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Fri Sep 18 15:07:42 2026 +0700
+
+    fixed itmdt and sts primary table in migration
+
+[33mcommit 323d0555a920c0bcfa99abb7cc5afab4d91287a9[m
+Merge: 7b236ba 4f7cc39
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 14:49:34 2026 +0700
+
+    Merge pull request #4 from LoeisDavid/backend-master-data
+    
+    add migration and fix .env.example
+
+[33mcommit 4f7cc39c4d0cbe47117a82534c4bf7aa0d3acbfc[m[33m ([m[1;31morigin/backend-master-data[m[33m, [m[1;32mbackend-master-data[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Fri Sep 18 14:48:48 2026 +0700
+
+    add migration and fix .env.example
+
+[33mcommit 7b236bac06ba123877db58dc0731b8ea21dcbaee[m
+Merge: 8ec5244 349e43f
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 14:30:29 2026 +0700
+
+    Merge pull request #3 from LoeisDavid/feat/layout-app
+    
+    feat/layouts view
+
+[33mcommit 349e43f0ca4ad04503fef439908790a3263a22d1[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 14:27:13 2026 +0700
+
+    feat/layouts view
+
+[33mcommit 8ec5244bd5de4a7214d2fd4abb200902f95de6bf[m
+Merge: 3742b4a d375482
+Author: LightFuture <86642990+LoeisDavid@users.noreply.github.com>
+Date:   Fri Sep 18 13:43:24 2026 +0700
+
+    Merge pull request #2 from LoeisDavid/docs/add-readme
+    
+    docs(readme): add project documentation
+
+[33mcommit d37548264c6923a2ba8180f66f2fbdcaa194934c[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 13:42:32 2026 +0700
+
+    docs(readme): add project documentation
+
+[33mcommit 3742b4a4fbad7f055fbeb7345adcd16eb9853e40[m
+Merge: e9bba18 db73f75
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Fri Sep 18 13:23:26 2026 +0700
+
+    Merge pull request #1 from LoeisDavid/setup-database-masterdata
+    
+    feat(migration): add master data tables (users, itm, cst, spp, ktg, m…
+
+[33mcommit db73f75fa2c3e70a85fede1da83aa334736100bc[m
+Author: XiaooPouu <pranswrld@gmail.com>
+Date:   Thu Sep 17 00:16:45 2026 +0700
+
+    feat(migration): add master data tables (users, itm, cst, spp, ktg, mrk, gd)
+
+[33mcommit e9bba189f0b8da0020109c27c2fa2baeca952426[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author: LoeisDavid <loeisdavid123@gmail.com>
+Date:   Wed Sep 16 22:50:15 2026 +0700
+
+    first commit
