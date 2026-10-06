@@ -391,7 +391,7 @@
                 {{-- NAMA BARANG --}}
                 <div>
                     <label class="<?= $labelCls ?>">Nama Barang</label>
-                    <select name="stok_itm" required class="<?= $inputCls ?>">
+                    <select name="stok_itm" required class="searchable-select <?= $inputCls ?>">
                         <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Pilih barang</option>
                         <?php foreach ($daftarITM as $it): ?>
                             <option value="<?= e($it->itm) ?>" <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>>
@@ -405,7 +405,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="<?= $labelCls ?>">Gudang</label>
-                        <select name="stok_gd" required class="<?= $inputCls ?>">
+                        <select name="stok_gd" required class="searchable-select <?= $inputCls ?>">
                             <option value="" disabled <?= old('stok_gd') ? '' : 'selected' ?>>Pilih gudang</option>
                             <?php foreach ($GD as $g): ?>
                                 <option value="<?= e($g->GD) ?>" <?= old('stok_gd') == $g->GD ? 'selected' : '' ?>>
@@ -419,14 +419,14 @@
                     <div>
                         <label class="<?= $labelCls ?>">Harga Beli</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputmode="numeric"
                             name="stok_hrb"
-                            step="any"
-                            min="0"
                             required
-                            value="<?= e(old('stok_hrb')) ?>"
-                            placeholder="0"
-                            class="<?= $inputCls ?>"
+                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float)old('stok_hrb'), 0, ',', '.')) : '') ?>"
+                            placeholder="Rp 0"
+                            oninput="formatInputRupiah(this)"
+                            class="input-rupiah <?= $inputCls ?>"
                         >
                         <?= $galat('stok', 'stok_hrb') ?>
                     </div>
@@ -519,7 +519,7 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Merek</label>
-                        <select name="MRK" required class="<?= $inputCls ?>">
+                        <select name="MRK" required class="searchable-select <?= $inputCls ?>">
                             <option value="" disabled <?= old('MRK') ? '' : 'selected' ?>>Pilih Merk</option>
                             <?php foreach ($MRK as $m): ?>
                                 <option value="<?= e($m->MRK) ?>" <?= old('MRK') == $m->MRK ? 'selected' : '' ?>><?= e($m->DES) ?></option>
@@ -530,14 +530,15 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Harga Jual</label>
-                        <input type="number" name="HRG" step="any" min="0" required
-                               value="<?= e(old('HRG')) ?>" class="<?= $inputCls ?>">
+                        <input type="text" inputmode="numeric" name="HRG" required
+                               value="<?= e(old('HRG') ? ('Rp ' . number_format((float)old('HRG'), 0, ',', '.')) : '') ?>"
+                               placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>">
                         <?= $galat('tambah', 'HRG') ?>
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Kategori</label>
-                        <select name="KTG" required class="<?= $inputCls ?>">
+                        <select name="KTG" required class="searchable-select <?= $inputCls ?>">
                             <option value="" disabled <?= old('KTG') ? '' : 'selected' ?>>Pilih Kategori</option>
                             <?php foreach ($KTG as $k): ?>
                                 <option value="<?= e($k->KTG) ?>" <?= old('KTG') == $k->KTG ? 'selected' : '' ?>><?= e($k->DES) ?></option>
@@ -548,7 +549,7 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Supplier</label>
-                        <select name="SPP" required class="<?= $inputCls ?>">
+                        <select name="SPP" required class="searchable-select <?= $inputCls ?>">
                             <option value="" disabled <?= old('SPP') ? '' : 'selected' ?>>Pilih Supplier</option>
                             <?php foreach ($SPP as $s): ?>
                                 <option value="<?= e($s->SPP) ?>" <?= old('SPP') == $s->SPP ? 'selected' : '' ?>><?= e($s->DES) ?></option>
@@ -610,7 +611,7 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Merk</label>
-                        <select id="editMRK" name="MRK" required class="<?= $inputCls ?>">
+                        <select id="editMRK" name="MRK" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($MRK as $m): ?>
                                 <option value="<?= e($m->MRK) ?>"><?= e($m->DES) ?></option>
                             <?php endforeach; ?>
@@ -619,13 +620,13 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Harga</label>
-                        <input id="editHRG" type="number" name="HRG" min="0" step="any" required
-                               class="<?= $inputCls ?>">
+                        <input id="editHRG" type="text" inputmode="numeric" name="HRG" required
+                               placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>">
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Kategori</label>
-                        <select id="editKTG" name="KTG" required class="<?= $inputCls ?>">
+                        <select id="editKTG" name="KTG" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($KTG as $k): ?>
                                 <option value="<?= e($k->KTG) ?>"><?= e($k->DES) ?></option>
                             <?php endforeach; ?>
@@ -634,7 +635,7 @@
 
                     <div>
                         <label class="<?= $labelCls ?>">Supplier</label>
-                        <select id="editSPP" name="SPP" required class="<?= $inputCls ?>">
+                        <select id="editSPP" name="SPP" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($SPP as $s): ?>
                                 <option value="<?= e($s->SPP) ?>"><?= e($s->DES) ?></option>
                             <?php endforeach; ?>
@@ -669,6 +670,14 @@
         const m = document.getElementById(id);
         m.classList.remove('hidden');
         m.classList.add('flex');
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            $('#' + id).find('select.searchable-select').each(function() {
+                $(this).select2({
+                    width: '100%',
+                    dropdownParent: $('#' + id)
+                });
+            });
+        }
     }
 
     // ---------- Menu aksi ----------
@@ -720,14 +729,21 @@
 
         document.getElementById('editITM').value = d.itm;
         document.getElementById('editDES').value = d.des;
-        document.getElementById('editHRG').value = d.hrg;
-        document.getElementById('editKTG').value = d.ktg;
-        document.getElementById('editMRK').value = d.mrk;
-        document.getElementById('editSPP').value = d.spp;
+        document.getElementById('editHRG').value = d.hrg ? formatRupiah(d.hrg) : '';
         document.getElementById('editITMForm').action = d.action;
 
         tutupMenu(btn);
         bukaModal('editITMModal');
+
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            $('#editMRK').val(d.mrk).trigger('change');
+            $('#editKTG').val(d.ktg).trigger('change');
+            $('#editSPP').val(d.spp).trigger('change');
+        } else {
+            document.getElementById('editKTG').value = d.ktg;
+            document.getElementById('editMRK').value = d.mrk;
+            document.getElementById('editSPP').value = d.spp;
+        }
     }
 
     document.addEventListener('keydown', function (e) {

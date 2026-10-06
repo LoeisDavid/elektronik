@@ -59,23 +59,27 @@
                    onchange="this.form.submit()"
                    class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none focus:ring-1 focus:ring-primary-db">
 
-            <select name="status" onchange="this.form.submit()"
-                    class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
-                <option value="semua"   @selected($status === 'semua')>Semua Status</option>
-                <option value="in_stok" @selected($status === 'in_stok')>In Stok</option>
-                <option value="terjual" @selected($status === 'terjual')>Terjual</option>
-            </select>
+            <div class="w-40">
+                <select name="status" onchange="this.form.submit()"
+                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
+                    <option value="semua"   @selected($status === 'semua')>Semua Status</option>
+                    <option value="in_stok" @selected($status === 'in_stok')>In Stok</option>
+                    <option value="terjual" @selected($status === 'terjual')>Terjual</option>
+                </select>
+            </div>
 
-            <select name="sort" onchange="this.form.submit()"
-                    class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
-                <option value="default"        @selected($sort === 'default')>Default (Belum Terjual & Terlama)</option>
-                <option value="masuk_terbaru"  @selected($sort === 'masuk_terbaru')>Barang Masuk Terbaru</option>
-                <option value="masuk_terlama"  @selected($sort === 'masuk_terlama')>Barang Masuk Terlama</option>
-                <option value="keluar_terbaru" @selected($sort === 'keluar_terbaru')>Barang Keluar Terbaru</option>
-                <option value="keluar_terlama" @selected($sort === 'keluar_terlama')>Barang Keluar Terlama</option>
-                <option value="az"             @selected($sort === 'az')>A - Z</option>
-                <option value="za"             @selected($sort === 'za')>Z - A</option>
-            </select>
+            <div class="w-56">
+                <select name="sort" onchange="this.form.submit()"
+                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
+                    <option value="default"        @selected($sort === 'default')>Default (Belum Terjual & Terlama)</option>
+                    <option value="masuk_terbaru"  @selected($sort === 'masuk_terbaru')>Barang Masuk Terbaru</option>
+                    <option value="masuk_terlama"  @selected($sort === 'masuk_terlama')>Barang Masuk Terlama</option>
+                    <option value="keluar_terbaru" @selected($sort === 'keluar_terbaru')>Barang Keluar Terbaru</option>
+                    <option value="keluar_terlama" @selected($sort === 'keluar_terlama')>Barang Keluar Terlama</option>
+                    <option value="az"             @selected($sort === 'az')>A - Z</option>
+                    <option value="za"             @selected($sort === 'za')>Z - A</option>
+                </select>
+            </div>
 
             <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold">Cari</button>
 

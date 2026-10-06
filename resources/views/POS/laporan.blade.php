@@ -90,20 +90,15 @@
                     <select
                         name="kasir"
                         onchange="this.form.submit()"
-                        class="w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer appearance-none"
+                        class="searchable-select w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer"
                     >
-                        <option value="">Kasir</option>
+                        <option value="">Semua Kasir</option>
                         <?php foreach ($daftarKasir as $kode => $nama): ?>
                             <option value="<?= e($kode) ?>" <?= (string) $kasir === (string) $kode ? 'selected' : '' ?>>
                                 <?= e($nama) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                        </svg>
-                    </span>
                 </div>
 
                 <?php if ($tanggal !== '' || $kasir !== ''): ?>

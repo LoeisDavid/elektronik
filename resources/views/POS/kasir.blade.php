@@ -341,10 +341,12 @@
                     </label>
                     <div class="relative">
                         <input
-                            type="number"
+                            type="text"
+                            inputmode="numeric"
                             id="kasOpening"
-                            placeholder="Masukkan nominal"
-                            class="w-full bg-white border rounded-lg px-3 py-2.5 text-sm text-black outline-none pr-8 font-medium" />
+                            placeholder="Rp 0"
+                            oninput="formatInputRupiah(this)"
+                            class="input-rupiah w-full bg-white border rounded-lg px-3 py-2.5 text-sm text-black outline-none pr-8 font-medium" />
                         <!-- Tombol Clear / X -->
                         <button 
                             type="button" 
@@ -421,12 +423,12 @@
                         Voucher (Rp)
                     </label>
                     <input
-                        type="number"
+                        type="text"
+                        inputmode="numeric"
                         id="inputVoucher"
-                        min="0"
-                        step="1000"
-                        placeholder="Rp 100.000"
-                        class="w-full bg-white placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium border" />
+                        placeholder="Rp 0"
+                        oninput="formatInputRupiah(this)"
+                        class="input-rupiah w-full bg-white placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium border" />
                 </div>
             </div>
 
@@ -685,17 +687,14 @@
                     <label for="inputPelangganKonfirmasi" class="block text-sm font-semibold text-black">
                         Pelanggan
                     </label>
-                    <input
-                        type="text"
+                    <select
                         id="inputPelangganKonfirmasi"
-                        list="listPelanggan"
-                        placeholder="Cari Pelanggan"
-                        class="w-full bg-white border  rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:border-[#101D36] focus:ring-1 focus:ring-[#101D36] font-medium" />
-                    <datalist id="listPelanggan">
+                        class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
+                        <option value="">Cari / Pilih Pelanggan</option>
                         @foreach($customers ?? [] as $cst)
-                            <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
+                            <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
                         @endforeach
-                    </datalist>
+                    </select>
                 </div>
 
                 <!-- Field 3: Sales -->
@@ -703,17 +702,14 @@
                     <label for="inputSalesKonfirmasi" class="block text-sm font-semibold text-black">
                         Sales
                     </label>
-                    <input
-                        type="text"
+                    <select
                         id="inputSalesKonfirmasi"
-                        list="listSales"
-                        placeholder="Cari Sales"
-                        class="w-full bg-white border  rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:border-[#101D36] focus:ring-1 focus:ring-[#101D36] font-medium" />
-                    <datalist id="listSales">
+                        class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
+                        <option value="">Cari / Pilih Sales</option>
                         @foreach($salesList ?? [] as $sls)
-                            <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
+                            <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
                         @endforeach
-                    </datalist>
+                    </select>
                 </div>
             </div>
 
@@ -831,10 +827,11 @@
 
     // Simpan Buka Kasir via Backend
     function simpanBukaKasir() {
-        const kasOpening = document.getElementById('kasOpening').value;
+        const rawKasOpening = document.getElementById('kasOpening').value;
+        const cleanOpening = parseFloat(rawKasOpening.replace(/\D/g, '')) || 0;
         const catatanOpening = document.getElementById('catatanOpening').value;
 
-        if (kasOpening === '' || parseFloat(kasOpening) < 0) {
+        if (rawKasOpening === '' || cleanOpening < 0) {
             alert('Silakan masukkan nominal Kas Opening yang valid!');
             return;
         }
@@ -852,7 +849,7 @@
                 'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
-                kas_opening: kasOpening,
+                kas_opening: cleanOpening,
                 catatan_opening: catatanOpening
             })
         })
@@ -1090,16 +1087,14 @@
 
                     {{-- Input Voucher Langsung (Rp) --}}
                     <div class="relative w-28">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-500 pointer-events-none">Rp</span>
                         <input
-                            type="number"
-                            min="0"
-                            step="500"
-                            value="${itemDiscountVoucher > 0 ? itemDiscountVoucher : ''}"
-                            placeholder="0"
+                            type="text"
+                            inputmode="numeric"
+                            value="${itemDiscountVoucher > 0 ? formatRupiah(itemDiscountVoucher) : ''}"
+                            placeholder="Rp 0"
                             title="Voucher (Rp)"
-                            oninput="ubahVoucherItemLangsung('${key}', this.value)"
-                            class="w-full h-8 bg-white border border-black rounded-lg pl-7 pr-2.5 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            oninput="formatInputRupiah(this); ubahVoucherItemLangsung('${key}', this.value)"
+                            class="input-rupiah w-full h-8 bg-white border border-black rounded-lg px-2 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black" />
                     </div>
 
                     <span id="subtotalItem-${key}" class="text-right text-lg font-bold text-black font-number">${formatRupiah(itemTotal)}</span>
@@ -1274,7 +1269,8 @@
 
     function ubahVoucherItemLangsung(key, rawVal) {
         if (!cartData[key]) return;
-        let val = parseFloat(rawVal) || 0;
+        let cleaned = typeof rawVal === 'string' ? rawVal.replace(/\D/g, '') : rawVal;
+        let val = parseFloat(cleaned) || 0;
         val = Math.max(0, val);
         cartData[key].discount_voucher = val;
 
@@ -1314,7 +1310,7 @@
     // -------------------------------------------------------------------------
     function modalDiskonGlobal() {
         document.getElementById('inputDiskon').value = discountPercent || '';
-        document.getElementById('inputVoucher').value = voucherAmount || '';
+        document.getElementById('inputVoucher').value = voucherAmount > 0 ? formatRupiah(voucherAmount) : '';
 
         const modal = document.getElementById('modalDiskonGlobal');
         if (modal) {
@@ -1336,7 +1332,8 @@
         const rawDiskon = parseFloat(document.getElementById('inputDiskon').value) || 0;
         discountPercent = Math.min(100, Math.max(0, rawDiskon));
 
-        const rawVoucher = parseFloat(document.getElementById('inputVoucher').value) || 0;
+        const rawVoucherStr = document.getElementById('inputVoucher').value || '';
+        const rawVoucher = parseFloat(rawVoucherStr.replace(/\D/g, '')) || 0;
         voucherAmount = Math.max(0, rawVoucher);
 
         renderCart();
@@ -1443,12 +1440,24 @@
 
         if (isLoadedFromDraft) {
             // Jika dari draft, otomatis terisi
-            if (inputPelanggan) inputPelanggan.value = currentDraftPelanggan;
-            if (inputSales) inputSales.value = currentDraftSales;
+            if (inputPelanggan) {
+                inputPelanggan.value = currentDraftPelanggan;
+                if (typeof jQuery !== 'undefined') $(inputPelanggan).val(currentDraftPelanggan).trigger('change');
+            }
+            if (inputSales) {
+                inputSales.value = currentDraftSales;
+                if (typeof jQuery !== 'undefined') $(inputSales).val(currentDraftSales).trigger('change');
+            }
         } else {
             // Jika transaksi baru, dikosongkan
-            if (inputPelanggan) inputPelanggan.value = '';
-            if (inputSales) inputSales.value = '';
+            if (inputPelanggan) {
+                inputPelanggan.value = '';
+                if (typeof jQuery !== 'undefined') $(inputPelanggan).val('').trigger('change');
+            }
+            if (inputSales) {
+                inputSales.value = '';
+                if (typeof jQuery !== 'undefined') $(inputSales).val('').trigger('change');
+            }
         }
 
         // Buka Modal Konfirmasi
@@ -1456,6 +1465,14 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                $(modal).find('select.searchable-select').each(function() {
+                    $(this).select2({
+                        width: '100%',
+                        dropdownParent: $(modal)
+                    });
+                });
+            }
         }
     }
 

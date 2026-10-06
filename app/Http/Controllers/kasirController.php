@@ -41,7 +41,8 @@ class kasirController extends Controller
      */
     public function bukaKasir(Request $request)
     {
-        $nominalOpening = (int) ($request->input('kas_opening') ?? 0);
+        $rawOpening = (string) ($request->input('kas_opening') ?? 0);
+        $nominalOpening = (int) (preg_replace('/[^\d]/', '', $rawOpening) ?: 0);
         $catatanOpening = $request->input('catatan_opening') ?? '';
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
