@@ -15,6 +15,11 @@
     5. Daftar SELALU diurutkan: Checking -> Belum Terjual -> Sudah Terjual.
     6. Selesai -> ringkasan -> Tutup -> redirect ke route('inventory.gudang').
 
+    INPUT KODE (semua diperlakukan sebagai STRING, bukan angka):
+      - Scanner fisik (keyboard wedge): mengetik ke kolom teks lalu Enter.
+      - Kamera live (HTTPS / localhost) lewat partial barcode-camera.
+      - Foto barcode (kamera HP, jalan di HTTP biasa) lewat partial yang sama.
+
     Palet warna:
       Kuning  #F2B80C | Hijau #327437 | Abu #6B7280
       Merah   #D02231 | Navy gelap #0D1C43 | Navy #22396F
@@ -45,6 +50,9 @@
     }
 
     .modal-backdrop { background: rgba(13, 28, 67, 0.55); }
+
+    /* Preview kamera live: pastikan video memenuhi lebar kotak */
+    .bcam video { width: 100% !important; object-fit: cover; }
 </style>
 @endpush
 
@@ -141,19 +149,28 @@
 </div>
 
 {{-- ================= MODAL: SCAN / INPUT KODE ================= --}}
-<div id="modalScan" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-    <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
+<div id="modalScan" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6 max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-bold text-[#0D1C43]">Scan / Input Kode Barang</h2>
-            <button id="btnCloseScan" class="text-[#6B7280] hover:text-[#0D1C43] text-xl leading-none">&times;</button>
+            <button id="btnCloseScan" type="button" class="text-[#6B7280] hover:text-[#0D1C43] text-xl leading-none">&times;</button>
         </div>
 
+        {{-- Kamera: live (HTTPS/localhost) atau foto (HTTP) --}}
+        <div class="mb-3">
+            @include('inventory.partials.barcode-camera', ['cameraId' => 'opname'])
+        </div>
+
+        {{-- Scanner fisik / ketik manual. type="text": kode diterima sebagai string --}}
         <form id="formScan" class="space-y-3">
             <input
                 type="text"
                 id="inputKode"
+                inputmode="text"
                 autocomplete="off"
-                placeholder="Scan Barcode atau ketik kode lalu Enter..."
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder="Scan barcode atau ketik kode lalu Enter..."
                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-xs text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
             >
             <button type="submit" class="w-full bg-[#0D1C43] text-white text-xs font-semibold py-2.5 rounded-md hover:bg-[#22396F]">
@@ -255,7 +272,8 @@ document.addEventListener('DOMContentLoaded', function () {
     ===================================================================== */
     const rawData = @json($items ?? []);
 
-    // Normalisasi + kasih index unik
+    // Normalisasi + kasih index unik.
+    // kode_barcode SELALU String (leading zero & huruf tetap utuh).
     const stokData = rawData.map((item, idx) => ({
         idx,
         kode_barcode: String(item.kode_barcode ?? '').trim(),
@@ -264,6 +282,14 @@ document.addEventListener('DOMContentLoaded', function () {
             ? item.status
             : 'checking',
     }));
+
+    // Escape HTML: data masuk lewat innerHTML pada virtual scroll
+    const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    // Bersihkan karakter kontrol (sebagian scanner menambah prefix/suffix)
+    const bersihkan = (v) => String(v ?? '').replace(/[\u0000-\u001F\u007F]/g, '').trim();
 
     // Data yang sedang ditampilkan (hasil search + filter + urut)
     let tampil = stokData.slice();
@@ -328,8 +354,8 @@ document.addEventListener('DOMContentLoaded', function () {
             html += `
                 <div class="grid grid-cols-3 items-center text-center text-xs border-b border-gray-300 data-row"
                      data-idx="${item.idx}" style="height:${ROW_HEIGHT}px;">
-                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${item.kode_barcode}">${item.kode_barcode}</div>
-                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${item.nama_barang}">${item.nama_barang}</div>
+                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${esc(item.kode_barcode)}">${esc(item.kode_barcode)}</div>
+                    <div class="px-4 min-w-0 truncate whitespace-nowrap text-[#0D1C43]" title="${esc(item.nama_barang)}">${esc(item.nama_barang)}</div>
                     <div class="px-4 min-w-0 truncate">${badge(item.status)}</div>
                 </div>`;
         }
@@ -414,12 +440,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =====================================================================
-       4. MODAL: SCAN / INPUT KODE
+       4. MODAL: SCAN / INPUT KODE (scanner fisik + kamera)
     ===================================================================== */
     const modalScan    = document.getElementById('modalScan');
     const inputKode    = document.getElementById('inputKode');
     const formScan     = document.getElementById('formScan');
     const scanFeedback = document.getElementById('scanFeedback');
+    const camOpname    = document.getElementById('bcam-opname');
 
     function openScanModal() {
         modalScan.classList.remove('hidden');
@@ -430,6 +457,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function closeScanModal() {
         modalScan.classList.add('hidden');
+        // matikan kamera supaya lampu kamera padam
+        if (window.BarcodeCamera) BarcodeCamera.stop('opname');
     }
 
     function showFeedback(type, message) {
@@ -445,9 +474,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function prosesKode(kodeInput) {
-        const kode = kodeInput.trim();
+        const kode = bersihkan(kodeInput);
         if (!kode) return;
 
+        // Perbandingan murni string (tanpa konversi angka)
         const item = stokData.find(
             d => d.kode_barcode.toLowerCase() === kode.toLowerCase()
         );
@@ -481,11 +511,30 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnCloseScan').addEventListener('click', closeScanModal);
     modalScan.addEventListener('click', (e) => { if (e.target === modalScan) closeScanModal(); });
 
+    // Scanner fisik / ketik manual
     formScan.addEventListener('submit', function (e) {
         e.preventDefault();
         prosesKode(inputKode.value);
         inputKode.value = '';
         inputKode.focus();
+    });
+
+    // Hasil dari kamera (live maupun foto): langsung diproses sebagai string
+    camOpname.addEventListener('barcode:scan', function (e) {
+        prosesKode(e.detail.code);
+    });
+
+    // Scanner fisik tetap bisa dipakai walau fokus sedang di tombol kamera:
+    // ketikan pertama otomatis dialihkan ke kolom kode.
+    modalScan.addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.key.length === 1) inputKode.focus(); // karakter akan masuk ke input
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modalScan.classList.contains('hidden')) closeScanModal();
     });
 
     /* =====================================================================
