@@ -90,6 +90,9 @@ class ACRController extends Controller
         }
 
         return view('POS.transaksi', compact('data'));
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data ACR.');
+    }
     }
 
     /**
@@ -99,6 +102,7 @@ class ACRController extends Controller
      */
     public function print(Request $request)
     {
+        try {
         $request->validate([
             'ref_no'          => 'required|string|max:50',
             'tanggal'         => 'nullable|string|max:50',
@@ -165,6 +169,8 @@ class ACRController extends Controller
         // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item
         $tinggi = 420 + (count($items) * 36);
 
+         $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
+                ->setPaper([0, 0, 226.77, $tinggi], 'portrait');
             $namaFile = 'struk-' . preg_replace('/[^A-Za-z0-9_-]/', '', $struk['ref_no']) . '.pdf';
 
             return $pdf->stream($namaFile);
