@@ -36,12 +36,12 @@ class KTGController extends Controller
         $validated = $request->validate([
             'DES' => 'required|string|max:45',
         ]);
+
+        $validated['KTG'] = $this->generateCode($validated['DES'], 'KTG');
  
         KTG::create($validated);
 
-        $validated['KTG'] = $this->generateCode($validated['DES'], 'KTG');
-
-        return redirect()->route('kategori.index')->with('success', 'Data kategori berhasil ditambahkan.');
+        return redirect()->route('inventory.kategori')->with('success', 'Data kategori berhasil ditambahkan.');
     }
  
     /**
