@@ -381,11 +381,14 @@
     >
         <div class="absolute inset-0" onclick="tutupModal('tambahStokModal')"></div>
 
-        <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-200 p-5 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
+        <div class="relative w-full max-w-2xl bg-secondary-bw border border-gray-200 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[92vh] overflow-y-auto">
 
-            <h2 class="text-lg font-bold mb-4">Tambah Stok</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">Tambah Stok</h2>
+                <button type="button" onclick="tutupModal('tambahStokModal')" class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none cursor-pointer">&times;</button>
+            </div>
 
-            <form id="formStok" method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-3">
+            <form id="formStok" method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-4">
                 @csrf
 
                 {{-- NAMA BARANG --}}

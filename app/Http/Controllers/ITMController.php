@@ -460,6 +460,39 @@ class ITMController extends Controller
         }
     }
 
+    public function cetakSatuan(Request $request)
+    {
+        try {
+            $bcOut = $request->input('bc_out') ?? $request->query('bc_out');
+
+            if (!$bcOut) {
+                return redirect()->back()->with('error', 'Kode barcode tidak ditemukan.');
+            }
+
+            $detail = ITMDT::where('BC_OUT', $bcOut)->first();
+            if (!$detail) {
+                return redirect()->back()->with('error', 'Data stok barang tidak ditemukan.');
+            }
+
+            $itm = ITM::where('ITM', $detail->ITM)->first();
+            $gd  = GD::where('GD', $detail->GD)->first();
+
+            $cetak = [
+                [
+                    'itm'    => $detail->ITM,
+                    'des'    => $itm->DES ?? $detail->ITM,
+                    'gd'     => $gd->DES ?? '-',
+                    'bc_in'  => $detail->BC_IN,
+                    'bc_out' => $detail->BC_OUT,
+                ]
+            ];
+
+            return view('Inventory.cetakBarcode', ['cetak' => $cetak]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika mencetak barcode');
+        }
+    }
+
     /**
      * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit  => maks 20 karakter.
      */

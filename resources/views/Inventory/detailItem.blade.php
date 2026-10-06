@@ -230,9 +230,23 @@
             </div>
         </div>
     </div>
+
+    {{-- Form Tersembunyi Print Barcode -> Controller (target _blank) --}}
+    <form
+        id="formPrintBarcode"
+        method="POST"
+        action="{{ route('inventory.item.cetak.satuan') }}"
+        target="_blank"
+        class="hidden"
+    >
+        @csrf
+        <input type="hidden" name="bc_out" id="printBcOut">
+    </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script>
+    let currentKodeStok = '';
+
     function openBarcodeModal(btn) {
         // 1. Ambil nilai kode_stok dari atribut data-kode tombol yang diklik
         const kodeTransaksi = btn.dataset.kode;
@@ -243,12 +257,14 @@
             return;
         }
 
+        currentKodeStok = kodeTransaksi;
+
         const modal = document.getElementById('modalBarcode');
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
 
-        // 2. Render Barcode CODE128
+        // 2. Render Barcode CODE128 preview
         JsBarcode("#barcodeCanvas", kodeTransaksi, {
             format: "CODE128",       // Jenis barcode
             lineColor: "#000000",   // Warna garis barcode
@@ -262,23 +278,38 @@
     }
 
     function closeBarcodeModal() {
-
-        const modal =
-            document.getElementById('modalBarcode');
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-
+        const modal = document.getElementById('modalBarcode');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     }
 
-
     function closeBarcodeKlikLuar(event) {
-
         if (event.target === event.currentTarget) {
             closeBarcodeModal();
         }
-
     }
 
+    function cetakStruk() {
+        if (!currentKodeStok) {
+            console.error('Kode barcode belum dipilih');
+            return;
+        }
+
+        const inputBc = document.getElementById('printBcOut');
+        const formPrint = document.getElementById('formPrintBarcode');
+
+        if (inputBc && formPrint) {
+            inputBc.value = currentKodeStok;
+            formPrint.submit();
+        }
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeBarcodeModal();
+        }
+    });
 </script>
 @endsection
