@@ -47,8 +47,9 @@ class UserController extends Controller
             $request->validate([
                 'USERNAME' => 'required|string|max:20',
                 'PASS' => 'required|string|max:20',
+                'CONFIRM_PASS' => 'required|string|max:20|same:PASS',
                 'AL' => 'string|max:100',
-                'HP' => 'required|string|max:25',
+                'HP' => 'required|numeric|max_digits:25',
                 'DES' => 'required|string|max:100',
                 'ROLE' => 'required|integer',
             ]);
@@ -68,7 +69,7 @@ class UserController extends Controller
 
             $validated = $request->validate([
                 'AL' => 'string|max:100',
-                'HP' => 'required|string|max:25',
+                'HP' => 'required|numeric|max_digits:25',
                 'DES' => 'required|string|max:100',
                 'ROLE' => 'required|integer',
             ]);
