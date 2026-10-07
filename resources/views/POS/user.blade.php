@@ -567,139 +567,170 @@
 
         {{-- Modal Card Container --}}
         <div
-            class="relative w-full max-w-lg bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
-        >
+    class="relative w-full max-w-lg bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
+>
 
-            <h2 class="text-2xl font-bold mb-5 tracking-tight">
-                Tambah User
-            </h2>
+    <h2 class="text-2xl font-bold mb-5 tracking-tight">
+        Tambah User
+    </h2>
 
-            <form
-                method="POST"
-                id="formTambah"
-                action="{{ route('POS.user.store') }}"
-                class="space-y-5"
-            >
-                @csrf
+    <form
+        method="POST"
+        id="formTambah"
+        action="{{ route('POS.user.store') }}"
+        class="space-y-5"
+    >
+        @csrf
 
-                {{-- GROUP 1: Informasi Akun (Akses) --}}
-                <div class="space-y-3 pt-1">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {{-- USERNAME --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Username
-                            </label>
-                            <input
-                                type="text"
-                                name="USERNAME"
-                                placeholder="Contoh: CST004"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                            >
-                        </div>
+        {{-- GROUP 1: Informasi Akun (Akses) --}}
+        <div class="space-y-3 pt-1">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-                        {{-- PASSWORD --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Password
-                            </label>
-                            <input
-                                type="password"
-                                name="PASS"
-                                placeholder="Masukkan password"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                            >
-                        </div>
-                    </div>
-                </div>
+                {{-- USERNAME --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Username
+                    </label>
 
-                {{-- GROUP 2: Data Diri & Role --}}
-                <div class="space-y-3 pt-1">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {{-- NAMA LENGKAP (DES) --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Nama Lengkap
-                            </label>
-                            <input
-                                type="text"
-                                name="DES"
-                                placeholder="Masukkan nama"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                            >
-                        </div>
-
-                        {{-- NOMOR HANDPHONE (HP) --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Nomor Handphone
-                            </label>
-                            <input
-                                type="text"
-                                name="HP"
-                                placeholder="08123456789"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                            >
-                        </div>
-                    </div>
-
-                    {{-- ROLE --}}
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">
-                            Role
-                        </label>
-                        <input
-                            type="text"
-                            name="ROLE"
-                            placeholder=""
-                            required
-                            class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                    </div>
-                </div>
-
-                {{-- GROUP 3: Alamat --}}
-                <div class="space-y-3 pt-1">
-                    {{-- ALAMAT --}}
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">
-                            Alamat
-                        </label>
-                        <textarea
-                            name="AL"
-                            rows="2"
-                            placeholder="Contoh: Jl. Jend. Sudirman No. 1, Jakarta Selatan"
-                            class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none"
-                        ></textarea>
-                    </div>
-                </div>
-
-                {{-- TOMBOL AKSI --}}
-                <div class="pt-4 flex items-center gap-3">
-                    <button
-                        type="button"
-                        onclick="closeTambahModal()"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer transition-colors"
+                    <input
+                        type="text"
+                        name="USERNAME"
+                        placeholder="Contoh: CST004"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
-                        Batal
-                    </button>
-
-                    <button
-                        type="submit"
-                        id="btnTambah"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer transition-colors"
-                    >
-                        Simpan
-                    </button>
                 </div>
 
-            </form>
+                {{-- PASSWORD --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        name="PASS"
+                        placeholder="Masukkan password"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                </div>
+
+                {{-- CONFIRM PASSWORD --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Konfirmasi Password
+                    </label>
+
+                    <input
+                        type="password"
+                        name="CONFIRM_PASS"
+                        placeholder="Ulangi password"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                </div>
+
+            </div>
+        </div>
+
+        {{-- GROUP 2: Data Diri & Role --}}
+        <div class="space-y-3 pt-1">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                {{-- NAMA LENGKAP (DES) --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Nama Lengkap
+                    </label>
+
+                    <input
+                        type="text"
+                        name="DES"
+                        placeholder="Masukkan nama"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                </div>
+
+                {{-- NOMOR HANDPHONE (HP) --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Nomor Handphone
+                    </label>
+
+                    <input
+                        type="text"
+                        name="HP"
+                        placeholder="08123456789"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                </div>
+
+            </div>
+
+            {{-- ROLE --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1">
+                    Role
+                </label>
+
+                <input
+                    type="text"
+                    name="ROLE"
+                    placeholder=""
+                    required
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                >
+            </div>
 
         </div>
+
+        {{-- GROUP 3: Alamat --}}
+        <div class="space-y-3 pt-1">
+
+            {{-- ALAMAT --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1">
+                    Alamat
+                </label>
+
+                <textarea
+                    name="AL"
+                    rows="2"
+                    placeholder="Contoh: Jl. Jend. Sudirman No. 1, Jakarta Selatan"
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none"
+                ></textarea>
+            </div>
+
+        </div>
+
+        {{-- TOMBOL AKSI --}}
+        <div class="pt-4 flex items-center gap-3">
+
+            <button
+                type="button"
+                onclick="closeTambahModal()"
+                class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer transition-colors"
+            >
+                Batal
+            </button>
+
+            <button
+                type="submit"
+                id="btnTambah"
+                class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer transition-colors"
+            >
+                Simpan
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
 
     </div>
 
@@ -749,8 +780,8 @@
                                 type="text"
                                 name="USERNAME"
                                 placeholder="Contoh: David Loes"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                                readonly
+                                class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
                             >
                         </div>
 

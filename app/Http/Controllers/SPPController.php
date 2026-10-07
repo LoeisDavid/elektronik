@@ -16,7 +16,8 @@ class SPPController extends Controller
             if ($request->filled('keyword')) {
                 $search = $request->keyword;
                 $query->where('DES', 'LIKE', "%{$search}%")
-                      ->orWhere('SPP', 'LIKE', "%{$search}%");
+                      ->orWhere('SPP', 'LIKE', "%{$search}%")
+                      ->orWhere('TLP', 'LIKE', "%{$search}%");
             }
 
             $sort = $request->sort;
@@ -46,7 +47,7 @@ class SPPController extends Controller
         try {
             $validated = $request->validate([
                 'DES' => 'required|string|max:150',
-                'TLP' => 'required|string|max:20',
+                'TLP' => 'required|numeric|max_digits:20',
             ]);
 
             $validated['SPP'] = $this->generateCode($validated['DES'], 'SPP');
@@ -76,7 +77,7 @@ class SPPController extends Controller
             $validated = $request->validate([
                 'SPP' => 'required|string|max:10',
                 'DES' => 'required|string|max:45',
-                'TLP' => 'required|string|max:20',
+                'TLP' => 'required|numeric|max_digits:20',
             ]);
 
             $spp = SPP::findOrFail($spp);

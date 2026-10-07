@@ -47,8 +47,7 @@ class kasirController extends Controller
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
 
-        try {
-            $kas = KAS::updateOrCreate(
+        $kas = KAS::updateOrCreate(
                 ['TGL' => $today],
                 [
                     'USER'  => substr($user, 0, 10),
@@ -64,6 +63,9 @@ class kasirController extends Controller
                     'TGLK'  => null,
                 ]
             );
+
+        try {
+            
 
             session()->put('kas_open', true);
             session()->put('kas_opening', $nominalOpening);
@@ -135,6 +137,7 @@ class kasirController extends Controller
 
             // Hapus session kasir dan cart
             session()->forget(['kas_open', 'kas_opening', 'catatan_opening', 'cart', 'voucher', 'discount_percent']);
+
 
             return response()->json([
                 'success' => true,

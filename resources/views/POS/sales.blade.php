@@ -694,8 +694,8 @@
                         id="editSLS"
                         type="text"
                         name="SLS"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db transition-all"
+                        readonly
+                        class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
                     >
 
                 </div>

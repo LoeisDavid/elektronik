@@ -15,7 +15,8 @@ class CSTController extends Controller
             if ($request->filled('keyword')) {
                 $keyword = $request->keyword;
                 $query->where('DES', 'LIKE', "%{$keyword}%")
-                    ->orWhere('CST', 'LIKE', "%{$keyword}%");
+                    ->orWhere('CST', 'LIKE', "%{$keyword}%")
+                    ->orWhere('TLP', 'LIKE', "%{$keyword}%");
             }
 
             $sort = $request->sort;
@@ -45,7 +46,7 @@ class CSTController extends Controller
         try {
             $validated = $request->validate([
                 'DES' => 'required|string|max:45',
-                'TLP' => 'required|string|max:20',
+                'TLP' => 'required|numeric|max_digits:20',
             ]);
 
             $validated['CST'] = $this->generateCode($validated['DES'], 'CST');
@@ -66,7 +67,7 @@ class CSTController extends Controller
             $request->validate([
                 'CST' => 'required|string|max:10',
                 'DES' => 'required|string|max:45',
-                'TLP' => 'required|string|max:20',
+                'TLP' => 'required|numeric|max_digits:20',
             ]);
 
             $customer = CST::where('CST', $decodedId)->firstOrFail();
