@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('kas', function (Blueprint $table) {
-            $table->date('TGL')->primary();
+            $table->string('CD', 20)->primary();
+            $table->date('TGL');
             $table->string('USER', 10);
             $table->integer('AWLT');
             $table->integer('AWLNT');
@@ -33,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('kas');
     }
 };

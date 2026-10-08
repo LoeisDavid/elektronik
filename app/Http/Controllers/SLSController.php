@@ -98,7 +98,7 @@ class SLSController extends Controller
             $validated = $request->validate([
                 'SLS' => 'required|string|max:10|unique:sls,SLS,' . $sales->SLS . ',sls',
                 'DES' => 'required|string|max:150',
-                'HP'  => 'required|string|max:20',
+                'HP'  => 'required|numeric|max_digits:20',
                 'AL'  => 'required|string|max:100',
             ]);
 

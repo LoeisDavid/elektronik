@@ -47,22 +47,37 @@ class kasirController extends Controller
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
 
-        $kas = KAS::updateOrCreate(
-                ['TGL' => $today],
-                [
-                    'USER'  => substr($user, 0, 10),
-                    'AWLT'  => $nominalOpening,
-                    'AWLNT' => 0,
-                    'DBT'   => 0,
-                    'DBNT'  => 0,
-                    'CRT'   => 0,
-                    'CRNT'  => 0,
-                    'AKHT'  => $nominalOpening,
-                    'AKHNT' => 0,
-                    'TGLM'  => now(),
-                    'TGLK'  => null,
-                ]
-            );
+        $kas = KAS::where('TGL', $today)->whereNull('TGLK')->first();
+        if (!$kas) {
+            $kas = KAS::where('TGL', $today)->first();
+        }
+
+        if (!$kas) {
+            $cd = 'CD' . sprintf('%08d', KAS::count() + 1);
+            while (KAS::where('CD', $cd)->exists()) {
+                $cd = 'CD' . sprintf('%08d', rand(10000, 99999999));
+            }
+            $kas = KAS::create([
+                'CD'    => $cd,
+                'TGL'   => $today,
+                'USER'  => substr($user, 0, 10),
+                'AWLT'  => $nominalOpening,
+                'AWLNT' => 0,
+                'DBT'   => 0,
+                'DBNT'  => 0,
+                'CRT'   => 0,
+                'CRNT'  => 0,
+                'AKHT'  => $nominalOpening,
+                'AKHNT' => 0,
+                'TGLM'  => now(),
+                'TGLK'  => null,
+            ]);
+        } else {
+            $kas->update([
+                'AWLT' => $nominalOpening,
+                'AKHT' => $nominalOpening,
+            ]);
+        }
 
         try {
             
