@@ -5,55 +5,62 @@
 
 @section('content')
 
+@php
+    $sortOpsi = [
+        'terbaru'  => 'Terbaru',
+        'terlama'  => 'Terlama',
+        'termahal' => 'Termahal',
+        'termurah' => 'Termurah',
+    ];
+    $sortAktif = array_key_exists(request('sort'), $sortOpsi) ? request('sort') : 'terbaru';
+@endphp
+
 <div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6">
 
     {{-- ========================================================= --}}
-    {{-- TOOLBAR --}}
+    {{-- TOOLBAR                                                    --}}
+    {{-- Urutan: Search -> Urutkan -> Tanggal dari/sampai -> Cari   --}}
+    {{-- Semua filter HANYA diterapkan saat tombol Cari ditekan     --}}
+    {{-- (atau Enter di kolom pencarian).                           --}}
     {{-- ========================================================= --}}
 
-    <div class="flex items-center justify-between gap-3 mb-4">
+    <form
+        action="{{ url()->current() }}"
+        method="GET"
+        class="flex flex-wrap items-center gap-2 mb-4"
+    >
 
-    {{-- SEARCH + SORT --}}
-    <div class="flex items-center gap-2">
+        {{-- NILAI SORT (diisi dropdown di bawah, tidak auto-submit) --}}
+        <input type="hidden" name="sort" id="inputSortTransaksi" value="{{ $sortAktif }}">
 
         {{-- SEARCH --}}
         <div class="relative w-64 md:w-80">
-
-            <form action="{{ url()->current() }}" method="GET">
-
-                @if(request('sort'))
-                    <input type="hidden" name="sort" value="{{ request('sort') }}">
-                @endif
-
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
-                    <svg
-                        class="w-5 h-5 stroke-[2.5]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                        />
-                    </svg>
-                </span>
-
-                <input
-                    type="text"
-                    placeholder="Cari kode"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
-                    value="{{ request('keyword') }}"
-                    name="keyword"
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                <svg
+                    class="w-5 h-5 stroke-[2.5]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                 >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                    />
+                </svg>
+            </span>
 
-            </form>
-
+            <input
+                type="text"
+                name="keyword"
+                value="{{ request('keyword') }}"
+                placeholder="Cari kode"
+                class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+            >
         </div>
 
 
-        {{-- DROPDOWN SORT --}}
+        {{-- DROPDOWN SORT (di sebelah search) --}}
         <div
             class="relative inline-block text-left"
             id="containerSortTransaksi"
@@ -68,28 +75,7 @@
 
                 <span>
                     Urutkan:
-                    @switch(request('sort', 'terbaru'))
-
-                        @case('terbaru')
-                            Terbaru
-                            @break
-
-                        @case('terlama')
-                            Terlama
-                            @break
-
-                        @case('termahal')
-                            Termahal
-                            @break
-
-                        @case('termurah')
-                            Termurah
-                            @break
-
-                        @default
-                            Terbaru
-
-                    @endswitch
+                    <span id="labelSortTransaksi">{{ $sortOpsi[$sortAktif] }}</span>
                 </span>
 
                 <svg
@@ -110,23 +96,26 @@
             </button>
 
 
-            {{-- PANEL --}}
+            {{-- PANEL (hanya memilih nilai, TIDAK submit) --}}
             <div
                 id="panelSortTransaksi"
                 class="hidden absolute left-0 mt-2 w-52 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
             >
 
-                {{-- TERBARU --}}
-                <a
-                    href="{{ request()->fullUrlWithQuery(['sort' => 'terbaru', 'page' => 1]) }}"
-                    class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                >
+                @foreach ($sortOpsi as $nilai => $label)
 
-                    <span>Terbaru</span>
+                    <button
+                        type="button"
+                        data-sort="{{ $nilai }}"
+                        data-label="{{ $label }}"
+                        onclick="pilihSortTransaksi(this)"
+                        class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                    >
 
-                    @if(request('sort', 'terbaru') === 'terbaru')
+                        <span>{{ $label }}</span>
+
                         <svg
-                            class="w-4 h-4 text-gray-600"
+                            class="icon-check-sort w-4 h-4 text-gray-600 {{ $sortAktif === $nilai ? '' : 'hidden' }}"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -138,98 +127,60 @@
                                 d="M4.5 12.75l6 6 9-13.5"
                             />
                         </svg>
-                    @endif
 
-                </a>
+                    </button>
 
-
-                {{-- TERLAMA --}}
-                <a
-                    href="{{ request()->fullUrlWithQuery(['sort' => 'terlama', 'page' => 1]) }}"
-                    class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                >
-
-                    <span>Terlama</span>
-
-                    @if(request('sort') === 'terlama')
-                        <svg
-                            class="w-4 h-4 text-gray-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M4.5 12.75l6 6 9-13.5"
-                            />
-                        </svg>
-                    @endif
-
-                </a>
-
-
-                {{-- TERMAHAL --}}
-                <a
-                    href="{{ request()->fullUrlWithQuery(['sort' => 'termahal', 'page' => 1]) }}"
-                    class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                >
-
-                    <span>Termahal</span>
-
-                    @if(request('sort') === 'termahal')
-                        <svg
-                            class="w-4 h-4 text-gray-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M4.5 12.75l6 6 9-13.5"
-                            />
-                        </svg>
-                    @endif
-
-                </a>
-
-
-                {{-- TERMURAH --}}
-                <a
-                    href="{{ request()->fullUrlWithQuery(['sort' => 'termurah', 'page' => 1]) }}"
-                    class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
-                >
-
-                    <span>Termurah</span>
-
-                    @if(request('sort') === 'termurah')
-                        <svg
-                            class="w-4 h-4 text-gray-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M4.5 12.75l6 6 9-13.5"
-                            />
-                        </svg>
-                    @endif
-
-                </a>
+                @endforeach
 
             </div>
 
         </div>
 
-    </div>
 
-</div>
+        {{-- TANGGAL DARI - SAMPAI --}}
+        <div class="flex items-center gap-2">
+            <input
+                type="date"
+                name="tanggal_dari"
+                value="{{ request('tanggal_dari') }}"
+                max="{{ request('tanggal_sampai') }}"
+                title="Dari tanggal"
+                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+            >
+
+            <span class="text-sm text-gray-600">s/d</span>
+
+            <input
+                type="date"
+                name="tanggal_sampai"
+                value="{{ request('tanggal_sampai') }}"
+                min="{{ request('tanggal_dari') }}"
+                title="Sampai tanggal"
+                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+            >
+        </div>
+
+
+        {{-- TOMBOL CARI --}}
+        <button
+            type="submit"
+            class="h-9.5 px-4 bg-primary-db text-white rounded-lg text-sm font-semibold cursor-pointer"
+        >
+            Cari
+        </button>
+
+
+        {{-- RESET --}}
+        @if(request('keyword') || request('tanggal_dari') || request('tanggal_sampai') || $sortAktif !== 'terbaru')
+            <a
+                href="{{ url()->current() }}"
+                class="h-9.5 px-4 inline-flex items-center bg-white border border-gray-800 text-black hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+            >
+                Reset
+            </a>
+        @endif
+
+    </form>
 
 
     {{-- ========================================================= --}}
@@ -802,7 +753,7 @@
 
 
     // ============================================================
-    // DROPDOWN SORT
+    // DROPDOWN SORT (hanya memilih nilai, submit via tombol Cari)
     // ============================================================
 
     function toggleSortTransaksi(event) {
@@ -833,6 +784,35 @@
 
         panel.classList.add('hidden');
         arrow.classList.remove('rotate-180');
+
+    }
+
+
+    function pilihSortTransaksi(btn) {
+
+        // isi nilai ke input hidden (ikut terkirim saat tombol Cari ditekan)
+        document.getElementById('inputSortTransaksi').value =
+            btn.dataset.sort;
+
+        // ubah label di tombol dropdown
+        document.getElementById('labelSortTransaksi').textContent =
+            btn.dataset.label;
+
+        // pindahkan tanda centang ke opsi yang dipilih
+        document
+            .querySelectorAll('#panelSortTransaksi .icon-check-sort')
+            .forEach(function(icon) {
+                icon.classList.add('hidden');
+            });
+
+        const check =
+            btn.querySelector('.icon-check-sort');
+
+        if (check) {
+            check.classList.remove('hidden');
+        }
+
+        tutupSortTransaksi();
 
     }
 

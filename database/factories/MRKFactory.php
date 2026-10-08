@@ -13,6 +13,29 @@ class MRKFactory extends Factory
     protected $model = MRK::class;
     protected static int $sequence = 1;
 
+    protected static array $brands = [
+        'Samsung',
+        'LG',
+        'Polytron',
+        'Sharp',
+        'Panasonic',
+        'Xiaomi',
+        'Cosmos',
+        'Miyako',
+        'Toshiba',
+        'Philips',
+        'Realme',
+        'Asus',
+        'Sony',
+        'Aqua Japan',
+        'Daikin',
+        'Modena',
+        'Mito',
+        'Changhong',
+        'Denpoo',
+        'Sanex',
+    ];
+
     public static function resetSequence(int $start = 1): void
     {
         static::$sequence = $start;
@@ -26,11 +49,18 @@ class MRKFactory extends Factory
     public function definition(): array
     {
         $num = static::$sequence++;
+        $idx = ($num - 1) % count(static::$brands);
+        $brandName = static::$brands[$idx];
+        if ($num > count(static::$brands)) {
+            $brandName .= ' ' . ceil($num / count(static::$brands));
+        }
+
         return [
             'MRK' => sprintf('MRK%07d', $num), // 10 chars, fits string(10)
-            'DES' => substr(fake()->unique(true)->word() . ' ' . $num, 0, 45), // fits string(45)
+            'DES' => substr($brandName, 0, 45), // fits string(45)
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
 }
+

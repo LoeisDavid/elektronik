@@ -16,25 +16,35 @@ class OpnameStokController extends Controller
 
     /**
      * Dipanggil saat tombol "Mulai" ditekan: baru di sini data di-pull.
+     *
+     * Catatan performa:
+     * - Status "terjual" dicek dengan EXISTS, bukan LEFT JOIN ke tabel sts.
+     *   LEFT JOIN bisa menggandakan baris kalau satu BC_OUT muncul lebih dari
+     *   sekali di sts, dan itu yang membuat halaman "memuat terus".
+     * - Pastikan kolom sts.BC_OUT dan itmdt.ITM / itm.ITM sudah di-index.
      */
     public function pull()
     {
         try {
-            $items = DB::select("
-                SELECT
-                    t1.BC_OUT as kode_barcode,
-                    t2.DES as nama_barang,
-                    t3.BC_OUT as status
-                FROM itmdt t1
-                LEFT JOIN itm t2 ON t1.ITM = t2.ITM
-                LEFT JOIN sts t3 ON t1.BC_OUT = t3.BC_OUT
-            ");
+            // Jaga-jaga untuk data besar supaya tidak kena batas 30 detik PHP
+            set_time_limit(120);
 
-            // Status awal hanya 'checking' atau 'sudah_terjual'.
-            // Pengurutan dilakukan di JavaScript (halaman opname-stok).
-            foreach ($items as $row) {
-                $row->status = $row->status ? 'sudah_terjual' : 'checking';
-            }
+            $items = DB::table('itmdt as t1')
+                ->leftJoin('itm as t2', 't1.ITM', '=', 't2.ITM')
+                ->select(
+                    't1.BC_OUT as kode_barcode',
+                    't2.DES as nama_barang',
+                    DB::raw('EXISTS (SELECT 1 FROM sts WHERE sts.BC_OUT = t1.BC_OUT) AS terjual')
+                )
+                ->get()
+                // Status awal hanya 'checking' atau 'sudah_terjual'.
+                // Pengurutan dilakukan di JavaScript (halaman opname-stok).
+                ->map(fn ($row) => [
+                    'kode_barcode' => (string) $row->kode_barcode,
+                    'nama_barang'  => $row->nama_barang,
+                    'status'       => $row->terjual ? 'sudah_terjual' : 'checking',
+                ])
+                ->values();
 
             return view('inventory.opname-stok', ['items' => $items]);
         } catch (\Throwable $e) {

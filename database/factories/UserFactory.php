@@ -35,12 +35,13 @@ class UserFactory extends Factory
         return [
             'USERNAME' => sprintf('usr%07d', $num), // 10 chars, fits string(20) and acr.USER string(10)
             'PASS' => static::$password ??= Hash::make('password123'),
-            'AL' => substr(fake()->address(), 0, 100),
-            'HP' => substr(fake()->phoneNumber(), 0, 25),
-            'DES' => substr(fake()->name(), 0, 100),
+            'AL' => substr(fake('id_ID')->address(), 0, 100),
+            'HP' => substr('08' . fake()->numerify('##########'), 0, 25),
+            'DES' => substr(fake('id_ID')->name(), 0, 100),
             'ROLE' => fake()->randomElement([1, 2, 3]),
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
 }
+
