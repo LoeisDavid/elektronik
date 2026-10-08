@@ -159,9 +159,9 @@ class GDController extends Controller
                 return (object) [
                     'BC_OUT' => $row->BC_OUT,
                     'DES'    => $itm->DES ?? '-',
-                    'KTG'    => $itm->KTG ?? '-',
-                    'SPP'    => $itm->SPP ?? '-',
-                    'MRK'    => $itm->MRK ?? '-',
+                    'KTG'    => $itm->KTG()->DES ?? '-',
+                    'SPP'    => $itm->SPP()->DES ?? '-',
+                    'MRK'    => $itm->MRK()->DES ?? '-',
                     'STOK'   => $stokPerItm[$row->ITM] ?? 0,
                     'HRB'    => $row->HRB ?? 0,
                 ];

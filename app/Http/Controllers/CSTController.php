@@ -65,7 +65,6 @@ class CSTController extends Controller
             $decodedId = urldecode($id);
 
             $request->validate([
-                'CST' => 'required|string|max:10',
                 'DES' => 'required|string|max:45',
                 'TLP' => 'required|numeric|max_digits:20',
             ]);

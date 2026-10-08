@@ -125,6 +125,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
+                        <th class="py-3 px-4 font-semibold">Kode</th>
                         <th class="py-3 px-4 font-semibold">Kasir</th>
                         <th class="py-3 px-4 font-semibold">Waktu Buka</th>
                         <th class="py-3 px-4 font-semibold">Waktu Tutup</th>
@@ -139,6 +140,7 @@
                     <?php if (count($laporan) > 0): ?>
                         <?php foreach ($laporan as $row): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
+                                <td class="py-3.5 px-4 font-mono text-gray-600"><?= e($row->cd ?? '-') ?></td>
                                 <td class="py-3.5 px-4 font-medium"><?= e($row->kasir) ?></td>
                                 <td class="py-3.5 px-4"><?= e($jam($row->waktu_buka)) ?></td>
                                 <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($jam($row->waktu_tutup)) : '<span class="text-amber-600">Belum ditutup</span>' ?></td>
@@ -158,7 +160,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
+                            <td colspan="8" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

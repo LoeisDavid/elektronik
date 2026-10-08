@@ -7,6 +7,7 @@ use App\Models\CST;
 use App\Models\GD;
 use App\Models\ITM;
 use App\Models\ITMDT;
+use App\Models\KAS;
 use App\Models\KTG;
 use App\Models\MRK;
 use App\Models\SLS;
@@ -18,6 +19,7 @@ use Database\Factories\CSTFactory;
 use Database\Factories\GDFactory;
 use Database\Factories\ITMDTFactory;
 use Database\Factories\ITMFactory;
+use Database\Factories\KASFactory;
 use Database\Factories\KTGFactory;
 use Database\Factories\MRKFactory;
 use Database\Factories\SLSFactory;
@@ -40,7 +42,7 @@ class DatabaseSeeder extends Seeder
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        $tables = ['sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'users'];
+        $tables = ['sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'users', 'kas'];
         foreach ($tables as $table) {
             DB::table($table)->truncate();
         }
@@ -265,6 +267,20 @@ class DatabaseSeeder extends Seeder
         }
         foreach (array_chunk($stsData, $chunkSize) as $chunk) {
             DB::table('sts')->insert($chunk);
+        }
+
+        // 12. KAS (Memanggil KASFactory untuk seed riwayat shift kasir)
+        $this->command?->info("Seeding KAS (menggunakan KASFactory)...");
+        KASFactory::resetSequence(1);
+        KAS::factory()->count(60)->create();
+        // Pastikan ada KAS record untuk hari ini juga
+        $todayStr = now()->toDateString();
+        if (!KAS::where('TGL', $todayStr)->exists()) {
+            KAS::factory()->create([
+                'TGL'  => $todayStr,
+                'TGLM' => $todayStr . ' 08:00:00',
+                'TGLK' => $todayStr . ' 17:00:00',
+            ]);
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
