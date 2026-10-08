@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database with 10,000 records for each migration.
+     * Seed the application's database with electronic items, matched stock, single user, and unsold stock.
      */
     public function run(): void
     {
@@ -45,31 +45,22 @@ class DatabaseSeeder extends Seeder
             DB::table($table)->truncate();
         }
 
-        $totalRecords = 10000;
-        $chunkSize = 1000;
+        $totalRecords = 1000;
+        $chunkSize = 500;
 
-        // 1. Users (admin + 10,000 users)
-        $this->command?->info("Seeding Users (admin + 10,000 records)...");
+        // 1. Users (Hanya 1 user admin)
+        $this->command?->info("Seeding Users (1 user admin)...");
         User::create([
             'USERNAME' => 'admin',
-            'PASS' => Hash::make('admin123'),
-            'AL' => 'Jl. Elektronik No. 1',
-            'HP' => '08123456789',
-            'DES' => 'Administrator Toko',
-            'ROLE' => 1,
+            'PASS'     => Hash::make('admin123'),
+            'AL'       => 'Jl. Raya Elektronik No. 88, Jakarta Pusat',
+            'HP'       => '081234567890',
+            'DES'      => 'Administrator Toko',
+            'ROLE'     => 1,
         ]);
 
-        UserFactory::resetSequence(1);
-        for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
-            $data = [];
-            for ($i = 0; $i < $chunkSize; $i++) {
-                $data[] = User::factory()->make()->getAttributes();
-            }
-            DB::table('users')->insert($data);
-        }
-
-        // 2. CST (Customer) - 10,000
-        $this->command?->info("Seeding CST (10,000 records)...");
+        // 2. CST (Customer)
+        $this->command?->info("Seeding CST ($totalRecords records)...");
         CSTFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -79,8 +70,8 @@ class DatabaseSeeder extends Seeder
             DB::table('cst')->insert($data);
         }
 
-        // 3. SPP (Supplier) - 10,000
-        $this->command?->info("Seeding SPP (10,000 records)...");
+        // 3. SPP (Supplier)
+        $this->command?->info("Seeding SPP ($totalRecords records)...");
         SPPFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -90,8 +81,8 @@ class DatabaseSeeder extends Seeder
             DB::table('spp')->insert($data);
         }
 
-        // 4. MRK (Merek) - 10,000
-        $this->command?->info("Seeding MRK (10,000 records)...");
+        // 4. MRK (Merek)
+        $this->command?->info("Seeding MRK ($totalRecords records)...");
         MRKFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -101,8 +92,8 @@ class DatabaseSeeder extends Seeder
             DB::table('mrk')->insert($data);
         }
 
-        // 5. KTG (Kategori) - 10,000
-        $this->command?->info("Seeding KTG (10,000 records)...");
+        // 5. KTG (Kategori)
+        $this->command?->info("Seeding KTG ($totalRecords records)...");
         KTGFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -112,8 +103,8 @@ class DatabaseSeeder extends Seeder
             DB::table('ktg')->insert($data);
         }
 
-        // 6. GD (Gudang) - 10,000
-        $this->command?->info("Seeding GD (10,000 records)...");
+        // 6. GD (Gudang)
+        $this->command?->info("Seeding GD ($totalRecords records)...");
         GDFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -123,8 +114,8 @@ class DatabaseSeeder extends Seeder
             DB::table('gd')->insert($data);
         }
 
-        // 7. SLS (Sales) - 10,000
-        $this->command?->info("Seeding SLS (10,000 records)...");
+        // 7. SLS (Sales)
+        $this->command?->info("Seeding SLS ($totalRecords records)...");
         SLSFactory::resetSequence(1);
         for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
             $data = [];
@@ -134,76 +125,150 @@ class DatabaseSeeder extends Seeder
             DB::table('sls')->insert($data);
         }
 
-        // 8. ITM (Item) - 10,000
-        $this->command?->info("Seeding ITM (10,000 records)...");
+        // 8. ITM (Item) & 9. ITMDT (Item Detail)
+        // Stok pada ITM disesuaikan dengan jumlah ITMDT. Beberapa ITM tidak memiliki stok (STOK = 0).
+        $this->command?->info("Seeding ITM & ITMDT (stok ITM sesuai jumlah ITMDT)...");
         ITMFactory::resetSequence(1);
-        $globalIndex = 1;
-        for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
-            $data = [];
-            for ($i = 0; $i < $chunkSize; $i++) {
-                $data[] = ITM::factory()->make([
-                    'KTG' => sprintf('KTG%07d', $globalIndex),
-                    'MRK' => sprintf('MRK%07d', $globalIndex),
-                    'SPP' => sprintf('SPP%07d', $globalIndex),
-                ])->getAttributes();
-                $globalIndex++;
-            }
-            DB::table('itm')->insert($data);
-        }
-
-        // 9. ITMDT (Item Detail) - 10,000
-        $this->command?->info("Seeding ITMDT (10,000 records)...");
         ITMDTFactory::resetSequence(1);
-        $globalIndex = 1;
-        for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
-            $data = [];
-            for ($i = 0; $i < $chunkSize; $i++) {
-                $data[] = ITMDT::factory()->make([
-                    'ITM' => sprintf('ITM%07d', $globalIndex),
-                    'GD'  => sprintf('GD%08d', $globalIndex),
-                ])->getAttributes();
-                $globalIndex++;
+
+        $itmData = [];
+        $itmdtData = [];
+        $itmdtSequence = 1;
+        $allCreatedItmdts = [];
+
+        for ($i = 1; $i <= $totalRecords; $i++) {
+            $itmCode = sprintf('ITM%07d', $i);
+            $ktgCode = sprintf('KTG%07d', (($i - 1) % $totalRecords) + 1);
+            $mrkCode = sprintf('MRK%07d', (($i - 1) % $totalRecords) + 1);
+            $sppCode = sprintf('SPP%07d', (($i - 1) % $totalRecords) + 1);
+
+            // ~15% barang tidak ada stok (STOK = 0), sisa barang punya stok 1 s/d 6 unit
+            if ($i % 7 === 0) {
+                $stockCount = 0;
+            } else {
+                $stockCount = (($i * 3 + 7) % 6) + 1;
             }
-            DB::table('itmdt')->insert($data);
+
+            $itmObj = ITM::factory()->make([
+                'ITM'  => $itmCode,
+                'STOK' => $stockCount,
+                'KTG'  => $ktgCode,
+                'MRK'  => $mrkCode,
+                'SPP'  => $sppCode,
+            ])->getAttributes();
+            $itmData[] = $itmObj;
+
+            for ($s = 0; $s < $stockCount; $s++) {
+                $bcOut = sprintf('BCO%017d', $itmdtSequence);
+                $gdCode = sprintf('GD%08d', (($itmdtSequence - 1) % $totalRecords) + 1);
+
+                $itmdtObj = ITMDT::factory()->make([
+                    'ITM'    => $itmCode,
+                    'BC_IN'  => sprintf('BCI%017d', $itmdtSequence),
+                    'BC_OUT' => $bcOut,
+                    'GD'     => $gdCode,
+                ])->getAttributes();
+
+                $itmdtData[] = $itmdtObj;
+                $allCreatedItmdts[] = [
+                    'BC_OUT' => $bcOut,
+                    'ITM'    => $itmCode,
+                    'HRG'    => $itmObj['HRG'],
+                ];
+                $itmdtSequence++;
+            }
         }
 
-        // 10. ACR (Account Receivable / Header Penjualan) - 10,000
-        $this->command?->info("Seeding ACR (10,000 records)...");
+        foreach (array_chunk($itmData, $chunkSize) as $chunk) {
+            DB::table('itm')->insert($chunk);
+        }
+
+        foreach (array_chunk($itmdtData, $chunkSize) as $chunk) {
+            DB::table('itmdt')->insert($chunk);
+        }
+
+        // 10. ACR & 11. STS (Penjualan)
+        // Hanya sebagian stok (sekitar 60%) yang terjual di STS, sisanya 40% belum terjual
+        $totalItmdts = count($allCreatedItmdts);
+        $soldCount = (int) ($totalItmdts * 0.6);
+        $soldItmdts = array_slice($allCreatedItmdts, 0, $soldCount);
+
+        $this->command?->info("Seeding ACR & STS ($soldCount unit terjual dari total $totalItmdts unit ITMDT)...");
+
         ACRFactory::resetSequence(1);
-        $globalIndex = 1;
-        for ($chunk = 0; $chunk < ($totalRecords / $chunkSize); $chunk++) {
-            $data = [];
-            for ($i = 0; $i < $chunkSize; $i++) {
-                $data[] = ACR::factory()->make([
-                    'CST'  => sprintf('CST%07d', $globalIndex),
-                    'SLS'  => sprintf('SLS%07d', $globalIndex),
-                    'USER' => sprintf('usr%07d', $globalIndex),
-                ])->getAttributes();
-                $globalIndex++;
+        STSFactory::resetSequence(0);
+
+        $acrData = [];
+        $stsData = [];
+        $stsRecIndex = 0;
+        $invIndex = 1;
+        $cstIndex = 1;
+        $slsIndex = 1;
+
+        $soldOffset = 0;
+        while ($soldOffset < $soldCount) {
+            $itemsInInvoice = min(rand(1, 3), $soldCount - $soldOffset);
+            $refNo = sprintf('INV%07d', $invIndex);
+            $cstCode = sprintf('CST%07d', (($cstIndex - 1) % $totalRecords) + 1);
+            $slsCode = sprintf('SLS%07d', (($slsIndex - 1) % $totalRecords) + 1);
+
+            $brtTotal = 0;
+            for ($j = 0; $j < $itemsInInvoice; $j++) {
+                $soldUnit = $soldItmdts[$soldOffset + $j];
+                $recKey = str_pad(base_convert((string)$stsRecIndex, 10, 36), 3, '0', STR_PAD_LEFT);
+                $hgj = $soldUnit['HRG'];
+                $brtTotal += $hgj;
+
+                $stsData[] = [
+                    'REC'        => $recKey,
+                    'REF_NO'     => $refNo,
+                    'BC_OUT'     => $soldUnit['BC_OUT'],
+                    'ITM'        => $soldUnit['ITM'],
+                    'HGJ'        => $hgj,
+                    'ST'         => 'UNT',
+                    'POT_1'      => null,
+                    'POT_2'      => null,
+                    'POT_R'      => null,
+                    'PPN'        => null,
+                    'BRT'        => $hgj,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $stsRecIndex++;
             }
-            DB::table('acr')->insert($data);
+
+            $acrData[] = [
+                'REF_NO'     => $refNo,
+                'DT'         => fake()->date(),
+                'CST'        => $cstCode,
+                'SLS'        => $slsCode,
+                'BRT'        => $brtTotal,
+                'PAY'        => $brtTotal,
+                'TOT_POT'    => 0,
+                'JNS'        => 1,
+                'POT_1'      => null,
+                'POT_2'      => null,
+                'POT_R'      => null,
+                'USER'       => 'admin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $soldOffset += $itemsInInvoice;
+            $invIndex++;
+            $cstIndex++;
+            $slsIndex++;
         }
 
-        // 11. STS (Surat / Detail Penjualan) - Sisakan 10 item belum terjual (index 1-10)
-        $this->command?->info("Seeding STS (9,990 records, 10 item belum terjual)...");
-        STSFactory::resetSequence(0);
-        $globalIndex = 11;
-        $stsRecords = $totalRecords - 10;
-        for ($offset = 0; $offset < $stsRecords; $offset += $chunkSize) {
-            $limit = min($chunkSize, $stsRecords - $offset);
-            $data = [];
-            for ($i = 0; $i < $limit; $i++) {
-                $data[] = STS::factory()->make([
-                    'REF_NO' => sprintf('INV%07d', $globalIndex),
-                    'BC_OUT' => sprintf('BCO%017d', $globalIndex),
-                    'ITM'    => sprintf('ITM%07d', $globalIndex),
-                ])->getAttributes();
-                $globalIndex++;
-            }
-            DB::table('sts')->insert($data);
+        foreach (array_chunk($acrData, $chunkSize) as $chunk) {
+            DB::table('acr')->insert($chunk);
+        }
+        foreach (array_chunk($stsData, $chunkSize) as $chunk) {
+            DB::table('sts')->insert($chunk);
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        $this->command?->info("All 11 migrations seeded with 10,000 records each successfully!");
+        $this->command?->info("Seeding database berhasil!");
     }
 }
+

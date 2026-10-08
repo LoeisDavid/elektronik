@@ -76,11 +76,48 @@
 </div>
 
 @else
+
+@php
+    // Hitungan awal dari server, supaya chip langsung terisi
+    // walaupun JavaScript belum / gagal jalan.
+    $koleksi    = collect($items);
+    $cTotal     = $koleksi->count();
+    $cSudah     = $koleksi->where('status', 'sudah_terjual')->count();
+    $cBelum     = $koleksi->where('status', 'belum_terjual')->count();
+    $cChecking  = $cTotal - $cSudah - $cBelum;
+@endphp
+
 <div class="font-mont flex-1 flex flex-col h-full min-h-0 bg-[#F7F8FD]">
 
-    {{-- ================= TOP BAR: STATISTIK + TOMBOL ================= --}}
-    <div class="flex items-center justify-between px-6 pt-4 shrink-0">
-        <p class="text-xs text-[#6B7280]" id="statCounter">Memuat data...</p>
+    {{-- ================= TOP BAR: CHIP STATISTIK + TOMBOL ================= --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 px-6 pt-4 shrink-0">
+
+        {{-- CHIP --}}
+        <div class="flex flex-wrap items-center gap-2" id="statChips">
+
+            <div class="inline-flex items-center gap-2 pl-3 pr-1.5 py-1 rounded-full border border-[#22396F] bg-[#22396F]/10 text-[#22396F] text-xs font-semibold">
+                <span>Total Produk</span>
+                <span id="chipTotal" class="min-w-[28px] text-center px-2 py-0.5 rounded-full bg-[#22396F] text-white">{{ $cTotal }}</span>
+            </div>
+
+            <div class="inline-flex items-center gap-2 pl-3 pr-1.5 py-1 rounded-full border border-[#327437] bg-[#327437]/10 text-[#327437] text-xs font-semibold">
+                <span>Produk Terjual</span>
+                <span id="chipSudah" class="min-w-[28px] text-center px-2 py-0.5 rounded-full bg-[#327437] text-white">{{ $cSudah }}</span>
+            </div>
+
+            <div class="inline-flex items-center gap-2 pl-3 pr-1.5 py-1 rounded-full border border-[#F2B80C] bg-[#F2B80C]/10 text-[#0D1C43] text-xs font-semibold">
+                <span>Produk Belum Terjual</span>
+                <span id="chipBelum" class="min-w-[28px] text-center px-2 py-0.5 rounded-full bg-[#F2B80C] text-[#0D1C43]">{{ $cBelum }}</span>
+            </div>
+
+            <div class="inline-flex items-center gap-2 pl-3 pr-1.5 py-1 rounded-full border border-[#6B7280] bg-gray-100 text-[#6B7280] text-xs font-semibold">
+                <span>Produk Checking</span>
+                <span id="chipChecking" class="min-w-[28px] text-center px-2 py-0.5 rounded-full bg-[#6B7280] text-white">{{ $cChecking }}</span>
+            </div>
+
+        </div>
+
+        {{-- TOMBOL --}}
         <div class="flex items-center gap-2">
             <button id="btnSelesai"
                 class="px-4 py-1.5 rounded-md text-xs font-semibold text-[#D02231] border border-[#D02231] bg-white hover:bg-[#D02231]/10 transition">
@@ -319,6 +356,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const emptyState  = document.getElementById('emptyState');
     const HEADER_H    = 40; // tinggi header sticky (approx)
 
+    // Chip statistik di bagian atas
+    const chipTotal    = document.getElementById('chipTotal');
+    const chipSudah    = document.getElementById('chipSudah');
+    const chipBelum    = document.getElementById('chipBelum');
+    const chipChecking = document.getElementById('chipChecking');
+
     const BADGE_BASE = 'inline-block min-w-[112px] px-3 py-0.5 text-xs font-semibold rounded border';
 
     const badge = (status) => {
@@ -341,7 +384,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (total === 0) { rowsWrap.innerHTML = ''; updateHeaderCounter(); return; }
 
-        const viewportH = scrollBox.clientHeight - HEADER_H;
+        // Fallback kalau tinggi container belum terhitung (0) supaya tetap ada baris yang dirender
+        const viewportH = Math.max(scrollBox.clientHeight - HEADER_H, 400);
         const scrollTop = Math.max(0, scrollBox.scrollTop - HEADER_H);
 
         const buffer = 8;
@@ -420,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =====================================================================
-       3. HITUNG STATUS
+       3. HITUNG STATUS + UPDATE CHIP
     ===================================================================== */
     function hitungStatus() {
         const hasil = { checking: 0, belum_terjual: 0, sudah_terjual: 0 };
@@ -430,8 +474,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateHeaderCounter() {
         const h = hitungStatus();
-        document.getElementById('statCounter').textContent =
-            `Total ${stokData.length} barang • Belum terscan: ${h.checking} • Belum terjual: ${h.belum_terjual} • Sudah terjual: ${h.sudah_terjual}`;
+        if (chipTotal)    chipTotal.textContent    = stokData.length;
+        if (chipSudah)    chipSudah.textContent    = h.sudah_terjual;
+        if (chipBelum)    chipBelum.textContent    = h.belum_terjual;
+        if (chipChecking) chipChecking.textContent = h.checking;
     }
 
     function updateModalScanCounter() {
@@ -442,13 +488,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =====================================================================
+       INIT TABEL — dijalankan SEGERA (sebelum modal/kamera di-setup)
+       supaya kalau bagian lain error, tabel & chip tetap tampil.
+    ===================================================================== */
+    try {
+        terapkanFilter();
+    } catch (err) {
+        console.error('Gagal merender tabel cek stok:', err);
+        emptyState.textContent = 'Gagal menampilkan data. Coba muat ulang halaman.';
+        emptyState.classList.remove('hidden');
+    }
+
+    /* =====================================================================
        4. MODAL: SCAN / INPUT KODE (scanner fisik + kamera)
     ===================================================================== */
     const modalScan    = document.getElementById('modalScan');
     const inputKode    = document.getElementById('inputKode');
     const formScan     = document.getElementById('formScan');
     const scanFeedback = document.getElementById('scanFeedback');
-    const camOpname    = document.getElementById('bcam-opname');
+    const camOpname    = document.getElementById('bcam-opname'); // bisa null kalau partial tidak merender id ini
 
     function openScanModal() {
         modalScan.classList.remove('hidden');
@@ -522,9 +580,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Hasil dari kamera (live maupun foto): langsung diproses sebagai string
-    camOpname.addEventListener('barcode:scan', function (e) {
-        prosesKode(e.detail.code);
-    });
+    if (camOpname) {
+        camOpname.addEventListener('barcode:scan', function (e) {
+            prosesKode(e.detail.code);
+        });
+    } else {
+        console.warn('Elemen #bcam-opname tidak ditemukan; scan lewat kamera dinonaktifkan. Cek partial barcode-camera.');
+    }
 
     // Scanner fisik tetap bisa dipakai walau fokus sedang di tombol kamera:
     // ketikan pertama otomatis dialihkan ke kolom kode.
@@ -615,11 +677,6 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         e.returnValue = '';
     });
-
-    /* =====================================================================
-       INIT
-    ===================================================================== */
-    terapkanFilter();
 });
 </script>
 @endif

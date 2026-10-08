@@ -13,6 +13,19 @@ class GDFactory extends Factory
     protected $model = GD::class;
     protected static int $sequence = 1;
 
+    protected static array $warehouses = [
+        'Gudang Utama Jakarta',
+        'Gudang Surabaya',
+        'Gudang Bandung',
+        'Gudang Semarang',
+        'Gudang Medan',
+        'Gudang Makassar',
+        'Gudang Bekasi',
+        'Gudang Tangerang',
+        'Gudang Depok',
+        'Gudang Palembang',
+    ];
+
     public static function resetSequence(int $start = 1): void
     {
         static::$sequence = $start;
@@ -26,11 +39,18 @@ class GDFactory extends Factory
     public function definition(): array
     {
         $num = static::$sequence++;
+        $idx = ($num - 1) % count(static::$warehouses);
+        $gdName = static::$warehouses[$idx];
+        if ($num > count(static::$warehouses)) {
+            $gdName .= ' ' . ceil($num / count(static::$warehouses));
+        }
+
         return [
             'GD' => sprintf('GD%08d', $num), // 10 chars, fits string(10)
-            'DES' => substr('Gudang ' . fake()->city() . ' ' . $num, 0, 45), // fits string(45)
+            'DES' => substr($gdName, 0, 45), // fits string(45)
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
 }
+

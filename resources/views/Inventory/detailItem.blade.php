@@ -43,7 +43,7 @@
     <div class="border border-gray-300 rounded-2xl bg-white p-6 space-y-4">
         <h3 class="text-base font-bold text-black">Riwayat Masuk / Keluar</h3>
 
-        {{-- Search + Filter --}}
+        {{-- Search + Filter (hanya submit saat tombol Cari ditekan / Enter di kolom pencarian) --}}
         <form method="GET" id="filterForm" class="flex flex-wrap items-center gap-2">
             <div class="relative w-64">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
@@ -56,11 +56,10 @@
             </div>
 
             <input type="date" name="tanggal" value="{{ $tanggal }}"
-                   onchange="this.form.submit()"
                    class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none focus:ring-1 focus:ring-primary-db">
 
             <div class="w-40">
-                <select name="status" onchange="this.form.submit()"
+                <select name="status"
                         class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
                     <option value="semua"   @selected($status === 'semua')>Semua Status</option>
                     <option value="in_stok" @selected($status === 'in_stok')>In Stok</option>
@@ -69,7 +68,7 @@
             </div>
 
             <div class="w-56">
-                <select name="sort" onchange="this.form.submit()"
+                <select name="sort"
                         class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
                     <option value="default"        @selected($sort === 'default')>Default (Belum Terjual & Terlama)</option>
                     <option value="masuk_terbaru"  @selected($sort === 'masuk_terbaru')>Barang Masuk Terbaru</option>
@@ -84,7 +83,10 @@
             <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold">Cari</button>
 
             @if($q || $tanggal || $status !== 'semua' || $sort !== 'default')
-                <a href="{{ url()->current() }}" class="text-xs text-gray-600 hover:text-black underline">Reset</a>
+                <a href="{{ url()->current() }}"
+                class="py-1.5 px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-100 rounded-xl text-xs font-semibold transition-colors">
+                    Reset
+                </a>
             @endif
         </form>
 
@@ -145,7 +147,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-6 text-center text-gray-500">Data tidak ditemukan</td>
+                                <td colspan="6" class="py-6 text-center text-gray-500">Data tidak ditemukan</td>
                             </tr>
                         @endforelse
                     </tbody>

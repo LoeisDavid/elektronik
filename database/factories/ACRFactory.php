@@ -29,7 +29,7 @@ class ACRFactory extends Factory
     public function definition(): array
     {
         $num = static::$sequence++;
-        $brt = fake()->randomFloat(2, 50000, 250000000);
+        $brt = fake()->randomFloat(2, 50000, 25000000);
         $pot1 = fake()->optional(0.3)->numberBetween(1, 10);
         $pot2 = fake()->optional(0.2)->numberBetween(1, 5);
         $potR = fake()->optional(0.2)->randomFloat(2, 5000, 100000);
@@ -48,9 +48,10 @@ class ACRFactory extends Factory
             'POT_1' => $pot1,
             'POT_2' => $pot2,
             'POT_R' => $potR,
-            'USER' => sprintf('usr%07d', (($num - 1) % 10000) + 1), // fits string(10)
+            'USER' => 'admin', // Only 1 user ('admin')
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
 }
+
