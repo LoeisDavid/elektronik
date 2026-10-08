@@ -21,11 +21,11 @@
         <div id="stokBarcodeList" class="px-6 pb-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
             <button type="button" id="stokBarcodeKembali"
-                    class="py-1.5 px-4 bg-white border border-gray-400 text-black rounded-xl text-xs font-semibold">Kembali</button>
+                    class="py-1.5 px-4 bg-white border border-gray-400 text-black rounded-xl text-xs font-semibold hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200">Kembali</button>
             <button type="button" id="stokBarcodePrintAll"
-                    class="py-1.5 px-4 bg-white border border-gray-400 text-black rounded-xl text-xs font-semibold">Print Semua</button>
+                    class="py-1.5 px-4 bg-white border border-gray-400 text-black rounded-xl text-xs font-semibold hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200">Print Semua</button>
             <button type="button" id="stokBarcodeSelesai"
-                    class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold">Selesai</button>
+                    class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold hover:bg-primary-sdb active:bg-dark-navy transition-all duration-200">Selesai</button>
         </div>
     </div>
 </div>

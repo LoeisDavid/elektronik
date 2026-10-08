@@ -143,14 +143,14 @@
                 id="inputCari"
                 autocomplete="off"
                 placeholder="Cari kode / nama barang"
-                class="w-full bg-white border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
+                class="w-full bg-white border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs text-[#0D1C43] placeholder-[#6B7280] transition-all duration-200 hover:border-[#22396F] hover:bg-[#0D1C43]/5 focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
             >
         </div>
 
         <div class="w-48">
             <select
                 id="filterStatus"
-                class="searchable-select bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
+                class="searchable-select bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] transition-all duration-200 hover:border-[#22396F] hover:bg-[#0D1C43]/5 focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
             >
                 <option value="semua">Status: Semua</option>
                 <option value="checking">Status: Checking</option>
@@ -209,7 +209,7 @@
                     autocapitalize="off"
                     spellcheck="false"
                     placeholder="Scan barcode atau ketik kode manual..."
-                    class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-[#0D1C43] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
+                    class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-[#0D1C43] placeholder-[#6B7280] transition-all duration-200 hover:border-[#22396F] hover:bg-[#0D1C43]/5 focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
                 >
                 <button type="submit" class="bg-[#0D1C43] hover:bg-[#22396F] text-white text-sm font-semibold px-6 py-2.5 rounded-xl cursor-pointer transition-colors">
                     Cek Kode
@@ -248,7 +248,7 @@
             Setelah selesai, sesi cek stok ini dianggap berakhir. Pastikan semua barang sudah di-scan.
         </p>
         <div class="flex gap-3">
-            <button id="btnBatalSelesai" class="flex-1 py-2 rounded-md text-xs font-semibold border border-[#0D1C43] text-[#0D1C43] bg-white hover:bg-gray-50">
+            <button id="btnBatalSelesai" class="flex-1 py-2 rounded-md text-xs font-semibold border border-[#0D1C43] text-[#0D1C43] bg-white hover:bg-gray-300 active:bg-gray-200 transition-all duration-200">
                 Batal
             </button>
             <button id="btnYaSelesai" class="flex-1 py-2 rounded-md text-xs font-semibold border border-[#D02231] bg-[#D02231]/10 text-[#D02231] hover:bg-[#D02231]/20">

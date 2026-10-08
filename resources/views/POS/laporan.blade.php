@@ -28,9 +28,9 @@
     $akhir     = min($totalHal, $mulai + 4);
     $mulai     = max(1, $akhir - 4);
 
-    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-colors';
-    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100';
-    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854]';
+    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
+    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb';
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 ?>
 
@@ -81,7 +81,7 @@
                         name="tanggal"
                         value="<?= e($tanggal) ?>"
                         onchange="this.form.submit()"
-                        class="w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer"
+                        class="w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db cursor-pointer"
                     >
                 </div>
 
@@ -90,7 +90,7 @@
                     <select
                         name="kasir"
                         onchange="this.form.submit()"
-                        class="searchable-select w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer"
+                        class="searchable-select w-full bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db cursor-pointer"
                     >
                         <option value="">Semua Kasir</option>
                         <?php foreach ($daftarKasir as $kode => $nama): ?>
@@ -104,7 +104,7 @@
                 <?php if ($tanggal !== '' || $kasir !== ''): ?>
                     <a
                         href="<?= e(route('POS.laporan')) ?>"
-                        class="flex items-center justify-center gap-2 bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black hover:bg-gray-100 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer transition-colors"
+                        class="flex items-center justify-center gap-2 bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer transition-all duration-200"
                     >
                         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />

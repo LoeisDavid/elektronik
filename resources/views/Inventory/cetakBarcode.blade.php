@@ -7,6 +7,7 @@
         body { font-family: sans-serif; margin: 20px; }
         .bar { display: flex; gap: 8px; margin-bottom: 16px; }
         .bar a, .bar button { padding: 8px 14px; border: 1px solid #999; border-radius: 6px; background: #fff; cursor: pointer; text-decoration: none; color: #000; font-size: 13px; }
+.bar a:hover, .bar button:hover { background: #d1d5db; border-color: #6b7280; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .label { border: 1px dashed #666; padding: 10px; text-align: center; break-inside: avoid; }
         .label svg { max-width: 100%; height: auto; }

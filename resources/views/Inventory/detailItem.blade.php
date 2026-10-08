@@ -52,15 +52,15 @@
                     </svg>
                 </div>
                 <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama gudang / kode stok"
-                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none focus:ring-1 focus:ring-primary-db">
+                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db">
             </div>
 
             <input type="date" name="tanggal" value="{{ $tanggal }}"
-                   class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none focus:ring-1 focus:ring-primary-db">
+                   class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db">
 
             <div class="w-40">
                 <select name="status"
-                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
+                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none">
                     <option value="semua"   @selected($status === 'semua')>Semua Status</option>
                     <option value="in_stok" @selected($status === 'in_stok')>In Stok</option>
                     <option value="terjual" @selected($status === 'terjual')>Terjual</option>
@@ -69,7 +69,7 @@
 
             <div class="w-56">
                 <select name="sort"
-                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none">
+                        class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none">
                     <option value="default"        @selected($sort === 'default')>Default (Belum Terjual & Terlama)</option>
                     <option value="masuk_terbaru"  @selected($sort === 'masuk_terbaru')>Barang Masuk Terbaru</option>
                     <option value="masuk_terlama"  @selected($sort === 'masuk_terlama')>Barang Masuk Terlama</option>
@@ -80,11 +80,11 @@
                 </select>
             </div>
 
-            <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold">Cari</button>
+            <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold hover:bg-primary-sdb active:bg-dark-navy transition-all duration-200">Cari</button>
 
             @if($q || $tanggal || $status !== 'semua' || $sort !== 'default')
                 <a href="{{ url()->current() }}"
-                class="py-1.5 px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-100 rounded-xl text-xs font-semibold transition-colors">
+                class="py-1.5 px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 rounded-xl text-xs font-semibold">
                     Reset
                 </a>
             @endif
@@ -123,7 +123,7 @@
                                     type="button"
                                     onclick="openBarcodeModal(this)"
                                     data-kode="{{ $row->kode_stok }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-100 rounded-lg text-xs font-semibold text-black cursor-pointer transition-colors"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 rounded-lg text-xs font-semibold text-black cursor-pointer transition-colors"
                                 >
 
                                     <svg
@@ -166,19 +166,19 @@
                     @if($items->onFirstPage())
                         <span class="h-7 w-7 border border-gray-200 rounded-md flex items-center justify-center text-gray-300">‹</span>
                     @else
-                        <a href="{{ $items->previousPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100">‹</a>
+                        <a href="{{ $items->previousPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">‹</a>
                     @endif
 
                     @foreach(range(1, $items->lastPage()) as $p)
                         @if($p === $items->currentPage())
                             <span class="h-7 w-7 border rounded-md flex items-center justify-center font-semibold bg-primary-db text-white border-primary-db">{{ $p }}</span>
                         @else
-                            <a href="{{ $items->url($p) }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100">{{ $p }}</a>
+                            <a href="{{ $items->url($p) }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">{{ $p }}</a>
                         @endif
                     @endforeach
 
                     @if($items->hasMorePages())
-                        <a href="{{ $items->nextPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100">›</a>
+                        <a href="{{ $items->nextPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">›</a>
                     @else
                         <span class="h-7 w-7 border border-gray-200 rounded-md flex items-center justify-center text-gray-300">›</span>
                     @endif
@@ -212,7 +212,7 @@
                 <button
                     type="button"
                     onclick="cetakStruk()"
-                    class="w-full bg-primary-db hover:bg-primary-sdb active:bg-black text-white rounded-xl py-2.5 text-center text-sm font-semibold transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2"
+                    class="w-full bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl py-2.5 text-center text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2"
                 >
                     <svg
                         class="w-4 h-4"
