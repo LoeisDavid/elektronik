@@ -55,7 +55,7 @@
                 name="keyword"
                 value="{{ request('keyword') }}"
                 placeholder="Cari kode"
-                class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
             >
         </div>
 
@@ -70,7 +70,7 @@
             <button
                 type="button"
                 onclick="toggleSortTransaksi(event)"
-                class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5"
+                class="h-9.5 px-3 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs min-w-42.5"
             >
 
                 <span>
@@ -109,7 +109,7 @@
                         data-sort="{{ $nilai }}"
                         data-label="{{ $label }}"
                         onclick="pilihSortTransaksi(this)"
-                        class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer shadow-xs"
+                        class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs"
                     >
 
                         <span>{{ $label }}</span>
@@ -145,7 +145,7 @@
                 value="{{ request('tanggal_dari') }}"
                 max="{{ request('tanggal_sampai') }}"
                 title="Dari tanggal"
-                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 cursor-pointer focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
             >
 
             <span class="text-sm text-gray-600">s/d</span>
@@ -156,7 +156,7 @@
                 value="{{ request('tanggal_sampai') }}"
                 min="{{ request('tanggal_dari') }}"
                 title="Sampai tanggal"
-                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 cursor-pointer focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
             >
         </div>
 
@@ -164,7 +164,7 @@
         {{-- TOMBOL CARI --}}
         <button
             type="submit"
-            class="h-9.5 px-4 bg-primary-db text-white rounded-lg text-sm font-semibold cursor-pointer"
+            class="h-9.5 px-4 bg-primary-db text-white rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-200 hover:bg-primary-sdb active:bg-dark-navy shadow-xs hover:shadow"
         >
             Cari
         </button>
@@ -282,7 +282,7 @@
                                     data-dibayar="{{ $dibayar }}"
                                     data-kembalian="{{ $kembalian }}"
                                     data-detail="{{ json_encode($detailArr) }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-100 rounded-lg text-xs font-semibold text-black cursor-pointer transition-colors"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-lg text-xs font-semibold text-black cursor-pointer transition-all duration-200"
                                 >
 
                                     <svg
@@ -365,7 +365,7 @@
 
                         <a
                             href="{{ $data->previousPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
+                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             ‹
                         </a>
@@ -384,8 +384,8 @@
                         href="{{ $data->url(1) }}"
                         class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                         {{ $current == 1
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                            ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                     >
                         1
                     </a>
@@ -400,8 +400,8 @@
                                 href="{{ $data->url($page) }}"
                                 class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                                 {{ $current == $page
-                                    ? 'bg-[#142854] text-white border-[#142854]'
-                                    : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                    ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                    : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                             >
                                 {{ $page }}
                             </a>
@@ -417,8 +417,8 @@
                             href="{{ $data->url(2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                         >
                             2
                         </a>
@@ -427,8 +427,8 @@
                             href="{{ $data->url(3) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == 3
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                         >
                             3
                         </a>
@@ -439,7 +439,7 @@
 
                         <a
                             href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             {{ $last }}
                         </a>
@@ -457,8 +457,8 @@
                             href="{{ $data->url($last - 2) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                         >
                             {{ $last - 2 }}
                         </a>
@@ -467,8 +467,8 @@
                             href="{{ $data->url($last - 1) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last - 1
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                         >
                             {{ $last - 1 }}
                         </a>
@@ -477,8 +477,8 @@
                             href="{{ $data->url($last) }}"
                             class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
                             {{ $current == $last
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100' }}"
+                                ? 'bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200'
+                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
                         >
                             {{ $last }}
                         </a>
@@ -494,21 +494,21 @@
 
                         <a
                             href="{{ $data->url($current - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             {{ $current - 1 }}
                         </a>
 
                         <a
                             href="{{ $data->url($current) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854]"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200"
                         >
                             {{ $current }}
                         </a>
 
                         <a
                             href="{{ $data->url($current + 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             {{ $current + 1 }}
                         </a>
@@ -519,7 +519,7 @@
 
                         <a
                             href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100"
+                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             {{ $last }}
                         </a>
@@ -532,7 +532,7 @@
 
                         <a
                             href="{{ $data->nextPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100"
+                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
                         >
                             ›
                         </a>

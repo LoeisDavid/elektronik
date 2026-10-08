@@ -31,9 +31,9 @@
     };
 
 
-    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-colors';
-    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100';
-    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854]';
+    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200';
+    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200';
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 
     // Nomor halaman: 1 ... (tengah) ... terakhir
@@ -69,13 +69,13 @@
                     name="keyword"
                     value="<?= e($keyword) ?>"
                     placeholder="Cari produk"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
                 >
             </form>
 
             {{-- SORT (HTML murni: <details> + link) --}}
             <details class="relative group">
-                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3.5 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-45">
+                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3.5 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs min-w-45">
                     <span>Urutkan: <?= e($opsiSort[$sort]) ?></span>
                     <svg class="w-4 h-4 text-gray-600 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -86,7 +86,7 @@
                     <?php foreach ($opsiSort as $kode => $label): ?>
                         <a
                             href="<?= e($buatUrl(['sort' => $kode, 'page' => 1])) ?>"
-                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors shadow-xs"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 shadow-xs"
                         >
                             <span><?= e($label) ?></span>
                             <?php if ($sort === $kode): ?>
@@ -105,7 +105,7 @@
         <button
             type="button"
             onclick="bukaModal('tambahSupplierModal')"
-            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-[#0f172a] text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
         >
             <span class="text-lg leading-none font-bold">+</span>
             <span>Tambah supplier</span>
@@ -146,7 +146,7 @@
                                     <button
                                         type="button"
                                         onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer"
                                         title="Aksi Sales"
                                     >
                                         <svg
@@ -178,7 +178,7 @@
                                             data-tlp="{{ $supplier->TLP }}"
                                             data-action="{{ route('inventory.supplier.update', ['spp' => $supplier->SPP]) }}"
                                             onclick="openEditModal(this)"
-                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                         >
 
                                             <svg
@@ -333,7 +333,7 @@
                         name="DES"
                         placeholder="Contoh: PT. Jaya Elektronik"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
                 </div>
 
@@ -344,7 +344,7 @@
                         name="TLP"
                         placeholder="Contoh: 081234567890"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
                 </div>
 
@@ -352,14 +352,14 @@
                     <button
                         type="button"
                         onclick="tutupModal('tambahSupplierModal')"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 transition-all duration-200 cursor-pointer"
                     >
                         Batal
                     </button>
                     <button
                         type="submit"
                         id="btnTambah"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
                     >
                         Simpan
                     </button>
@@ -402,7 +402,7 @@
                         type="text"
                         name="DES"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
                 </div>
 
@@ -413,7 +413,7 @@
                         type="text"
                         name="TLP"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
                 </div>
 
@@ -421,13 +421,13 @@
                     <button
                         type="button"
                         onclick="tutupModal('editSupplierModal')"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 transition-all duration-200 cursor-pointer"
                     >
                         Batal
                     </button>
                     <button
                         type="submit"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
                     >
                         Simpan
                     </button>

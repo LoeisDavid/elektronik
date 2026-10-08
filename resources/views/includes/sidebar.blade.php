@@ -9,7 +9,7 @@
         <button 
             type="button" 
             id="btnToggleSidebar"
-            class="text-secondary-bw hover:opacity-80 transition-opacity focus:outline-none cursor-pointer flex items-center justify-center" 
+            class="text-secondary-bw hover:bg-white/10 hover:opacity-100 rounded-md p-1 transition-all duration-200 focus:outline-none cursor-pointer flex items-center justify-center" 
             aria-label="Toggle Menu"
         >
             <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
@@ -26,7 +26,7 @@
             {{-- POS Header Button (accordion trigger) --}}
             <button
                 type="button"
-                class="sidebar-header sidebar-toggle w-full flex items-center gap-3 px-4 py-2.5 font-bold text-secondary-bw border-secondary-bw border-b text-base tracking-wide transition-all duration-300 focus:outline-none cursor-pointer"
+                class="sidebar-header sidebar-toggle w-full flex items-center gap-3 px-4 py-2.5 font-bold text-secondary-bw border-secondary-bw border-b text-base tracking-wide transition-all duration-200 hover:bg-white/10 focus:outline-none cursor-pointer"
                 data-target="posMenu"
                 aria-expanded="true"
             >
@@ -60,7 +60,7 @@
                     @endphp
                     <a 
                         href="{{ Route::has($menu['route']) ? route($menu['route']) : '#' }}"
-                        class="flex items-center w-full px-5 py-2 text-sm italic font-medium text-white transition-colors cursor-pointer {{ $isActive ? 'bg-primary-sdb font-semibold' : 'hover:bg-primary-db' }}"
+                        class="flex items-center w-full px-5 py-2 text-sm italic font-medium text-white transition-colors duration-200 cursor-pointer {{ $isActive ? 'bg-primary-sdb font-semibold hover:bg-white/15' : 'hover:bg-white/10' }}"
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)
@@ -83,7 +83,7 @@
             {{-- Inventory Header Button (accordion trigger) --}}
             <button
                 type="button"
-                class="sidebar-header sidebar-toggle w-full flex items-center gap-3 px-4 py-2.5 font-bold text-secondary-bw border-secondary-bw border-b text-base tracking-wide transition-all duration-300 focus:outline-none cursor-pointer"
+                class="sidebar-header sidebar-toggle w-full flex items-center gap-3 px-4 py-2.5 font-bold text-secondary-bw border-secondary-bw border-b text-base tracking-wide transition-all duration-200 hover:bg-white/10 focus:outline-none cursor-pointer"
                 data-target="inventoryMenu"
                 aria-expanded="true"
             >
@@ -116,7 +116,7 @@
                     @endphp
                     <a 
                         href="{{ Route::has($menu['route']) ? route($menu['route']) : '#' }}"
-                        class="flex items-center w-full px-5 py-2 text-sm italic font-medium text-white transition-colors cursor-pointer {{ $isActive ? 'bg-primary-sdb font-semibold' : 'hover:bg-primary-db' }}"
+                        class="flex items-center w-full px-5 py-2 text-sm italic font-medium text-white transition-colors duration-200 cursor-pointer {{ $isActive ? 'bg-primary-sdb font-semibold hover:bg-white/15' : 'hover:bg-white/10' }}"
                     >
                         {{-- Active Triangle Indicator --}}
                         @if ($isActive)

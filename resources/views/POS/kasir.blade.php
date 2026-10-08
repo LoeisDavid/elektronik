@@ -159,7 +159,10 @@
                 <span class="block text-[13px] text-gray-500 font-normal">Subtotal</span>
                 <span id="labelSubtotal" class="block text-[15px] text-black font-medium">Rp 0</span>
                 <span class="block text-[11px] text-gray-500 font-medium tracking-wide mt-1.5">TOTAL</span>
-                <span id="labelGrandTotal" class="block text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
+                <div class="flex items-baseline gap-2.5 flex-wrap">
+                    <span id="labelGrandTotal" class="text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
+                    <span id="labelPromoGlobal" class="hidden text-[13px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
+                </div>
                 {{-- Rincian diskon/voucher tetap di DOM (hidden) agar JS tidak error, tidak tampil sesuai referensi --}}
                 <span id="labelDiskonGlobal" class="hidden">Rp 0</span>
                 <span id="labelVoucherGlobal" class="hidden">Rp 0</span>
@@ -551,17 +554,14 @@
                     <label for="inputPelangganDraft" class="block text-sm font-semibold text-black mb-1">
                         Pelanggan
                     </label>
-                    <input
-                        type="text"
+                    <select
                         id="inputPelangganDraft"
-                        list="listPelangganDraft"
-                        placeholder="Cari Pelanggan"
-                        class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
-                    <datalist id="listPelangganDraft">
+                        class="searchable-select w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
+                        <option value="">Cari Pelanggan</option>
                         @foreach($customers ?? [] as $cst)
-                        <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
+                        <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
                         @endforeach
-                    </datalist>
+                    </select>
                 </div>
 
                 <!-- Input Sales -->
@@ -569,17 +569,14 @@
                     <label for="inputSalesDraft" class="block text-sm font-semibold text-black mb-1">
                         Sales
                     </label>
-                    <input
-                        type="text"
+                    <select
                         id="inputSalesDraft"
-                        list="listSalesDraft"
-                        placeholder="Cari Sales"
-                        class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
-                    <datalist id="listSalesDraft">
+                        class="searchable-select w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
+                        <option value="">Cari Sales</option>
                         @foreach($salesList ?? [] as $sls)
-                        <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
+                        <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
                         @endforeach
-                    </datalist>
+                    </select>
                 </div>
 
                 <!-- Tombol Aksi (Batal & Konfirmasi Simpan Draft) -->
@@ -1106,18 +1103,23 @@
 
                     <span class="text-sm text-gray-600">${formatRupiah(itemPrice)}</span>
 
-                    {{-- Input Diskon Langsung (%) --}}
-                    <div class="relative w-24">
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value="${itemDiscountPct > 0 ? itemDiscountPct : ''}"
-                            placeholder="0"
-                            title="Diskon (%)"
-                            oninput="ubahDiskonItemLangsung('${key}', this)"
-                            class="w-full h-8 bg-white border border-black rounded-lg px-2.5 pr-6 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
+                    {{-- Input Diskon Langsung (%) + nominal hasil (render saat blur/Enter, bukan saat mengetik) --}}
+                    <div class="w-24 flex flex-col items-center">
+                        <div class="relative w-full">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value="${itemDiscountPct > 0 ? itemDiscountPct : ''}"
+                                placeholder="0"
+                                title="Diskon (%)"
+                                onfocus="tahanHasilDiskonItem(this)"
+                                onkeydown="if(event.key==='Enter'){this.blur();}"
+                                onblur="commitDiskonItemLangsung('${key}', this)"
+                                class="w-full h-8 bg-white border border-black rounded-lg px-2.5 pr-6 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
+                        </div>
+                        ${discFromPct > 0 ? `<span class="mt-1 text-[13px] font-semibold text-gray-500 whitespace-nowrap">Rp ${Number(discFromPct * qty).toLocaleString('id-ID')}</span>` : ``}
                     </div>
 
                     {{-- Input Voucher Langsung (Rp) --}}
@@ -1223,6 +1225,17 @@
 
         const elVoucherGlobal = document.getElementById('labelVoucherGlobal');
         if (elVoucherGlobal) elVoucherGlobal.innerText = formatRupiah(voucherAmount);
+
+        // Ringkasan promo global di samping TOTAL (hanya tampil jika ada diskon/voucher)
+        const elPromoGlobal = document.getElementById('labelPromoGlobal');
+        if (elPromoGlobal) {
+            if (diskonTransaksiNominal > 0 || voucherAmount > 0) {
+                elPromoGlobal.innerHTML = `Diskon: ${formatRupiah(diskonTransaksiNominal)}&nbsp;&nbsp;Voucher: ${formatRupiah(voucherAmount)}`;
+                elPromoGlobal.classList.remove('hidden');
+            } else {
+                elPromoGlobal.classList.add('hidden');
+            }
+        }
 
         const elGrandTotal = document.getElementById('labelGrandTotal');
         if (elGrandTotal) elGrandTotal.innerText = formatRupiah(grandTotal);
@@ -1343,7 +1356,21 @@
     let syncCartDebounceTimer = null;
 
     function ubahDiskonItemLangsung(key, inputEl) {
+        // Dipakai saat blur/Enter via commitDiskonItemLangsung agar tidak re-render saat mengetik.
+        commitDiskonItemLangsung(key, inputEl);
+    }
+
+    // Tandai input sedang diketik: tahan hasil lama, jangan hitung ulang dulu
+    function tahanHasilDiskonItem(inputEl) {
+        if (inputEl) inputEl.dataset.mengetik = '1';
+    }
+
+    // Commit diskon item saat input tidak dipilih lagi (blur / Enter):
+    // baru simpan + render ulang hasil nominal di bawah box.
+    function commitDiskonItemLangsung(key, inputEl) {
         if (!cartData[key]) return;
+        if (inputEl) delete inputEl.dataset.mengetik;
+
         let rawVal = (typeof inputEl === 'object' && inputEl !== null) ? inputEl.value : inputEl;
         let val = parseFloat(rawVal) || 0;
 
@@ -1359,11 +1386,16 @@
             }
         }
 
+        // Jika nilai sama, cukup pastikan ringkasan sinkron tanpa render ulang
+        if ((parseFloat(cartData[key].discount) || 0) === val) {
+            hitungRingkasan();
+            return;
+        }
+
         cartData[key].discount = val;
 
-        updateSubtotalBarisItem(key);
-        hitungRingkasan();
-        triggerSyncCartDebounced();
+        renderCart();
+        simpanKeSession();
     }
 
     function ubahVoucherItemLangsung(key, rawVal) {
@@ -2009,6 +2041,20 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            // Inisialisasi Select2 di dalam modal draft (dropdownParent = modal agar tidak terpotong)
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                ['#inputPelangganDraft', '#inputSalesDraft'].forEach(function(sel) {
+                    const $el = jQuery(sel);
+                    if ($el.length && !$el.hasClass('select2-hidden-accessible')) {
+                        $el.select2({
+                            width: '100%',
+                            placeholder: $el.find('option:first').text() || 'Cari...',
+                            allowClear: true,
+                            dropdownParent: jQuery(modal)
+                        });
+                    }
+                });
+            }
         }
     }
 
@@ -2040,6 +2086,16 @@
 
         localStorage.setItem('pos_drafts', JSON.stringify(drafts));
         tutupModalTambahArsip();
+        // Reset pilihan pelanggan/sales (termasuk tampilan Select2)
+        ['inputPelangganDraft', 'inputSalesDraft'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = '';
+                if (typeof jQuery !== 'undefined' && jQuery(el).hasClass('select2-hidden-accessible')) {
+                    jQuery(el).val('').trigger('change');
+                }
+            }
+        });
         resetKeranjang(true);
         updateDraftBadgeHeader(drafts.length);
         alert('Draft transaksi berhasil disimpan!');

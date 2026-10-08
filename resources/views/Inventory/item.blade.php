@@ -31,9 +31,9 @@
     $bukaTambah = $errors->hasBag('tambah');
 
 
-    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-colors';
-    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100';
-    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854]';
+    $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200';
+    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200';
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 
     // Nomor halaman: 1 ... (tengah) ... terakhir
@@ -42,7 +42,7 @@
         : '<a href="' . e($buatUrl(['page' => $i])) . '" class="' . $btnNormal . '">' . $i . '</a>';
     $titik = '<span class="px-1">...</span>';
 
-    $inputCls = 'w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db';
+    $inputCls = 'w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db';
     $labelCls = 'block text-xs font-medium text-black mb-1.5';
 ?>
 
@@ -97,13 +97,13 @@
                     name="keyword"
                     value="<?= e($keyword) ?>"
                     placeholder="Cari produk"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
                 >
             </form>
 
             {{-- SORT (HTML murni: <details> + link) --}}
             <details class="relative group">
-                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors cursor-pointer shadow-xs min-w-42.5">
+                <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs min-w-42.5">
                     <span>Urutkan: <?= e($opsiSort[$sort]) ?></span>
                     <svg class="w-4 h-4 text-gray-600 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -114,7 +114,7 @@
                     <?php foreach ($opsiSort as $kode => $label): ?>
                         <a
                             href="<?= e($buatUrl(['sort' => $kode, 'page' => 1])) ?>"
-                            class="w-full bg-white border border-gray-300 text-black rounded-xl px-3.5 py-2 text-left font-medium text-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            class="w-full bg-white border border-gray-300 text-black rounded-xl px-3.5 py-2 text-left font-medium text-sm flex items-center justify-between hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200"
                         >
                             <span><?= e($label) ?></span>
                             <?php if ($sort === $kode): ?>
@@ -134,7 +134,7 @@
             <button
                 type="button"
                 onclick="openStokModal()"
-                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
             >
                 <span class="text-lg leading-none font-bold">+</span>
                 <span>Tambah stok</span>
@@ -143,7 +143,7 @@
             <button
                 type="button"
                 onclick="bukaModal('tambahITMModal')"
-                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
             >
                 <span class="text-lg leading-none font-bold">+</span>
                 <span>Tambah barang</span>
@@ -193,7 +193,7 @@
                                     <button
                                         type="button"
                                         onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-100 hover:border-primary-db rounded-md inline-flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer"
                                         title="Aksi Item"
                                     >
                                         <svg
@@ -219,7 +219,7 @@
                                         {{-- DETAIL --}}
                                             <a
                                                 href="<?= e(route('inventory.item.show', $r->itm)) ?>"
-                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                             >
                                                 <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -239,7 +239,7 @@
                                             data-spp="{{ $r->spp }}"
                                             data-action="{{ route('inventory.item.update', ['id' => $r->itm]) }}"
                                             onclick="openEditModal(this)"
-                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer"
+                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                         >
 
                                             <svg
@@ -458,7 +458,7 @@
                         >
                         <button
                             type="submit"
-                            class="py-2 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                            class="py-2 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
                         >
                             Simpan
                         </button>
@@ -486,7 +486,7 @@
                 <button
                     type="submit"
                     <?= empty($stokList) ? 'disabled' : '' ?>
-                    class="w-full py-2 px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="w-full py-2 px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 transition-all duration-200 cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Generate Barcode<?= !empty($stokList) ? ' (' . count($stokList) . ')' : '' ?>
                 </button>
@@ -565,13 +565,13 @@
 
                 <div class="pt-2 flex items-center gap-4 w-full">
                     <button type="button" onclick="tutupModal('tambahITMModal')"
-                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
+                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 transition-all duration-200 cursor-pointer text-center">
                         Batal
                     </button>
                     <button
                     type="submit"
                     id="btnTambahITM"
-                    class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer text-center">
+                    class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow text-center">
                         Simpan
                     </button>
                 </div>
@@ -649,7 +649,7 @@
 
                 <div class="pt-2 flex items-center gap-4 w-full">
                     <button type="button" onclick="tutupModal('editITMModal')"
-                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer text-center">
+                            class="w-1/2 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 transition-all duration-200 cursor-pointer text-center">
                         Batal
                     </button>
                     <button type="submit"

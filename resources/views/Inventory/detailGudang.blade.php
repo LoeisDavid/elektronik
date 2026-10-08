@@ -71,7 +71,7 @@
                                 name="keyword"
                                 value="{{ request('keyword') }}"
                                 placeholder="Cari produk" 
-                                class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black focus:outline-none focus:ring-1 focus:ring-primary-db"
+                                class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db"
                             >
                         </div>
                     </form>
@@ -81,7 +81,7 @@
                         <button
                             type="button"
                             id="sort-toggle"
-                            class="flex items-center justify-center w-9 h-8 bg-white border border-gray-400 rounded-xl text-black hover:bg-gray-50 transition-colors cursor-pointer"
+                            class="flex items-center justify-center w-9 h-8 bg-white border border-gray-400 rounded-xl text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer"
                             aria-haspopup="true"
                             aria-expanded="false"
                             title="Urutkan"
@@ -102,7 +102,7 @@
                                 <a
                                     href="{{ request()->fullUrlWithQuery(['sort' => $value, 'page' => null]) }}"
                                     class="flex items-center justify-between px-3 py-2 text-xs transition-colors
-                                        {{ $sort === $value ? 'bg-primary-db text-white font-semibold' : 'text-black hover:bg-gray-50' }}"
+                                        {{ $sort === $value ? 'bg-primary-db text-white font-semibold hover:bg-primary-sdb transition-all duration-200' : 'text-black hover:bg-primary-db/5 transition-all duration-200' }}"
                                 >
                                     {{ $label }}
                                     @if($sort === $value)
