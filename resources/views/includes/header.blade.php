@@ -18,7 +18,20 @@
     </div>
 
     {{-- Right Section: Action Buttons & User Profile --}}
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
+
+        {{-- Tombol Draft Transaksi (Hanya di halaman Kasir saat kasir dibuka) --}}
+        @if(request()->routeIs('POS.kasir'))
+            <button
+                type="button"
+                id="btnHeaderDraft"
+                onclick="modalDraftTransaksi()"
+                class="{{ !empty($isKasirOpen) ? 'flex' : 'hidden' }} items-center gap-2 bg-white text-black text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-black transition-all cursor-pointer hover:border-primary-db hover:text-primary-db hover:bg-[#EEF2FF] hover:shadow-sm active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-db/40">
+                <span class="w-2.5 h-2.5 bg-black rounded-[3px] inline-block shrink-0"></span>
+                Draft Transaksi
+                <span id="DraftCountBadgeHeader" class="hidden min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold items-center justify-center">0</span>
+            </button>
+        @endif
 
         {{-- User Info dengan Avatar --}}
         <a href="{{ route('login') }}" class="flex items-center gap-2.5 hover:opacity-85 transition-all cursor-pointer py-1 px-1.5 rounded-lg hover:bg-gray-100" title="Keluar / Ke Login">

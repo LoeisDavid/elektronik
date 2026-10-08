@@ -60,7 +60,7 @@
                     action="{{ route('POS.scan') }}"
                     method="POST"
                     onsubmit="return handleScanSubmit(event)"
-                    class="flex items-center gap-3 bg-white border border-black rounded-2xl pl-5 pr-3 py-3">
+                    class="flex items-center gap-3 bg-white border border-black rounded-2xl pl-5 pr-3 py-3 transition-all hover:border-primary-db hover:shadow-sm focus-within:border-primary-db focus-within:ring-2 focus-within:ring-primary-db/30 focus-within:shadow-sm">
                     @csrf
                     <svg class="w-5 h-5 text-black flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4zm4 0h1v16h-1V4zm2 0h2v16h-2V4zm3 0h1v16h-1V4z" />
@@ -123,22 +123,16 @@
                 <span id="infoItemTerakhirText"></span>
             </p>
 
-            {{-- 3. JUDUL KERANJANG + KOSONGKAN --}}
+            {{-- 3. JUDUL KERANJANG --}}
             <div class="flex items-baseline justify-between flex-shrink-0 mt-6">
                 <div class="flex items-baseline gap-4">
                     <h2 class="text-lg font-bold text-black tracking-tight">Keranjang</h2>
                     <span id="labelJumlahItem" class="text-sm text-gray-500">0 item</span>
                 </div>
-                <button
-                    type="button"
-                    onclick="resetKeranjang()"
-                    class="text-sm font-medium text-black hover:underline cursor-pointer">
-                    Kosongkan keranjang
-                </button>
             </div>
 
             {{-- 4. HEADER KOLOM TABEL (grid harus sama dengan baris item di script) --}}
-            <div class="flex-shrink-0 grid grid-cols-[minmax(0,3.2fr)_1.3fr_1fr_1fr_1.4fr_56px] gap-4 items-center px-6 mt-4 mb-2 text-xs font-medium text-gray-600">
+            <div class="flex-shrink-0 grid grid-cols-[minmax(0,3.2fr)_1.3fr_1fr_1fr_1.4fr_56px] gap-4 items-center px-6 mt-4 mb-2 text-xs font-medium text-black">
                 <span class="pl-[72px]">BARANG</span>
                 <span>HARGA</span>
                 <span>DISKON</span>
@@ -154,75 +148,72 @@
         </div>
 
         {{-- ----------------------------------------------------------------- --}}
-        {{-- BAR BAWAH: TOTAL, RINCIAN, DAN TOMBOL AKSI                        --}}
+        {{-- BAR BAWAH: TOTAL, RINCIAN, DAN TOMBOL AKSI (SESUAI REFERENSI)     --}}
+        {{-- Kiri: Subtotal + TOTAL | Kanan: Kosongkan, Draft, %, Metode, Bayar --}}
         {{-- (id rightOrderPanel dipertahankan agar JS buka/tutup kasir aman)  --}}
         {{-- ----------------------------------------------------------------- --}}
-        <div id="rightOrderPanel" class="flex-shrink-0 flex items-center justify-between gap-6 bg-white border-t border-black px-6 py-4">
+        <div id="rightOrderPanel" class="flex-shrink-0 flex items-center justify-between gap-6 bg-white border-t border-black px-6 py-3">
 
-            {{-- Kiri: Total + rincian --}}
-            <div class="min-w-0">
-                <span class="block text-xs text-gray-600">TOTAL</span>
-                <span id="labelGrandTotal" class="block text-3xl font-bold text-black tracking-tight leading-tight">Rp 0</span>
-                <p class="mt-1 text-xs text-gray-500 flex flex-wrap items-center gap-x-2">
-                    <span>Subtotal <span id="labelSubtotal">Rp 0</span></span>
-                    <span>·</span>
-                    <button type="button" onclick="modalDiskonGlobal()" class="hover:text-black cursor-pointer">
-                        Diskon − <span id="labelDiskonGlobal">Rp 0</span>
-                    </button>
-                    <span>·</span>
-                    <button type="button" onclick="modalDiskonGlobal()" class="hover:text-black cursor-pointer">
-                        Voucher − <span id="labelVoucherGlobal">Rp 0</span>
-                    </button>
-                </p>
+            {{-- Kiri: Subtotal + TOTAL (sesuai referensi) --}}
+            <div class="min-w-0 leading-tight select-none self-center">
+                <span class="block text-[13px] text-gray-500 font-normal">Subtotal</span>
+                <span id="labelSubtotal" class="block text-[15px] text-black font-medium">Rp 0</span>
+                <span class="block text-[11px] text-gray-500 font-medium tracking-wide mt-1.5">TOTAL</span>
+                <span id="labelGrandTotal" class="block text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
+                {{-- Rincian diskon/voucher tetap di DOM (hidden) agar JS tidak error, tidak tampil sesuai referensi --}}
+                <span id="labelDiskonGlobal" class="hidden">Rp 0</span>
+                <span id="labelVoucherGlobal" class="hidden">Rp 0</span>
                 {{-- Dipertahankan untuk JS (nilai metode pembayaran aktif) --}}
                 <span id="metodePembayaran" class="hidden">Cash</span>
             </div>
 
-            {{-- Kanan: Tombol aksi --}}
-            <div class="flex items-center gap-3 shrink-0">
+            {{-- Kanan: Tombol aksi (vertikal center / floating sesuai referensi) --}}
+            <div class="flex items-center gap-2.5 shrink-0 self-center">
+                {{-- Kosongkan Keranjang (trash) --}}
+                <button
+                    type="button"
+                    onclick="kosongkanKeranjang()"
+                    title="Kosongkan keranjang"
+                    class="w-11 h-11 flex items-center justify-center bg-white border border-black rounded-[10px] text-black transition-all cursor-pointer hover:border-primary-db hover:text-primary-db hover:bg-[#EEF2FF] hover:shadow-sm active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-db/40">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </button>
+
                 {{-- Simpan Draft / Arsip --}}
                 <button
                     type="button"
                     onclick="modalTambahArsip()"
-                    title="Simpan Draft"
-                    class="w-11 h-11 flex items-center justify-center bg-white border border-black rounded-xl text-black hover:bg-gray-100 transition-colors cursor-pointer">
+                    title="Simpan sebagai draft"
+                    class="w-11 h-11 flex items-center justify-center bg-white border border-black rounded-[10px] text-black transition-all cursor-pointer hover:border-primary-db hover:text-primary-db hover:bg-[#EEF2FF] hover:shadow-sm active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-db/40">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3M2.25 13.5v4.5A2.25 2.25 0 004.5 20.25h15a2.25 2.25 0 002.25-2.25v-4.5" />
                     </svg>
                 </button>
 
-                {{-- Draft Transaksi --}}
+                {{-- Diskon Global + Voucher (%) -> buka modal diskon & voucher --}}
                 <button
                     type="button"
-                    onclick="modalDraftTransaksi()"
-                    class="h-11 px-4 flex items-center gap-2 bg-white border border-black rounded-xl text-xs font-semibold text-black hover:bg-gray-100 transition-colors cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-                    </svg>
-                    Draft Transaksi
+                    onclick="modalDiskonGlobal()"
+                    title="Diskon global & voucher"
+                    class="w-11 h-11 flex items-center justify-center bg-white border border-black rounded-[10px] text-black transition-all cursor-pointer hover:border-primary-db hover:text-primary-db hover:bg-[#EEF2FF] hover:shadow-sm active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-db/40">
+                    <span class="text-lg font-extrabold leading-none tracking-tight select-none">%</span>
                 </button>
 
-                {{-- Toggle Tunai / Non-tunai --}}
+                {{-- Metode Pembayaran (single button sesuai referensi) --}}
                 <button
                     type="button"
-                    id="btnMetodeTunai"
-                    onclick="pilihMetodePembayaran('Cash')"
-                    class="h-11 px-8 rounded-xl border border-black text-sm font-bold transition-colors cursor-pointer bg-primary-db text-white">
-                    Tunai
-                </button>
-                <button
-                    type="button"
-                    id="btnMetodeNonTunai"
+                    id="btnMetodePembayaran"
                     onclick="modalMetodePembayaran()"
-                    class="h-11 px-6 rounded-xl border border-gray-400 text-sm font-medium transition-colors cursor-pointer bg-white text-gray-500 hover:bg-gray-50">
-                    Non-tunai
+                    class="h-11 px-5 flex items-center bg-white border border-black rounded-[10px] text-[13px] font-bold text-black transition-all cursor-pointer whitespace-nowrap hover:border-primary-db hover:text-primary-db hover:bg-[#EEF2FF] hover:shadow-sm active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-db/40">
+                    <span id="labelMetodeAktif">Metode Pembayaran</span>
                 </button>
 
                 {{-- Konfirmasi & Bayar --}}
                 <button
                     type="button"
                     onclick="prosesPembayaran()"
-                    class="h-11 px-6 bg-primary-db hover:bg-primary-sdb text-white text-sm font-bold rounded-xl transition-colors cursor-pointer">
+                    class="h-11 px-5 bg-primary-db hover:bg-primary-sdb text-white text-[13px] font-bold rounded-[10px] transition-colors cursor-pointer whitespace-nowrap">
                     Konfirmasi &amp; Bayar
                 </button>
             </div>
@@ -235,10 +226,10 @@
     <div
         id="modalBarcode"
         class="fixed inset-0 bg-black/50 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         {{-- Card Modal --}}
         <div class="w-full max-w-2xl bg-[#F7F8FC] rounded-2xl p-6 shadow-2xl space-y-4 border border-[#E2E8F0] max-h-[92vh] overflow-y-auto">
-            
+
             {{-- Header Modal --}}
             <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold text-black tracking-tight">Scan Barcode Kamera</h3>
@@ -270,7 +261,7 @@
                         placeholder="Atau scan / ketik kode barcode manual..."
                         required
                         class="flex-1 bg-white border border-[#2D3748] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#101D36]" />
-                    
+
                     <button
                         type="submit"
                         class="bg-[#101D36] hover:bg-[#1A2C50] active:bg-black text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer">
@@ -296,21 +287,21 @@
         id="modalDraftTransaksi"
         onclick="tutupModalDraftKlikLuar(event)"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         <!-- Card Modal -->
-        <div 
+        <div
             onclick="event.stopPropagation()"
             class="w-full max-w-lg bg-[#F8FAFC] rounded-3xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
+
             <!-- Header Modal -->
             <div class="flex items-start justify-between pb-2 border-b border-gray-300">
                 <div>
                     <h3 class="text-2xl font-extrabold text-black tracking-tight">Draft Transaksi</h3>
                     <p id="draftCountText" class="text-xs text-gray-500 font-medium mt-1">0 transaksi tersimpan</p>
                 </div>
-                <button 
-                    type="button" 
-                    onclick="tutupModalDraftTransaksi()" 
+                <button
+                    type="button"
+                    onclick="tutupModalDraftTransaksi()"
                     class="w-8 h-8 flex items-center justify-center border border-gray-400 rounded-lg text-black hover:bg-gray-200 transition-colors font-bold text-sm cursor-pointer">
                     ✕
                 </button>
@@ -324,9 +315,9 @@
             <!-- Footer Modal -->
             <div class="pt-3 border-t border-gray-300 flex items-center justify-between">
                 <span class="text-xs text-gray-400 font-medium">Klik Lanjutkan untuk memuat draft ke keranjang</span>
-                <button 
-                    type="button" 
-                    onclick="tutupModalDraftTransaksi()" 
+                <button
+                    type="button"
+                    onclick="tutupModalDraftTransaksi()"
                     class="px-6 py-2 bg-white border border-gray-800 hover:bg-gray-100 text-black rounded-xl text-sm font-bold transition-colors cursor-pointer">
                     Tutup
                 </button>
@@ -342,7 +333,7 @@
         id="modalBukaKasir"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
         <div class="w-full max-w-md bg-secondary-bw rounded-2xl p-6 shadow-2xl space-y-4 border border-black">
-            
+
             <!-- Header: Judul & Tanggal -->
             <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold text-black tracking-tight">Pembukaan kasir</h3>
@@ -365,8 +356,8 @@
                             oninput="formatInputRupiah(this)"
                             class="input-rupiah w-full bg-white border rounded-lg px-3 py-2.5 text-sm text-black outline-none pr-8 font-medium" />
                         <!-- Tombol Clear / X -->
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             onclick="document.getElementById('kasOpening').value = ''"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold hover:text-black">
                             ✕
@@ -408,14 +399,14 @@
     </div>
     <!-- end: Modal Buka Kasir -->
 
-    <!-- Modal Diskon Global -->
+    <!-- Modal Diskon Global + Voucher (dibuka via tombol % sesuai referensi) -->
     <div
         id="modalDiskonGlobal"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
         <div class="w-full max-w-sm bg-secondary-bw rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
+
             <!-- Judul Modal -->
-            <h3 class="text-xl font-bold text-black tracking-tight">Diskon Global</h3>
+            <h3 class="text-xl font-bold text-black tracking-tight">Diskon &amp; Voucher</h3>
 
             <!-- Form Input -->
             <div class="space-y-3">
@@ -473,10 +464,10 @@
     <div
         id="modalMetodePembayaran"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         <!-- Card Modal -->
         <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
+
             <!-- Judul Modal -->
             <h3 class="text-lg font-bold text-black tracking-tight">Metode Pembayaran</h3>
 
@@ -517,6 +508,17 @@
                 </div>
             </div>
 
+            <!-- Opsi Pembayaran Tunai -->
+            <div class="space-y-2">
+                <span class="block text-sm font-semibold text-black">Tunai</span>
+                <button
+                    type="button"
+                    onclick="pilihMetodePembayaran('Cash')"
+                    class="w-full bg-primary-db border border-gray-800 hover:bg-primary-sdb text-white font-medium py-2 rounded-xl text-sm transition-colors cursor-pointer">
+                    Cash
+                </button>
+            </div>
+
             <!-- Tombol Batal -->
             <div class="pt-1">
                 <button
@@ -535,10 +537,10 @@
     <div
         id="modalTambahArsip"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         <!-- Card Modal -->
         <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
+
             <!-- Judul Modal -->
             <h3 class="text-lg font-bold text-black tracking-tight">Simpan sebagai draft?</h3>
 
@@ -557,7 +559,7 @@
                         class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
                     <datalist id="listPelangganDraft">
                         @foreach($customers ?? [] as $cst)
-                            <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
+                        <option value="{{ $cst->DES }}">{{ $cst->CST }}</option>
                         @endforeach
                     </datalist>
                 </div>
@@ -575,7 +577,7 @@
                         class="w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#1A233A] font-medium" />
                     <datalist id="listSalesDraft">
                         @foreach($salesList ?? [] as $sls)
-                            <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
+                        <option value="{{ $sls->DES }}">{{ $sls->SLS }}</option>
                         @endforeach
                     </datalist>
                 </div>
@@ -605,10 +607,10 @@
     <div
         id="modalTutupKasir"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         <!-- Card Modal -->
         <div class="w-full max-w-sm bg-[#F8FAFC] rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-200">
-            
+
             <!-- Judul Modal -->
             <h3 class="text-lg font-bold text-black tracking-tight">Menutup Kasir</h3>
 
@@ -672,10 +674,10 @@
     <div
         id="modalKonfirmasiPembayaran"
         class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4">
-        
+
         <!-- Card Modal -->
         <div class="w-full max-w-sm bg-secondary-bw rounded-2xl p-6 shadow-2xl space-y-4 border border-gray-100">
-            
+
             <!-- Judul & Subtitle -->
             <div>
                 <h3 class="text-xl font-bold text-black tracking-tight">Konfirmasi Pembayaran</h3>
@@ -709,7 +711,7 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Pelanggan</option>
                         @foreach($customers ?? [] as $cst)
-                            <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
+                        <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -724,7 +726,7 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Sales</option>
                         @foreach($salesList ?? [] as $sls)
-                            <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
+                        <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -752,7 +754,7 @@
     <!-- end: Modal Konfirmasi Pembayaran -->
 
     <!-- Modal Struk Pembayaran -->
-     @include('POS.struk')
+    @include('POS.struk')
     <!-- end: Modal Struk Pembayaran -->
 
     {{-- ===================================================================== --}}
@@ -765,19 +767,19 @@
         target="_blank"
         class="hidden">
         @csrf
-        <input type="hidden" name="ref_no"          id="printRefNo">
-        <input type="hidden" name="tanggal"         id="printTanggal">
-        <input type="hidden" name="waktu"           id="printWaktu">
-        <input type="hidden" name="kasir"           id="printKasir">
-        <input type="hidden" name="metode"          id="printMetode">
-        <input type="hidden" name="subtotal"        id="printSubtotal">
-        <input type="hidden" name="discount_item"   id="printDiscountItem">
+        <input type="hidden" name="ref_no" id="printRefNo">
+        <input type="hidden" name="tanggal" id="printTanggal">
+        <input type="hidden" name="waktu" id="printWaktu">
+        <input type="hidden" name="kasir" id="printKasir">
+        <input type="hidden" name="metode" id="printMetode">
+        <input type="hidden" name="subtotal" id="printSubtotal">
+        <input type="hidden" name="discount_item" id="printDiscountItem">
         <input type="hidden" name="discount_global" id="printDiscountGlobal">
-        <input type="hidden" name="voucher"         id="printVoucher">
-        <input type="hidden" name="total"           id="printTotal">
-        <input type="hidden" name="dibayar"         id="printDibayar">
-        <input type="hidden" name="kembalian"       id="printKembalian">
-        <input type="hidden" name="items"           id="printItems">
+        <input type="hidden" name="voucher" id="printVoucher">
+        <input type="hidden" name="total" id="printTotal">
+        <input type="hidden" name="dibayar" id="printDibayar">
+        <input type="hidden" name="kembalian" id="printKembalian">
+        <input type="hidden" name="items" id="printItems">
     </form>
 
 </div>
@@ -791,13 +793,14 @@
     // 1. DATA KERANJANG & STATE DARI SESSION LARAVEL
     // -------------------------------------------------------------------------
     let cartData = @json($cart ?? []);
-    let voucherAmount = {{ (float) ($voucher ?? 0) }};
-    let discountPercent = {{ (float) ($discountPercent ?? 0) }};
+    let voucherAmount = {{ (float)($voucher ?? 0) }};
+    let discountPercent = {{ (float)($discountPercent ?? 0) }};
     let isKasirOpen = {{ !empty($isKasirOpen) ? 'true' : 'false' }};
     let activeItemKeyForDiscount = null;
     let currentGrandTotal = 0;
     let activePaymentMethod = 'Cash';
     let selectedBankName = '';
+    let hasPickedPaymentMethod = false;
 
     // State draft transaksi (dideklarasikan di awal agar aman dipakai semua fungsi)
     let isLoadedFromDraft = false;
@@ -860,69 +863,77 @@
         }
 
         fetch('{{ route('POS.buka-kasir') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({
-                kas_opening: cleanOpening,
-                catatan_opening: catatanOpening
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        kas_opening: cleanOpening,
+                        catatan_opening: catatanOpening
+                    })
+                })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Buka kasir';
+                }
+
+                if (data.success) {
+                    isKasirOpen = true;
+
+                    // Sembunyikan tampilan awal "Buka Kasir"
+                    const viewAwal = document.getElementById('viewBukaKasir');
+                    if (viewAwal) {
+                        viewAwal.classList.add('hidden');
+                        viewAwal.classList.remove('flex');
+                    }
+
+                    // Tampilkan area utama (scan & keranjang) & bar total
+                    const mainCenter = document.getElementById('mainCenterSection');
+                    if (mainCenter) {
+                        mainCenter.classList.remove('hidden');
+                        mainCenter.classList.add('flex');
+                    }
+
+                    const rightPanel = document.getElementById('rightOrderPanel');
+                    if (rightPanel) {
+                        rightPanel.classList.remove('hidden');
+                        rightPanel.classList.add('flex');
+                    }
+
+                    // Tampilkan tombol Tutup Kasir di Header
+                    const btnHeader = document.getElementById('btnHeaderTutupKasir');
+                    if (btnHeader) {
+                        btnHeader.classList.remove('hidden');
+                    }
+
+                    // Tampilkan tombol Draft Transaksi di Header
+                    const btnHeaderDraft = document.getElementById('btnHeaderDraft');
+                    if (btnHeaderDraft) {
+                        btnHeaderDraft.classList.remove('hidden');
+                        btnHeaderDraft.classList.add('flex');
+                    }
+                    updateDraftBadgeHeader();
+
+                    tutupModalBukaKasir();
+                    renderCart();
+
+                    const inputScan = document.getElementById('inputScanUtama');
+                    if (inputScan) inputScan.focus();
+                } else {
+                    alert(data.message || 'Gagal membuka kasir!');
+                }
             })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Buka kasir';
-            }
-
-            if (data.success) {
-                isKasirOpen = true;
-
-                // Sembunyikan tampilan awal "Buka Kasir"
-                const viewAwal = document.getElementById('viewBukaKasir');
-                if (viewAwal) {
-                    viewAwal.classList.add('hidden');
-                    viewAwal.classList.remove('flex');
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Buka kasir';
                 }
-
-                // Tampilkan area utama (scan & keranjang) & bar total
-                const mainCenter = document.getElementById('mainCenterSection');
-                if (mainCenter) {
-                    mainCenter.classList.remove('hidden');
-                    mainCenter.classList.add('flex');
-                }
-
-                const rightPanel = document.getElementById('rightOrderPanel');
-                if (rightPanel) {
-                    rightPanel.classList.remove('hidden');
-                    rightPanel.classList.add('flex');
-                }
-
-                // Tampilkan tombol Tutup Kasir di Header
-                const btnHeader = document.getElementById('btnHeaderTutupKasir');
-                if (btnHeader) {
-                    btnHeader.classList.remove('hidden');
-                }
-
-                tutupModalBukaKasir();
-                renderCart();
-
-                const inputScan = document.getElementById('inputScanUtama');
-                if (inputScan) inputScan.focus();
-            } else {
-                alert(data.message || 'Gagal membuka kasir!');
-            }
-        })
-        .catch(err => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Buka kasir';
-            }
-            console.error('Error buka kasir:', err);
-            alert('Terjadi kesalahan saat membuka kasir.');
-        });
+                console.error('Error buka kasir:', err);
+                alert('Terjadi kesalahan saat membuka kasir.');
+            });
     }
 
     // Buka Modal Tutup Kasir & Muat Data Kas
@@ -965,67 +976,74 @@
         }
 
         fetch('{{ route('POS.tutup-kasir') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Tutup';
-            }
-
-            if (data.success) {
-                isKasirOpen = false;
-                cartData = {};
-                voucherAmount = 0;
-                discountPercent = 0;
-                currentGrandTotal = 0;
-
-                // Tampilkan tampilan awal "Buka Kasir"
-                const viewAwal = document.getElementById('viewBukaKasir');
-                if (viewAwal) {
-                    viewAwal.classList.remove('hidden');
-                    viewAwal.classList.add('flex');
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Tutup';
                 }
 
-                // Sembunyikan area kasir aktif
-                const mainCenter = document.getElementById('mainCenterSection');
-                if (mainCenter) {
-                    mainCenter.classList.add('hidden');
-                    mainCenter.classList.remove('flex');
-                }
+                if (data.success) {
+                    isKasirOpen = false;
+                    cartData = {};
+                    voucherAmount = 0;
+                    discountPercent = 0;
+                    currentGrandTotal = 0;
 
-                const rightPanel = document.getElementById('rightOrderPanel');
-                if (rightPanel) {
-                    rightPanel.classList.add('hidden');
-                    rightPanel.classList.remove('flex');
-                }
+                    // Tampilkan tampilan awal "Buka Kasir"
+                    const viewAwal = document.getElementById('viewBukaKasir');
+                    if (viewAwal) {
+                        viewAwal.classList.remove('hidden');
+                        viewAwal.classList.add('flex');
+                    }
 
-                // Sembunyikan tombol Tutup Kasir di Header
-                const btnHeader = document.getElementById('btnHeaderTutupKasir');
-                if (btnHeader) {
-                    btnHeader.classList.add('hidden');
-                }
+                    // Sembunyikan area kasir aktif
+                    const mainCenter = document.getElementById('mainCenterSection');
+                    if (mainCenter) {
+                        mainCenter.classList.add('hidden');
+                        mainCenter.classList.remove('flex');
+                    }
 
-                tutupModalTutupKasir();
-                hapusDraft();
-                alert('Kasir berhasil ditutup.');
-            } else {
-                alert(data.message || 'Gagal menutup kasir!');
-            }
-        })
-        .catch(err => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Tutup';
-            }
-            console.error('Error tutup kasir:', err);
-            alert('Terjadi kesalahan saat menutup kasir.');
-        });
+                    const rightPanel = document.getElementById('rightOrderPanel');
+                    if (rightPanel) {
+                        rightPanel.classList.add('hidden');
+                        rightPanel.classList.remove('flex');
+                    }
+
+                    // Sembunyikan tombol Tutup Kasir di Header
+                    const btnHeader = document.getElementById('btnHeaderTutupKasir');
+                    if (btnHeader) {
+                        btnHeader.classList.add('hidden');
+                    }
+
+                    // Sembunyikan tombol Draft Transaksi di Header
+                    const btnHeaderDraft = document.getElementById('btnHeaderDraft');
+                    if (btnHeaderDraft) {
+                        btnHeaderDraft.classList.add('hidden');
+                        btnHeaderDraft.classList.remove('flex');
+                    }
+
+                    tutupModalTutupKasir();
+                    hapusDraft();
+                    alert('Kasir berhasil ditutup.');
+                } else {
+                    alert(data.message || 'Gagal menutup kasir!');
+                }
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Tutup';
+                }
+                console.error('Error tutup kasir:', err);
+                alert('Terjadi kesalahan saat menutup kasir.');
+            });
     }
 
     // -------------------------------------------------------------------------
@@ -1142,6 +1160,33 @@
         return total;
     }
 
+    // Badge jumlah draft di header (pill "Draft Transaksi")
+    function updateDraftBadgeHeader(count) {
+        let n = count;
+        if (typeof n === 'undefined' || n === null) {
+            try {
+                const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+                n = Array.isArray(drafts) ? drafts.length : 0;
+            } catch (e) {
+                n = 0;
+            }
+        }
+        const badgeHeader = document.getElementById('DraftCountBadgeHeader');
+        if (!badgeHeader) return;
+        if (n > 0) {
+            badgeHeader.innerText = n;
+            badgeHeader.classList.remove('hidden');
+            badgeHeader.classList.add('inline-flex');
+        } else {
+            badgeHeader.classList.add('hidden');
+            badgeHeader.classList.remove('inline-flex');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDraftBadgeHeader();
+    });
+
     // -------------------------------------------------------------------------
     // 4. FUNGSI PERHITUNGAN TOTAL, VOUCHER, DAN DISKON TRANSAKSI
     // -------------------------------------------------------------------------
@@ -1205,10 +1250,16 @@
             cartData = {};
             voucherAmount = 0;
             discountPercent = 0;
+            activePaymentMethod = 'Cash';
+            selectedBankName = '';
+            hasPickedPaymentMethod = false;
             isLoadedFromDraft = false;
             currentDraftPelanggan = '';
             currentDraftSales = '';
+            const elMetode = document.getElementById('metodePembayaran');
+            if (elMetode) elMetode.innerText = 'Cash';
             renderCart();
+            updateTombolMetode();
             simpanKeSession();
         }
     }
@@ -1218,17 +1269,17 @@
     // -------------------------------------------------------------------------
     function simpanKeSession() {
         fetch('{{ route('POS.cart.sync') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({
-                cart: cartData,
-                voucher: voucherAmount,
-                discount_percent: discountPercent
-            })
-        }).catch(err => console.error('Gagal sinkronisasi session cart:', err));
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    cart: cartData,
+                    voucher: voucherAmount,
+                    discount_percent: discountPercent
+                })
+            }).catch(err => console.error('Gagal sinkronisasi session cart:', err));
     }
 
     let html5QrcodeScanner = null;
@@ -1258,11 +1309,11 @@
     }
 
     // Sambungkan hasil scan kamera ke form kasir
-    (function () {
+    (function() {
         const camKasir = document.getElementById('bcam-kasir');
         if (!camKasir) return;
 
-        camKasir.addEventListener('barcode:scan', function (e) {
+        camKasir.addEventListener('barcode:scan', function(e) {
             var kode = String(e.detail.code || '').replace(/[\u0000-\u001F\u007F]/g, '').trim();
             if (!kode) return;
 
@@ -1278,7 +1329,9 @@
             var form = document.getElementById('formScanKasir');
             if (form) {
                 // keepResume: setelah halaman reload, kamera live menyala lagi
-                if (window.BarcodeCamera) BarcodeCamera.stop('kasir', { keepResume: true });
+                if (window.BarcodeCamera) BarcodeCamera.stop('kasir', {
+                    keepResume: true
+                });
                 form.requestSubmit();
             }
         });
@@ -1408,6 +1461,7 @@
 
     function pilihMetodePembayaran(method) {
         activePaymentMethod = method;
+        hasPickedPaymentMethod = true;
         if (['BNI', 'BCA', 'BRI', 'Seabank', 'JAGO'].includes(method)) {
             selectedBankName = method;
         } else {
@@ -1422,24 +1476,51 @@
     }
 
     // Sinkronkan tampilan toggle Tunai / Non-tunai di bar total
+    // Footer button menampilkan pilihan user (cth: JAGO), default "Metode Pembayaran"
     function updateTombolMetode() {
         const btnTunai = document.getElementById('btnMetodeTunai');
         const btnNon = document.getElementById('btnMetodeNonTunai');
-        if (!btnTunai || !btnNon) return;
+        const btnSingle = document.getElementById('btnMetodePembayaran');
+        const labelSingle = document.getElementById('labelMetodeAktif');
 
-        const aktif = ['bg-primary-db', 'text-white', 'border-black', 'font-bold'];
-        const nonaktif = ['bg-white', 'text-gray-500', 'border-gray-400', 'font-medium'];
+        const isTunai = (String(activePaymentMethod || 'cash').toLowerCase() === 'cash' || String(activePaymentMethod || '').toLowerCase() === 'tunai');
 
-        const isTunai = (activePaymentMethod.toLowerCase() === 'cash' || activePaymentMethod.toLowerCase() === 'tunai');
+        // Layout lama (jika masih ada): toggle Tunai / Non-tunai
+        if (btnTunai && btnNon) {
+            const aktif = ['bg-primary-db', 'text-white', 'border-black', 'font-bold'];
+            const nonaktif = ['bg-white', 'text-gray-500', 'border-gray-400', 'font-medium'];
 
-        btnTunai.classList.remove(...(isTunai ? nonaktif : aktif));
-        btnTunai.classList.add(...(isTunai ? aktif : nonaktif));
+            btnTunai.classList.remove(...(isTunai ? nonaktif : aktif));
+            btnTunai.classList.add(...(isTunai ? aktif : nonaktif));
 
-        btnNon.classList.remove(...(isTunai ? aktif : nonaktif));
-        btnNon.classList.add(...(isTunai ? nonaktif : aktif));
+            btnNon.classList.remove(...(isTunai ? aktif : nonaktif));
+            btnNon.classList.add(...(isTunai ? nonaktif : aktif));
 
-        // Jika non-tunai, tampilkan nama bank di tombol
-        btnNon.innerText = isTunai ? 'Non-tunai' : activePaymentMethod;
+            // Jika non-tunai, tampilkan nama bank di tombol
+            btnNon.innerText = isTunai ? 'Non-tunai' : activePaymentMethod;
+        }
+
+        // Layout referensi: satu tombol metode — tampilkan pilihan user
+        if (labelSingle) {
+            labelSingle.innerText = hasPickedPaymentMethod ? activePaymentMethod : 'Metode Pembayaran';
+        }
+        if (btnSingle) {
+            if (hasPickedPaymentMethod) {
+                btnSingle.classList.remove('bg-white', 'text-black');
+                btnSingle.classList.add('bg-primary-db', 'text-white');
+                // Override hover agar teks tetap putih saat terpilih
+                btnSingle.classList.remove('hover:text-primary-db', 'hover:bg-[#EEF2FF]');
+                btnSingle.classList.add('hover:bg-primary-sdb', 'hover:border-primary-sdb', 'hover:text-white');
+            } else {
+                btnSingle.classList.remove('bg-primary-db', 'text-white', 'hover:bg-primary-sdb', 'hover:border-primary-sdb', 'hover:text-white');
+                btnSingle.classList.add('bg-white', 'text-black', 'hover:text-primary-db', 'hover:bg-[#EEF2FF]');
+            }
+        }
+    }
+
+    // Kosongkan keranjang (tombol trash sesuai referensi) — pakai logika resetKeranjang
+    function kosongkanKeranjang() {
+        resetKeranjang(false);
     }
 
     // -------------------------------------------------------------------------
@@ -1581,71 +1662,78 @@
         }
 
         fetch('{{ route('POS.bayar') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({
-                cart: cartData,
-                voucher: voucherAmount,
-                discount_percent: discountPercent,
-                payment_method: activePaymentMethod,
-                bank_name: selectedBankName,
-                nominal_bayar: nominalBayarClean,
-                pelanggan: pelangganVal,
-                sales: salesVal
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Konfirmasi';
-            }
-
-            if (data.success) {
-                // 1. Hapus draft dari localStorage jika transaksi berasal dari muat draft
-                if (isLoadedFromDraft && activeDraftIndex !== null) {
-                    hapusDraftSetelahBayar(activeDraftIndex);
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        cart: cartData,
+                        voucher: voucherAmount,
+                        discount_percent: discountPercent,
+                        payment_method: activePaymentMethod,
+                        bank_name: selectedBankName,
+                        nominal_bayar: nominalBayarClean,
+                        pelanggan: pelangganVal,
+                        sales: salesVal
+                    })
+                })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Konfirmasi';
                 }
-                // 2. Tutup Modal Konfirmasi Pembayaran
-                tutupModalKonfirmasiPembayaran();
 
-                // 3. Tampilkan Pop-up Struk Pembayaran
-                tampilModalStruk({
-                    ref_no: data.ref_no,
-                    tanggal: data.tanggal || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-                    waktu: data.waktu || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.'),
-                    kasir: data.kasir || 'Kasir',
-                    metode: activePaymentMethod,
-                    items: Object.values(cartData),
-                    subtotal: data.subtotal,
-                    item_discount: data.item_discount,
-                    discount_percent: discountPercent,
-                    discount_global: data.discount_global,
-                    voucher: voucherAmount,
-                    total: data.grand_total || currentGrandTotal,
-                    dibayar: nominalBayarClean,
-                    kembalian: data.kembalian || 0
-                });
+                if (data.success) {
+                    // 1. Hapus draft dari localStorage jika transaksi berasal dari muat draft
+                    if (isLoadedFromDraft && activeDraftIndex !== null) {
+                        hapusDraftSetelahBayar(activeDraftIndex);
+                    }
+                    // 2. Tutup Modal Konfirmasi Pembayaran
+                    tutupModalKonfirmasiPembayaran();
 
-                // 4. Bersihkan Keranjang
-                resetKeranjang(true);
-                renderCart();
+                    // 3. Tampilkan Pop-up Struk Pembayaran
+                    tampilModalStruk({
+                        ref_no: data.ref_no,
+                        tanggal: data.tanggal || new Date().toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                        }),
+                        waktu: data.waktu || new Date().toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).replace(':', '.'),
+                        kasir: data.kasir || 'Kasir',
+                        metode: activePaymentMethod,
+                        items: Object.values(cartData),
+                        subtotal: data.subtotal,
+                        item_discount: data.item_discount,
+                        discount_percent: discountPercent,
+                        discount_global: data.discount_global,
+                        voucher: voucherAmount,
+                        total: data.grand_total || currentGrandTotal,
+                        dibayar: nominalBayarClean,
+                        kembalian: data.kembalian || 0
+                    });
 
-            } else {
-                alert(data.message || 'Gagal memproses pembayaran!');
-            }
-        })
-        .catch(err => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = 'Konfirmasi';
-            }
-            console.error('Error proses pembayaran:', err);
-            alert('Terjadi kesalahan saat memproses pembayaran.');
-        });
+                    // 4. Bersihkan Keranjang
+                    resetKeranjang(true);
+                    renderCart();
+
+                } else {
+                    alert(data.message || 'Gagal memproses pembayaran!');
+                }
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Konfirmasi';
+                }
+                console.error('Error proses pembayaran:', err);
+                alert('Terjadi kesalahan saat memproses pembayaran.');
+            });
     }
 
     // Tampilkan dan Populasikan Data Struk Sesuai Desain
@@ -1665,8 +1753,15 @@
         const elMetode = document.getElementById('strukMetode');
 
         if (elNoNota) elNoNota.innerText = transaksiData.ref_no || '-';
-        if (elTanggal) elTanggal.innerText = transaksiData.tanggal || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-        if (elWaktu) elWaktu.innerText = transaksiData.waktu || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+        if (elTanggal) elTanggal.innerText = transaksiData.tanggal || new Date().toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+        if (elWaktu) elWaktu.innerText = transaksiData.waktu || new Date().toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit'
+        }).replace(':', '.');
         if (elKasir) elKasir.innerText = transaksiData.kasir || 'Kasir';
         if (elMetode) elMetode.innerText = (transaksiData.metode || 'Tunai').toUpperCase();
 
@@ -1675,13 +1770,13 @@
         let rawSubtotal = 0;
         let totalItemDisc = 0;
 
-        const items = Array.isArray(transaksiData.items) 
-            ? transaksiData.items 
-            : Object.values(transaksiData.items || {});
+        const items = Array.isArray(transaksiData.items) ?
+            transaksiData.items :
+            Object.values(transaksiData.items || {});
 
         if (listContainer) {
             listContainer.innerHTML = '';
-            
+
             items.forEach(item => {
                 const qty = parseInt(item.qty) || 1;
                 const nama = item.nama_produk || item.name || 'Produk';
@@ -1740,9 +1835,9 @@
         // Diskon global (%)
         const globalPct = parseFloat(transaksiData.discount_percent) || 0;
         const subtotalAfterItem = Math.max(0, finalSubtotal - finalItemDisc);
-        const finalGlobalDisc = transaksiData.discount_global !== undefined 
-            ? parseFloat(transaksiData.discount_global) 
-            : (subtotalAfterItem * (globalPct / 100));
+        const finalGlobalDisc = transaksiData.discount_global !== undefined ?
+            parseFloat(transaksiData.discount_global) :
+            (subtotalAfterItem * (globalPct / 100));
 
         const wrapperDiscGlobal = document.getElementById('wrapperStrukDiskonGlobal');
         const labelDiscGlobal = document.getElementById('labelStrukDiskonGlobal');
@@ -1775,9 +1870,9 @@
         }
 
         // Grand Total
-        const finalGrandTotal = transaksiData.total !== undefined 
-            ? parseFloat(transaksiData.total) 
-            : Math.max(0, subtotalAfterItem - finalGlobalDisc - finalVoucher);
+        const finalGrandTotal = transaksiData.total !== undefined ?
+            parseFloat(transaksiData.total) :
+            Math.max(0, subtotalAfterItem - finalGlobalDisc - finalVoucher);
         if (elTotal) elTotal.innerText = formatRupiah(finalGrandTotal);
 
         // 3. Handle Rincian Pembayaran Tunai (Uang Diterima & Kembalian)
@@ -1786,7 +1881,7 @@
         const elKembali = document.getElementById('strukKembali');
 
         const isTunai = (transaksiData.metode && (
-            transaksiData.metode.toLowerCase() === 'cash' || 
+            transaksiData.metode.toLowerCase() === 'cash' ||
             transaksiData.metode.toLowerCase() === 'tunai'
         ));
 
@@ -1831,14 +1926,14 @@
             return;
         }
 
-        const rawItems = Array.isArray(strukTerakhir.items)
-            ? strukTerakhir.items
-            : Object.values(strukTerakhir.items || {});
+        const rawItems = Array.isArray(strukTerakhir.items) ?
+            strukTerakhir.items :
+            Object.values(strukTerakhir.items || {});
 
         let rawSubtotal = 0;
         let totalItemDisc = 0;
 
-        const items = rawItems.map(function (item) {
+        const items = rawItems.map(function(item) {
             const qty = parseInt(item.qty) || 1;
             const nama = item.nama_produk || item.name || 'Produk';
             const price = parseFloat(item.price) || 0;
@@ -1860,12 +1955,12 @@
                 discInfo = `${formatRupiah(vch)}`;
             }
 
-            return { 
-                nama: nama, 
-                qty: qty, 
-                price: price, 
-                discount_info: discInfo, 
-                subtotal: subtotal 
+            return {
+                nama: nama,
+                qty: qty,
+                price: price,
+                discount_info: discInfo,
+                subtotal: subtotal
             };
         });
 
@@ -1875,9 +1970,9 @@
         const finalSubtotal = strukTerakhir.subtotal !== undefined ? strukTerakhir.subtotal : rawSubtotal;
         const finalItemDisc = strukTerakhir.item_discount !== undefined ? strukTerakhir.item_discount : totalItemDisc;
         const globalPct = parseFloat(strukTerakhir.discount_percent) || 0;
-        const finalGlobalDisc = strukTerakhir.discount_global !== undefined 
-            ? strukTerakhir.discount_global 
-            : Math.max(0, (finalSubtotal - finalItemDisc) * (globalPct / 100));
+        const finalGlobalDisc = strukTerakhir.discount_global !== undefined ?
+            strukTerakhir.discount_global :
+            Math.max(0, (finalSubtotal - finalItemDisc) * (globalPct / 100));
         const finalVoucher = parseFloat(strukTerakhir.voucher) || 0;
 
         document.getElementById('printRefNo').value = strukTerakhir.ref_no || '';
@@ -1937,12 +2032,16 @@
             cart: JSON.parse(JSON.stringify(cartData)),
             voucher: voucherAmount,
             discount_percent: discountPercent,
-            time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+            time: new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) + ' WIB'
         });
 
         localStorage.setItem('pos_drafts', JSON.stringify(drafts));
         tutupModalTambahArsip();
         resetKeranjang(true);
+        updateDraftBadgeHeader(drafts.length);
         alert('Draft transaksi berhasil disimpan!');
     }
 
@@ -1970,45 +2069,46 @@
     }
 
     function renderDraftList() {
-    const container = document.getElementById('listDraftContainer');
-    const countText = document.getElementById('draftCountText');
-    if (!container) return;
+        const container = document.getElementById('listDraftContainer');
+        const countText = document.getElementById('draftCountText');
+        if (!container) return;
 
-    const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+        const drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
 
-    // Update teks jumlah draft
-    if (countText) {
-        countText.innerText = `${drafts.length} transaksi tersimpan`;
-    }
+        // Update teks jumlah draft + badge di header
+        if (countText) {
+            countText.innerText = `${drafts.length} transaksi tersimpan`;
+        }
+        updateDraftBadgeHeader(drafts.length);
 
-    if (drafts.length === 0) {
-        container.innerHTML = `
+        if (drafts.length === 0) {
+            container.innerHTML = `
             <div class="p-8 text-center text-gray-400 text-sm font-medium">
                 Belum ada draft transaksi yang disimpan.
             </div>
         `;
-        return;
-    }
-
-    let html = '';
-    drafts.forEach((d, idx) => {
-        // Hitung total item qty dari objek cart
-        let totalItems = 0;
-        let grandTotal = 0;
-        if (d.cart && typeof d.cart === 'object') {
-            Object.values(d.cart).forEach(item => {
-                const qty = parseInt(item.qty) || 1;
-                totalItems += qty;
-                const price = parseFloat(item.price) || 0;
-                grandTotal += (price * qty);
-            });
+            return;
         }
 
-        // Tampilkan info ringkasan
-        const itemInfo = `${totalItems} item`;
-        const totalFormatted = formatRupiah ? formatRupiah(grandTotal) : `Rp ${grandTotal.toLocaleString('id-ID')}`;
+        let html = '';
+        drafts.forEach((d, idx) => {
+            // Hitung total item qty dari objek cart
+            let totalItems = 0;
+            let grandTotal = 0;
+            if (d.cart && typeof d.cart === 'object') {
+                Object.values(d.cart).forEach(item => {
+                    const qty = parseInt(item.qty) || 1;
+                    totalItems += qty;
+                    const price = parseFloat(item.price) || 0;
+                    grandTotal += (price * qty);
+                });
+            }
 
-        html += `
+            // Tampilkan info ringkasan
+            const itemInfo = `${totalItems} item`;
+            const totalFormatted = formatRupiah ? formatRupiah(grandTotal) : `Rp ${grandTotal.toLocaleString('id-ID')}`;
+
+            html += `
             <div class="flex items-center justify-between p-3.5 bg-white border border-gray-800 rounded-2xl shadow-xs hover:border-black transition-all">
                 <!-- Info Kiri (Ikon + Detail) -->
                 <div class="flex items-center gap-3.5">
@@ -2052,10 +2152,10 @@
                 </div>
             </div>
         `;
-    });
+        });
 
-    container.innerHTML = html;
-}
+        container.innerHTML = html;
+    }
 
     function muatDraft(index) {
         let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
@@ -2073,6 +2173,7 @@
             // Hapus draft dari daftar tersimpan (localStorage) karena sudah dimuat
             drafts.splice(index, 1);
             localStorage.setItem('pos_drafts', JSON.stringify(drafts));
+            updateDraftBadgeHeader(drafts.length);
 
             renderCart();
             simpanKeSession();
@@ -2089,6 +2190,7 @@
         }
         localStorage.setItem('pos_drafts', JSON.stringify(drafts));
         renderDraftList();
+        updateDraftBadgeHeader(drafts.length);
         resetKeranjang(true);
         tutupModalDraftTransaksi();
     }
@@ -2141,7 +2243,7 @@
     // -------------------------------------------------------------------------
 
     // Scan memakai form submit (halaman reload), jadi simpan jumlah item sebelum submit
-    document.addEventListener('submit', function (e) {
+    document.addEventListener('submit', function(e) {
         if (e.target.querySelector && e.target.querySelector('[name="BC_OUT"]')) {
             sessionStorage.setItem('scanJumlahSebelum', String(hitungTotalQty()));
         }
@@ -2324,7 +2426,7 @@
     });
 
     // Inisialisasi awal saat DOM siap
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         if (isKasirOpen) {
             renderCart();
 
