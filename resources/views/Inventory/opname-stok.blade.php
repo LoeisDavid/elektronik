@@ -68,6 +68,16 @@
         </div>
     @endif
 
+    {{-- Judul --}}
+        <h1 class="text-2xl font-bold text-black tracking-tight mb-2">
+            Cek Stok (Opname Stok)
+        </h1>
+
+        {{-- Sub Judul --}}
+        <p class="text-sm text-[#6B7280] mb-3 max-w-xs text-center">
+            Silahkan klik tombol "Mulai"untuk melakukan opname stok
+        </p>
+
     <a id="btnMulai"
        href="{{ route('inventory.opname.pull') }}"
        class="px-12 py-2.5 rounded-md text-base font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition shadow-sm">

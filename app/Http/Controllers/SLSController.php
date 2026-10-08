@@ -52,7 +52,7 @@ class SLSController extends Controller
         try {
             $validated = $request->validate([
                 'DES' => 'required|string|max:150',
-                'HP'  => 'required|string|max:20',
+                'HP'  => 'required|numeric|max_digits:20',
                 'AL'  => 'required|string|max:100',
             ]);
 
