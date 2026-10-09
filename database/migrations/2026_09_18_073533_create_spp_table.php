@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('spp', function (Blueprint $table) {
             $table->string('SPP', 10)->primary();
-            $table->string('DES', 150);
-            $table->string('TLP', 20);
+            $table->string('DES', 150)->collation('utf8mb4_unicode_ci')->unique();
+            $table->string('TLP', 20)->unique();
             $table->timestamps();
         });
     }

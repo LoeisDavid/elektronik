@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('sls', function (Blueprint $table) {
             $table->string('SLS', 10)->primary();
-            $table->string('DES', 150);
-            $table->string('HP', 20);
+            $table->string('DES', 150)->collation('utf8mb4_unicode_ci')->unique();
+            $table->string('HP', 20)->unique();
             $table->string('AL', 100);
             $table->timestamps();
         });

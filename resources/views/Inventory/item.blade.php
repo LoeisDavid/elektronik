@@ -30,10 +30,9 @@
     $bukaStok   = !empty($stokList) || $errors->hasBag('stok');
     $bukaTambah = $errors->hasBag('tambah');
 
-
     $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
-    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200';
-    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200';
+    $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
+    $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb';
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 
     // Nomor halaman: 1 ... (tengah) ... terakhir
@@ -102,7 +101,7 @@
             </form>
 
             {{-- SORT (HTML murni: <details> + link) --}}
-            <details class="relative group">
+            <details id="sortDropdown" class="relative group">
                 <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs min-w-42.5">
                     <span>Urutkan: <?= e($opsiSort[$sort]) ?></span>
                     <svg class="w-4 h-4 text-gray-600 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -186,37 +185,25 @@
                                 <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
-                                {{-- DROPDOWN AKSI --}}
-                                <div class="relative inline-block">
+                                    {{-- DROPDOWN AKSI --}}
+                                    <div class="relative inline-block">
 
-                                    {{-- BUTTON AKSI --}}
-                                    <button
-                                        type="button"
-                                        onclick="toggleActionMenu(this)"
-                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer"
-                                        title="Aksi Item"
-                                    >
-                                        <svg
-                                            class="w-4 h-4 text-primary-db"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="2"
+                                        {{-- BUTTON AKSI --}}
+                                        <button
+                                            type="button"
+                                            onclick="toggleActionMenu(this)"
+                                            class="btn-aksi h-8 w-8 border border-gray-400 bg-white hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer"
+                                            title="Aksi Item"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                            />
-                                        </svg>
-                                    </button>
+                                            <svg class="w-4 h-4 text-primary-db" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                            </svg>
+                                        </button>
 
+                                        {{-- ACTION MENU --}}
+                                        <div class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden">
 
-                                    {{-- ACTION MENU --}}
-                                    <div
-                                        class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden"
-                                    >
-                                        {{-- DETAIL --}}
+                                            {{-- DETAIL --}}
                                             <a
                                                 href="<?= e(route('inventory.item.show', $r->itm)) ?>"
                                                 class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
@@ -228,77 +215,44 @@
                                                 <span>Detail</span>
                                             </a>
 
-                                        {{-- EDIT --}}
-                                        <button
-                                            type="button"
-                                            data-itm="{{ $r->itm }}"
-                                            data-des="{{ $r->des }}"
-                                            data-hrg="{{ $r->hrg }}"
-                                            data-ktg="{{ $r->ktg }}"
-                                            data-mrk="{{ $r->mrk }}"
-                                            data-spp="{{ $r->spp }}"
-                                            data-action="{{ route('inventory.item.update', ['id' => $r->itm]) }}"
-                                            onclick="openEditModal(this)"
-                                            class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                                        >
-
-                                            <svg
-                                                class="w-3.5 h-3.5 text-gray-600"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                                stroke-width="2"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-                                                />
-                                            </svg>
-
-                                            <span>Edit</span>
-
-                                        </button>
-
-
-                                        {{-- HAPUS --}}
-                                        <form
-                                            method="POST"
-                                            action="{{ route('inventory.item.destroy', ['id' => $r->itm]) }}"
-                                        >
-
-                                            @csrf
-                                            @method('DELETE')
-
+                                            {{-- EDIT --}}
                                             <button
-                                                type="submit"
-                                                onclick="return confirm('Hapus Item ini?')"
-                                                class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                                type="button"
+                                                data-itm="<?= e($r->itm) ?>"
+                                                data-des="<?= e($r->des) ?>"
+                                                data-hrg="<?= e($r->hrg) ?>"
+                                                data-ktg="<?= e($r->ktg) ?>"
+                                                data-mrk="<?= e($r->mrk) ?>"
+                                                data-spp="<?= e($r->spp) ?>"
+                                                data-action="<?= e(route('inventory.item.update', ['id' => $r->itm])) ?>"
+                                                onclick="openEditModal(this)"
+                                                class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                             >
-
-                                                <svg
-                                                    class="w-3.5 h-3.5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                    stroke-width="2"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16"
-                                                    />
+                                                <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                                                 </svg>
-
-                                                <span>Hapus</span>
-
+                                                <span>Edit</span>
                                             </button>
 
-                                        </form>
+                                            {{-- HAPUS --}}
+                                            <form method="POST" action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>">
+                                                <?= csrf_field() ?>
+                                                <?= method_field('DELETE') ?>
 
+                                                <button
+                                                    type="submit"
+                                                    onclick="return confirm('Hapus Item ini?')"
+                                                    class="w-full px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" />
+                                                    </svg>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </form>
+
+                                        </div>
                                     </div>
-
-                                </div>
 
                                 </td>
                             </tr>
@@ -389,7 +343,7 @@
             </div>
 
             <form id="formStok" method="POST" action="<?= e(route('inventory.item.stok')) ?>" class="space-y-4">
-                @csrf
+                <?= csrf_field() ?>
 
                 {{-- NAMA BARANG --}}
                 <div>
@@ -426,7 +380,7 @@
                             inputmode="numeric"
                             name="stok_hrb"
                             required
-                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float)old('stok_hrb'), 0, ',', '.')) : '') ?>"
+                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
                             placeholder="Rp 0"
                             oninput="formatInputRupiah(this)"
                             class="input-rupiah <?= $inputCls ?>"
@@ -482,7 +436,7 @@
             </form>
 
             <form method="POST" action="<?= e(route('inventory.item.generate')) ?>" class="mt-3">
-                @csrf
+                <?= csrf_field() ?>
                 <button
                     type="submit"
                     <?= empty($stokList) ? 'disabled' : '' ?>
@@ -509,7 +463,7 @@
             <h2 class="text-xl font-bold mb-6">Tambah Barang</h2>
 
             <form method="POST" id="formTambah" action="<?= e(route('inventory.item.store')) ?>" class="space-y-6">
-                @csrf
+                <?= csrf_field() ?>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
@@ -534,7 +488,7 @@
                     <div>
                         <label class="<?= $labelCls ?>">Harga Jual</label>
                         <input type="text" inputmode="numeric" name="HRG" required
-                               value="<?= e(old('HRG') ? ('Rp ' . number_format((float)old('HRG'), 0, ',', '.')) : '') ?>"
+                               value="<?= e(old('HRG') ? ('Rp ' . number_format((float) old('HRG'), 0, ',', '.')) : '') ?>"
                                placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>">
                         <?= $galat('tambah', 'HRG') ?>
                     </div>
@@ -569,9 +523,9 @@
                         Batal
                     </button>
                     <button
-                    type="submit"
-                    id="btnTambahITM"
-                    class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow text-center">
+                        type="submit"
+                        id="btnTambahITM"
+                        class="w-1/2 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow text-center">
                         Simpan
                     </button>
                 </div>
@@ -595,8 +549,8 @@
             <h2 class="text-xl font-bold mb-6">Edit Barang</h2>
 
             <form id="editITMForm" method="POST" class="space-y-6">
-                @csrf
-                @method('PUT')
+                <?= csrf_field() ?>
+                <?= method_field('PUT') ?>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
@@ -674,7 +628,7 @@
         m.classList.remove('hidden');
         m.classList.add('flex');
         if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-            $('#' + id).find('select.searchable-select').each(function() {
+            $('#' + id).find('select.searchable-select').each(function () {
                 $(this).select2({
                     width: '100%',
                     dropdownParent: $('#' + id)
@@ -695,6 +649,12 @@
     }
 
     // ---------- Menu aksi ----------
+    function tutupSemuaMenu() {
+        document.querySelectorAll('.action-menu').forEach(function (menu) {
+            menu.classList.add('hidden');
+        });
+    }
+
     function toggleActionMenu(button) {
         const menu = button.parentElement.querySelector('.action-menu');
 
@@ -705,12 +665,15 @@
         menu.classList.toggle('hidden');
     }
 
-    // ---------- Tutup menu aksi saat klik di luar ----------
+    // ---------- Tutup menu aksi & dropdown sort saat klik di luar ----------
     document.addEventListener('click', function (event) {
-        if (!event.target.closest('.action-menu') && !event.target.closest('button[onclick="toggleActionMenu(this)"]')) {
-            document.querySelectorAll('.action-menu').forEach(function (menu) {
-                menu.classList.add('hidden');
-            });
+        if (!event.target.closest('.action-menu') && !event.target.closest('.btn-aksi')) {
+            tutupSemuaMenu();
+        }
+
+        const sort = document.getElementById('sortDropdown');
+        if (sort && !event.target.closest('#sortDropdown')) {
+            sort.removeAttribute('open');
         }
     });
 
@@ -729,10 +692,7 @@
         document.getElementById('editHRG').value = d.hrg ? formatRupiah(d.hrg) : '';
         document.getElementById('editITMForm').action = d.action;
 
-        // tutup menu aksi baris ini
-        document.querySelectorAll('.action-menu').forEach(function (menu) {
-            menu.classList.add('hidden');
-        });
+        tutupSemuaMenu();
         bukaModal('editITMModal');
 
         if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
@@ -749,6 +709,7 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             ['tambahStokModal', 'tambahITMModal', 'editITMModal'].forEach(tutupModal);
+            tutupSemuaMenu();
         }
     });
 
@@ -790,7 +751,7 @@
         });
     })();
 
-    // Mencegah double submit
+    // ---------- Cegah double submit ----------
     document.getElementById('formTambah').addEventListener('submit', function (event) {
         const btn = document.getElementById('btnTambahITM');
 

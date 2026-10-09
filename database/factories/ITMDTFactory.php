@@ -39,5 +39,14 @@ class ITMDTFactory extends Factory
             'updated_at' => now(),
         ];
     }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (ITMDT $itmdt) {
+            $totalDt = ITMDT::where('ITM', $itmdt->ITM)->count();
+            $totalSts = \App\Models\STS::where('ITM', $itmdt->ITM)->count();
+            ITM::where('ITM', $itmdt->ITM)->update(['STOK' => max(0, $totalDt - $totalSts)]);
+        });
+    }
 }
 

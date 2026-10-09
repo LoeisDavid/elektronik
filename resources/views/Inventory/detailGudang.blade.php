@@ -127,7 +127,6 @@
                                 <th class="py-3 px-4 text-center font-semibold">Kategori</th>
                                 <th class="py-3 px-4 text-center font-semibold">Supplier</th>
                                 <th class="py-3 px-4 text-center font-semibold">Merek</th>
-                                <th class="py-3 px-4 text-center font-semibold">Stok</th>
                                 <th class="py-3 px-4 text-center font-semibold">Harga</th>
                             </tr>
                         </thead>
@@ -139,7 +138,6 @@
                                     <td class="px-4 text-center">{{ $item->KTG }}</td>
                                     <td class="px-4 text-center">{{ $item->SPP }}</td>
                                     <td class="px-4 text-center">{{ $item->MRK }}</td>
-                                    <td class="px-4 text-center">{{ number_format($item->STOK, 0, ',', '.') }} Unit</td>
                                     <td class="px-4 text-center">Rp {{ number_format($item->HRB, 0, ',', '.') }}</td>
                                 </tr>
                             @empty
