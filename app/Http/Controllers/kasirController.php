@@ -30,8 +30,8 @@ class kasirController extends Controller
         $isKasirOpen = ($activeKas !== null) || (bool) session()->get('kas_open', false);
 
         // Ambil daftar customer dan sales untuk autocomplete / pencarian
-        $customers = CST::select('CST', 'DES', 'TLP')->limit(100)->get();
-        $salesList = SLS::select('SLS', 'DES', 'HP')->limit(100)->get();
+        $customers = CST::select('CST', 'DES', 'TLP')->get();
+        $salesList = SLS::select('SLS', 'DES', 'HP')->get();
 
         return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'isKasirOpen', 'activeKas', 'customers', 'salesList'));
     }
@@ -237,68 +237,50 @@ class kasirController extends Controller
         $code = trim($request->input('BC_OUT') ?? $request->input('code') ?? '');
 
         if (!$code) {
-            return redirect()->route('POS.kasir')->with('error', 'Barcode atau kode produk tidak boleh kosong!');
+            return redirect()->route('POS.kasir')->with('error', 'Barcode tidak boleh kosong!');
         }
 
         $cart = session()->get('cart', []);
 
-        // Cek apakah barcode BC_OUT ini sudah ada di keranjang
+        // 1. Cek apakah barcode BC_OUT sudah ada di keranjang
         if (isset($cart[$code])) {
             return redirect()->route('POS.kasir')->with('warning', 'Barcode "' . $code . '" sudah ada di keranjang!');
         }
 
-        // Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
+        // 2. Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
         if (STS::where('BC_OUT', $code)->exists()) {
             return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" sudah terjual dan tidak dapat digunakan lagi!');
         }
 
-        // 1. Cek di tabel ITMDT berdasarkan barcode keluar (BC_OUT)
+        // 3. Cek di tabel ITMDT khusus berdasarkan BC_OUT
         $itmdt = ITMDT::where('BC_OUT', $code)->first();
-        $item = null;
 
-        if ($itmdt) {
-            $item = ITM::where('ITM', $itmdt->ITM)->first();
-        } else {
-            // 2. Jika bukan BC_OUT, cek apakah kode adalah kode produk ITM (atau nama ITM)
-            $item = ITM::where('ITM', $code)->orWhere('DES', $code)->first();
-            if ($item) {
-                // Cari BC_OUT dari ITMDT yang belum ada di keranjang dan belum ada di STS
-                $existingBcOuts = array_keys($cart);
-                $availableItmdt = ITMDT::where('ITM', $item->ITM)
-                    ->whereNotIn('BC_OUT', function ($query) {
-                        $query->select('BC_OUT')->from('sts');
-                    })
-                    ->whereNotIn('BC_OUT', $existingBcOuts)
-                    ->first();
-
-                if ($availableItmdt) {
-                    $code = $availableItmdt->BC_OUT;
-                } else {
-                    return redirect()->route('POS.kasir')->with('error', 'Stok barang untuk produk "' . ($item->DES ?? $item->ITM) . '" sudah habis atau sudah ada di keranjang!');
-                }
-            } else {
-                return redirect()->route('POS.kasir')->with('error', 'Kode barang atau barcode "' . $code . '" tidak ditemukan!');
-            }
+        if (!$itmdt) {
+            return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" tidak ditemukan!');
         }
 
-        // 3. Jika item ditemukan di database
-        if ($item) {
-            $cart[$code] = [
-                'id' => $item->ITM,
-                'code' => $code, // Barcode BC_OUT unik untuk unit barang ini
-                'name' => $item->DES ?? $item->ITM,
-                'description' => $item->mrk()?->DES ?? '',
-                'price' => (float) ($item->HRG ?? 0),
-                'qty' => 1,
-                'discount' => 0,
-                'discount_voucher' => 0
-            ];
+        // 4. Ambil data master produk (ITM) berdasarkan ITM milik ITMDT
+        $item = ITM::where('ITM', $itmdt->ITM)->first();
 
-            session()->put('cart', $cart);
-            return redirect()->route('POS.kasir')->with('success', 'Produk "' . ($item->DES ?? $code) . '" (Barcode: ' . $code . ') berhasil ditambahkan!');
+        if (!$item) {
+            return redirect()->route('POS.kasir')->with('error', 'Master item untuk barcode "' . $code . '" tidak ditemukan!');
         }
 
-        return redirect()->route('POS.kasir')->with('error', 'Produk tidak ditemukan!');
+        // 5. Tambahkan unit ke keranjang belanja
+        $cart[$code] = [
+            'id'               => $item->ITM,
+            'code'             => $code, // Barcode BC_OUT unik untuk unit barang ini
+            'name'             => $item->DES ?? $item->ITM,
+            'description'      => $item->mrk()?->DES ?? '',
+            'price'            => (float) ($item->HRG ?? 0),
+            'qty'              => 1,
+            'discount'         => 0,
+            'discount_voucher' => 0
+        ];
+
+        session()->put('cart', $cart);
+
+        return redirect()->route('POS.kasir')->with('success', 'Produk "' . ($item->DES ?? $code) . '" (Barcode: ' . $code . ') berhasil ditambahkan!');
     }
 
     /**
