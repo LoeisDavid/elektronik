@@ -91,7 +91,7 @@
                 <svg class="w-5 h-5 text-secondary-bw shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-1 18H5V9h14v11zm1-13H4V4h16v3z"/>
                 </svg>
-                <span class="sidebar-text whitespace-nowrap transition-opacity duration-200 flex-1 text-left">Inventory</span>
+                <span class="sidebar-text underline decoration-1 underline-offset-2 whitespace-nowrap transition-opacity duration-200 flex-1 text-left">Inventory</span>
                 {{-- Chevron --}}
                 <svg class="sidebar-text sidebar-chevron w-3.5 h-3.5 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />

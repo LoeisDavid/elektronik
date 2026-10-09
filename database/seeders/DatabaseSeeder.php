@@ -319,8 +319,8 @@ class DatabaseSeeder extends Seeder
         if (!KAS::where('TGL', $todayStr)->exists()) {
             KAS::factory()->create([
                 'TGL'  => $todayStr,
-                'TGLM' => $todayStr . ' 08:00:00',
-                'TGLK' => $todayStr . ' 17:00:00',
+                'TGLM' => $todayStr . ' ' . sprintf('%02d:%02d:%02d', fake()->numberBetween(7, 10), fake()->numberBetween(0, 59), fake()->numberBetween(0, 59)),
+                'TGLK' => null,
             ]);
         }
 

@@ -33,6 +33,17 @@ class KASFactory extends Factory
         $akht = $awlt + $dbt - $crt;
         $tgl = fake()->dateTimeBetween('-30 days', 'now');
 
+        // Waktu realistis yang bervariasi (bukan 08:00/17:00 yang seragam):
+        // buka antara 07:00-10:00, tutup 8-11 jam kemudian
+        $bukaJam   = fake()->numberBetween(7, 10);
+        $bukaMenit = fake()->numberBetween(0, 59);
+        $bukaDetik = fake()->numberBetween(0, 59);
+        $durasiJam = fake()->numberBetween(8, 11);
+        $tutupTambahan = $durasiJam * 3600 + fake()->numberBetween(0, 3599);
+
+        $waktuBuka  = (clone $tgl)->setTime($bukaJam, $bukaMenit, $bukaDetik);
+        $waktuTutup = (clone $waktuBuka)->modify("+{$tutupTambahan} seconds");
+
         return [
             'CD'         => sprintf('CD%08d', $num),
             'TGL'        => $tgl->format('Y-m-d'),
@@ -45,8 +56,8 @@ class KASFactory extends Factory
             'CRNT'       => 0,
             'AKHT'       => $akht,
             'AKHNT'      => $dbnt,
-            'TGLM'       => $tgl->format('Y-m-d 08:00:00'),
-            'TGLK'       => $tgl->format('Y-m-d 17:00:00'),
+            'TGLM'       => $waktuBuka->format('Y-m-d H:i:s'),
+            'TGLK'       => $waktuTutup->format('Y-m-d H:i:s'),
             'created_at' => now(),
             'updated_at' => now(),
         ];

@@ -207,15 +207,22 @@
                 <svg id="barcodeCanvas" class="w-full h-auto max-h-24"></svg>
             </div>
 
-            {{-- TOMBOL PRINT --}}
-            <div class="pt-1">
+            {{-- TOMBOL TUTUP & PRINT --}}
+            <div class="pt-1 flex gap-2">
+                <button
+                    type="button"
+                    onclick="closeBarcodeModal()"
+                    class="flex-1 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border border-gray-300 rounded-xl py-2.5 px-6 text-center text-sm font-semibold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                    Tutup
+                </button>
                 <button
                     type="button"
                     onclick="cetakStruk()"
-                    class="w-full bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl py-2.5 text-center text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+                    class="flex-1 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl py-2.5 px-6 text-center text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
                 >
                     <svg
-                        class="w-4 h-4"
+                        class="w-4 h-4 shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

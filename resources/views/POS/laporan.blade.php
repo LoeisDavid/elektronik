@@ -4,6 +4,16 @@
 @section('header_title', 'Laporan Kasir')
 
 @section('content')
+<style>
+    /* Sembunyikan scrollbar area tabel tapi tetap bisa scroll */
+    .table-scroll {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE / Edge lama */
+    }
+    .table-scroll::-webkit-scrollbar {
+        display: none; /* Chrome / Safari / Edge */
+    }
+</style>
 <?php
     // ---------- Helper PHP murni ----------
     $rp = fn ($angka) => 'Rp ' . number_format((int) $angka, 0, ',', '.');
@@ -34,7 +44,7 @@
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
 ?>
 
-<div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-6 space-y-6">
+<div class="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-secondary-bw p-6 space-y-6">
 
     {{-- ========================================================= --}}
     {{-- SECTION ATAS: STATISTIK & FILTER --}}
@@ -120,8 +130,8 @@
     {{-- ========================================================= --}}
     {{-- SECTION BAWAH: TABEL LAPORAN KASIR --}}
     {{-- ========================================================= --}}
-    <div class="border border-gray-300 rounded-2xl bg-white overflow-hidden shadow-xs">
-        <div class="overflow-x-auto">
+    <div class="flex-1 min-h-0 border border-gray-300 rounded-2xl bg-white overflow-hidden shadow-xs flex flex-col">
+        <div class="table-scroll flex-1 min-h-0 overflow-y-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
@@ -168,13 +178,14 @@
         </div>
 
         <!-- Footer / Pagination -->
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="shrink-0 px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
             <span>
                 Menampilkan <?= (int) $pagination['dari'] ?>-<?= (int) $pagination['sampai'] ?>
                 dari <?= (int) $pagination['total_data'] ?> data
             </span>
 
             <div class="flex items-center gap-1">
+                <?php if ($totalHal > 1): ?>
                 <!-- Prev -->
                 <?php if ($halaman > 1): ?>
                     <a href="<?= e($buatUrl($halaman - 1)) ?>" class="<?= $btnNormal ?>">‹</a>
@@ -196,6 +207,7 @@
                     <a href="<?= e($buatUrl($halaman + 1)) ?>" class="<?= $btnNormal ?>">›</a>
                 <?php else: ?>
                     <span class="<?= $btnOff ?>">›</span>
+                <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
