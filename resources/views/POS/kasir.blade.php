@@ -699,6 +699,7 @@
                 </div>
 
                 <!-- Field 2: Pelanggan -->
+                <!-- Field 2: Pelanggan -->
                 <div class="space-y-1">
                     <label for="inputPelangganKonfirmasi" class="block text-sm font-semibold text-black">
                         Pelanggan
@@ -708,7 +709,10 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Pelanggan</option>
                         @foreach($customers ?? [] as $cst)
-                        <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
+                            {{-- Tambahkan atribut data-phone dan tampilkan nomor telp di dalam teks option --}}
+                            <option value="{{ $cst->DES }}" data-phone="{{ $cst->TLP ?? '' }}">
+                                {{ $cst->DES }} {{ !empty($cst->TLP) ? '- ' . $cst->TLP : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -723,7 +727,7 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Sales</option>
                         @foreach($salesList ?? [] as $sls)
-                        <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
+                        <option value="{{ $sls->DES }}" data-phone="{{ $sls->HP ?? '' }}">{{ $sls->DES }} {{ !empty($sls->HP) ? '- ' . $sls->HP : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1624,11 +1628,35 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
             if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
                 $(modal).find('select.searchable-select').each(function() {
                     $(this).select2({
                         width: '100%',
-                        dropdownParent: $(modal)
+                        dropdownParent: $(modal),
+                        // Tambahkan logika pencarian custom
+                        matcher: function(params, data) {
+                            // Jika kolom pencarian kosong, tampilkan semua opsi
+                            if ($.trim(params.term) === '') {
+                                return data;
+                            }
+
+                            // Jika tidak ada data element (misal placeholder), lewati
+                            if (!data.element) {
+                                return null;
+                            }
+
+                            var term = params.term.toLowerCase();
+                            var text = (data.text || '').toLowerCase();
+                            var phone = ($(data.element).data('phone') || '').toString().toLowerCase();
+
+                            // Pencarian cocok jika term ada di Nama/Kode (text) ATAU di No. HP (data-phone)
+                            if (text.indexOf(term) > -1 || phone.indexOf(term) > -1) {
+                                return data;
+                            }
+
+                            return null;
+                        }
                     });
                 });
             }
