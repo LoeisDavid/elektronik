@@ -159,9 +159,9 @@
                 <span class="block text-[13px] text-gray-500 font-normal">Subtotal</span>
                 <span id="labelSubtotal" class="block text-[15px] text-black font-medium">Rp 0</span>
                 <span class="block text-[11px] text-gray-500 font-medium tracking-wide mt-1.5">TOTAL</span>
-                <div class="flex items-baseline gap-2.5 flex-wrap">
+                <div class="flex items-center gap-2.5 flex-wrap">
                     <span id="labelGrandTotal" class="text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
-                    <span id="labelPromoGlobal" class="hidden text-[13px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
+                    <span id="labelPromoGlobal" class="hidden self-start mt-[3px] text-[15px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
                 </div>
                 {{-- Rincian diskon/voucher tetap di DOM (hidden) agar JS tidak error, tidak tampil sesuai referensi --}}
                 <span id="labelDiskonGlobal" class="hidden">Rp 0</span>
@@ -366,18 +366,6 @@
                             ✕
                         </button>
                     </div>
-                </div>
-
-                <!-- Catatan Opening -->
-                <div>
-                    <label for="catatanOpening" class="block text-sm font-semibold text-black mb-1">
-                        Catatan opening:
-                    </label>
-                    <textarea
-                        id="catatanOpening"
-                        rows="3"
-                        placeholder="Tambahkan catatan opening jika ada..."
-                        class="w-full bg-white border rounded-lg p-3 text-sm text-black outline-none resize-none font-medium"></textarea>
                 </div>
             </div>
 
@@ -850,7 +838,6 @@
     function simpanBukaKasir() {
         const rawKasOpening = document.getElementById('kasOpening').value;
         const cleanOpening = parseFloat(rawKasOpening.replace(/\D/g, '')) || 0;
-        const catatanOpening = document.getElementById('catatanOpening').value;
 
         if (rawKasOpening === '' || cleanOpening < 0) {
             alert('Silakan masukkan nominal Kas Opening yang valid!');
@@ -870,8 +857,7 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        kas_opening: cleanOpening,
-                        catatan_opening: catatanOpening
+                        kas_opening: cleanOpening
                     })
                 })
             .then(res => res.json())

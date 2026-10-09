@@ -61,7 +61,6 @@ class kasirController extends Controller
     {
         $rawOpening = (string) ($request->input('kas_opening') ?? 0);
         $nominalOpening = (int) (preg_replace('/[^\d]/', '', $rawOpening) ?: 0);
-        $catatanOpening = $request->input('catatan_opening') ?? '';
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
 
@@ -93,8 +92,7 @@ class kasirController extends Controller
             }
 
             session()->put('kas_open', true);
-            session()->put('kas_opening', (int) $kas->AWLT);
-            session()->put('catatan_opening', $catatanOpening);
+            session()->put('kas_opening', $nominalOpening);
 
             return response()->json([
                 'success' => true,
@@ -162,7 +160,7 @@ class kasirController extends Controller
             }
 
             // Hapus session kasir dan cart
-            session()->forget(['kas_open', 'kas_opening', 'catatan_opening', 'cart', 'voucher', 'discount_percent']);
+            session()->forget(['kas_open', 'kas_opening', 'cart', 'voucher', 'discount_percent']);
 
             return response()->json([
                 'success' => true,
