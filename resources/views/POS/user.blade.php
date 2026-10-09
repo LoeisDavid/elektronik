@@ -130,15 +130,15 @@
                         </th>
 
                         <th class="py-2.5 px-4 ">
+                            Nama
+                        </th>
+
+                        <th class="py-2.5 px-4 ">
                             Alamat
                         </th>
 
                         <th class="py-2.5 px-4 ">
                             Nomor Handphone
-                        </th>
-
-                        <th class="py-2.5 px-4 ">
-                            Nama
                         </th>
 
                         <th class="py-2.5 px-4 ">
@@ -166,6 +166,10 @@
                                 {{ $user->USERNAME }}
                             </td>
 
+                            {{-- DES --}}
+                            <td class="py-3.5 px-4">
+                                {{ $user->DES }}
+                            </td>
 
                             {{-- Alamat --}}
                             <td class="py-3.5 px-4">
@@ -178,14 +182,9 @@
                                 {{ $user->HP }}
                             </td>
 
-                            {{-- DES --}}
-                            <td class="py-3.5 px-4">
-                                {{ $user->DES }}
-                            </td>
-
                             {{-- Role --}}
                             <td class="py-3.5 px-4">
-                                {{ $user->ROLE }}
+                                {{ $user->ROLE == 1 ? 'Admin' : 'Kasir' }}
                             </td>
 
 

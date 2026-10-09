@@ -15,6 +15,17 @@ use Illuminate\Support\Facades\DB;
 class kasirController extends Controller
 {
     /**
+     * Shift kasir yang sedang aktif (TGLK masih kosong), yang terbaru.
+     * Tidak memakai filter tanggal karena tiap kas berdiri sendiri.
+     */
+    private function kasAktif(): ?KAS
+    {
+        return KAS::whereNull('TGLK')
+            ->orderBy('TGLM', 'desc')
+            ->first();
+    }
+
+    /**
      * Menampilkan halaman utama Kasir (POS) beserta data keranjang dari Session.
      */
     public function index()
@@ -24,10 +35,17 @@ class kasirController extends Controller
         $voucher = session()->get('voucher', 0);
         $discountPercent = session()->get('discount_percent', 0);
 
-        // Cek status buka kasir hari ini
-        $today = now()->toDateString();
-        $activeKas = KAS::where('TGL', $today)->whereNull('TGLK')->first();
-        $isKasirOpen = ($activeKas !== null) || (bool) session()->get('kas_open', false);
+        // Status kasir ditentukan dari database (shift aktif)
+        $activeKas = $this->kasAktif();
+        $isKasirOpen = $activeKas !== null;
+
+        // Sinkronkan session dengan kondisi database
+        if ($activeKas) {
+            session()->put('kas_open', true);
+            session()->put('kas_opening', (int) $activeKas->AWLT);
+        } else {
+            session()->forget(['kas_open', 'kas_opening', 'catatan_opening']);
+        }
 
         // Ambil daftar customer dan sales untuk autocomplete / pencarian
         $customers = CST::select('CST', 'DES', 'TLP')->get();
@@ -47,42 +65,46 @@ class kasirController extends Controller
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
 
-        $cd = 'CD' . sprintf('%08d', KAS::count() + 1);
-            while (KAS::where('CD', $cd)->exists()) {
-                $cd = 'CD' . sprintf('%08d', rand(10000, 99999999));
-            }
-            $kas = KAS::create([
-                'CD'    => $cd,
-                'TGL'   => $today,
-                'USER'  => substr($user, 0, 10),
-                'AWLT'  => $nominalOpening,
-                'AWLNT' => 0,
-                'DBT'   => 0,
-                'DBNT'  => 0,
-                'CRT'   => 0,
-                'CRNT'  => 0,
-                'AKHT'  => $nominalOpening,
-                'AKHNT' => 0,
-                'TGLM'  => now(),
-                'TGLK'  => null,
-            ]);
-
         try {
-            
+            // Jika sudah ada shift aktif, jangan buat baris baru
+            $kas = $this->kasAktif();
+
+            if (!$kas) {
+                $cd = 'CD' . sprintf('%08d', KAS::count() + 1);
+                while (KAS::where('CD', $cd)->exists()) {
+                    $cd = 'CD' . sprintf('%08d', rand(10000, 99999999));
+                }
+
+                $kas = KAS::create([
+                    'CD'    => $cd,
+                    'TGL'   => $today,
+                    'USER'  => substr($user, 0, 10),
+                    'AWLT'  => $nominalOpening,
+                    'AWLNT' => 0,
+                    'DBT'   => 0,
+                    'DBNT'  => 0,
+                    'CRT'   => 0,
+                    'CRNT'  => 0,
+                    'AKHT'  => $nominalOpening,
+                    'AKHNT' => 0,
+                    'TGLM'  => now(),
+                    'TGLK'  => null,
+                ]);
+            }
 
             session()->put('kas_open', true);
-            session()->put('kas_opening', $nominalOpening);
+            session()->put('kas_opening', (int) $kas->AWLT);
             session()->put('catatan_opening', $catatanOpening);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Kasir berhasil dibuka.',
-                'kas'     => $kas
+                'kas'     => $kas,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuka kasir: ' . $e->getMessage()
+                'message' => 'Gagal membuka kasir: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -92,25 +114,31 @@ class kasirController extends Controller
      */
     public function kasStatus()
     {
-        $today = now()->toDateString();
-        $kas = KAS::where('TGL', $today)->first();
+        $kas = $this->kasAktif();
 
-        $saldoAwal = $kas ? (int) $kas->AWLT : (int) session()->get('kas_opening', 0);
-        $penjualanTunai = $kas ? (int) ($kas->DBT ?? 0) : 0;
-        $penjualanNonTunai = $kas ? (int) ($kas->DBNT ?? 0) : 0;
-        $mutasiKeluar = $kas ? (int) ($kas->CRT ?? 0) : 0;
-        $saldoAkhir = $saldoAwal + $penjualanTunai - $mutasiKeluar;
+        if (!$kas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada kasir yang sedang dibuka.',
+            ]);
+        }
+
+        $saldoAwal         = (int) ($kas->AWLT ?? 0);
+        $penjualanTunai    = (int) ($kas->DBT ?? 0);
+        $penjualanNonTunai = (int) ($kas->DBNT ?? 0);
+        $mutasiKeluar      = (int) ($kas->CRT ?? 0);
+        $saldoAkhir        = $saldoAwal + $penjualanTunai - $mutasiKeluar;
 
         return response()->json([
             'success' => true,
             'kas' => [
-                'saldo_awal'           => $saldoAwal,
-                'penjualan_tunai'      => $penjualanTunai,
-                'penjualan_non_tunai'  => $penjualanNonTunai,
-                'mutasi_keluar'        => $mutasiKeluar,
-                'saldo_akhir'          => $saldoAkhir,
-                'total_kas'            => $saldoAkhir,
-            ]
+                'saldo_awal'          => $saldoAwal,
+                'penjualan_tunai'     => $penjualanTunai,
+                'penjualan_non_tunai' => $penjualanNonTunai,
+                'mutasi_keluar'       => $mutasiKeluar,
+                'saldo_akhir'         => $saldoAkhir,
+                'total_kas'           => $saldoAkhir,
+            ],
         ]);
     }
 
@@ -119,16 +147,11 @@ class kasirController extends Controller
      */
     public function tutupKasir(Request $request)
     {
-        $today = now()->toDateString();
-
         try {
-            $kas = KAS::where('TGL', $today)->whereNull('TGLK')->first();
-            if (!$kas) {
-                $kas = KAS::where('TGL', $today)->first();
-            }
+            $kas = $this->kasAktif();
 
             if ($kas) {
-                $saldoAkhirTunai = ($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0);
+                $saldoAkhirTunai    = ($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0);
                 $saldoAkhirNonTunai = ($kas->AWLNT ?? 0) + ($kas->DBNT ?? 0) - ($kas->CRNT ?? 0);
 
                 $kas->update([
@@ -141,15 +164,14 @@ class kasirController extends Controller
             // Hapus session kasir dan cart
             session()->forget(['kas_open', 'kas_opening', 'catatan_opening', 'cart', 'voucher', 'discount_percent']);
 
-
             return response()->json([
                 'success' => true,
-                'message' => 'Kasir berhasil ditutup.'
+                'message' => 'Kasir berhasil ditutup.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menutup kasir: ' . $e->getMessage()
+                'message' => 'Gagal menutup kasir: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -314,6 +336,12 @@ class kasirController extends Controller
         try {
             DB::beginTransaction();
 
+            // 0. Pastikan ada shift kasir yang aktif
+            $kas = $this->kasAktif();
+            if (!$kas) {
+                throw new \Exception('Kasir belum dibuka atau sudah ditutup.');
+            }
+
             // 1. Generate REF_NO untuk tabel ACR (INV0000001 - max 10 karakter)
             $lastAcr = ACR::where('REF_NO', 'like', 'INV%')->orderBy('REF_NO', 'desc')->first();
             $nextNumber = 1;
@@ -356,7 +384,7 @@ class kasirController extends Controller
             $totalAllPotongan = $totalItemDiscountNominal + $voucherAmount + $diskonTransaksiNominal;
             $payAmount = $isTunai ? max($grandTotal, $nominalBayar) : $grandTotal;
 
-            $acr = ACR::create([
+            ACR::create([
                 'REF_NO'  => $refNo,
                 'DT'      => now()->toDateString(),
                 'CST'     => substr($cst, 0, 10),
@@ -403,19 +431,15 @@ class kasirController extends Controller
                 ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
             }
 
-            // 4. Update Saldo Penjualan Kas di Tabel KAS
-            $today = now()->toDateString();
-            $kas = KAS::where('TGL', $today)->whereNull('TGLK')->first() ?? KAS::where('TGL', $today)->first();
-            if ($kas) {
-                if ($isTunai) {
-                    $kas->DBT = ($kas->DBT ?? 0) + $grandTotal;
-                    $kas->AKHT = ($kas->AWLT ?? 0) + $kas->DBT - ($kas->CRT ?? 0);
-                } else {
-                    $kas->DBNT = ($kas->DBNT ?? 0) + $grandTotal;
-                    $kas->AKHNT = ($kas->AWLNT ?? 0) + $kas->DBNT - ($kas->CRNT ?? 0);
-                }
-                $kas->save();
+            // 4. Update Saldo Penjualan Kas di Tabel KAS (hanya shift aktif)
+            if ($isTunai) {
+                $kas->DBT  = ($kas->DBT ?? 0) + $grandTotal;
+                $kas->AKHT = ($kas->AWLT ?? 0) + $kas->DBT - ($kas->CRT ?? 0);
+            } else {
+                $kas->DBNT  = ($kas->DBNT ?? 0) + $grandTotal;
+                $kas->AKHNT = ($kas->AWLNT ?? 0) + $kas->DBNT - ($kas->CRNT ?? 0);
             }
+            $kas->save();
 
             // Kosongkan keranjang setelah berhasil dibayar
             session()->forget(['cart', 'voucher', 'discount_percent']);
