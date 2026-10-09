@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('ktg', function (Blueprint $table) {
             $table->string('KTG', 10)->primary();
-            $table->string('DES', 45);
+            $table->string('DES', 45)->collation('utf8mb4_unicode_ci')->unique();
             $table->timestamps();
         });
     }

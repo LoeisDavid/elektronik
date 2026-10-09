@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('USERNAME', 20)->primary();
             $table->string('PASS', 255);
             $table->string('AL', 100)->nullable();
-            $table->string('HP', 25)->nullable();
-            $table->string('DES', 100)->nullable();
+            $table->string('HP', 25)->unique()->nullable();
+            $table->string('DES', 100)->nullable()->collation('utf8mb4_unicode_ci')->unique();
             $table->integer('ROLE')->default(1);
             $table->timestamps();
         });

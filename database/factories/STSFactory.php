@@ -35,8 +35,21 @@ class STSFactory extends Factory
         return [
             'REC' => $recKey, // string(3) PK
             'REF_NO' => fn () => ACR::factory(),
-            'BC_OUT' => fn () => ITMDT::factory(),
-            'ITM' => fn () => ITM::factory(),
+            'BC_OUT' => function (array $attributes) {
+                if (!empty($attributes['ITM'])) {
+                    return ITMDT::factory()->create(['ITM' => $attributes['ITM']])->BC_OUT;
+                }
+                return ITMDT::factory()->create()->BC_OUT;
+            },
+            'ITM' => function (array $attributes) {
+                if (!empty($attributes['BC_OUT'])) {
+                    $dt = ITMDT::where('BC_OUT', $attributes['BC_OUT'])->first();
+                    if ($dt) {
+                        return $dt->ITM;
+                    }
+                }
+                return ITM::factory();
+            },
             'HGJ' => fake()->randomFloat(2, 10000, 50000000),
             'ST' => fake()->randomElement(['PCS', 'BOX', 'UNT']), // 3 chars
             'POT_1' => fake()->optional(0.3)->numberBetween(1, 10),
@@ -47,5 +60,14 @@ class STSFactory extends Factory
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (STS $sts) {
+            $totalDt = ITMDT::where('ITM', $sts->ITM)->count();
+            $totalSts = STS::where('ITM', $sts->ITM)->count();
+            ITM::where('ITM', $sts->ITM)->update(['STOK' => max(0, $totalDt - $totalSts)]);
+        });
     }
 }

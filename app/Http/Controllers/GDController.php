@@ -7,44 +7,60 @@ use App\Models\GD;
 use App\Models\ITM;
 use App\Models\ITMDT;
 use App\Models\STS;
+use Illuminate\Support\Facades\DB;
 
 class GDController extends Controller
 {
     // halaman index untuk menampilkan semua data gudang
-    public function index(Request $request)
-    {
-        try {
-            $query = GD::query();
+public function index(Request $request)
+{
+    try {
+        // Stok = jumlah itmdt di gudang tsb yang BC_OUT-nya tidak ada di sts
+        $stokSub = DB::table('itmdt')
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('itmdt.GD', 'gd.GD')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('sts')
+                  ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+            });
 
-            if ($request->filled('keyword')) {
-                $search = $request->keyword;
-                $query->where(function ($q) use ($search) {
-                    $q->where('DES', 'LIKE', "%{$search}%")
-                    ->orWhere('GD', 'LIKE', "%{$search}%");
-                });
-            }
+        $query = GD::query()
+            ->select('gd.*')
+            ->selectSub($stokSub, 'stok');
 
-            $sort = $request->sort;
-
-            if ($sort == 'a-z') {
-                $query->orderBy('DES', 'asc');
-            } else if ($sort == 'z-a') {
-                $query->orderBy('DES', 'desc');
-            } else if ($sort == 'new-old') {
-                $query->orderBy('created_at', 'desc');
-            } else if ($sort == 'old-new') {
-                $query->orderBy('created_at', 'asc');
-            } else {
-                $query->orderBy('DES', 'asc');
-            }
-
-            $data = $query->paginate(10);
-
-            return view('Inventory.gudang', compact('data'));
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where(function ($q) use ($search) {
+                $q->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('GD', 'LIKE', "%{$search}%");
+            });
         }
+
+        $sort = $request->sort;
+
+        if ($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if ($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else if ($sort == 'stok-sedikit') {
+            $query->orderBy('stok', 'asc')->orderBy('DES', 'asc');
+        } else {
+            // default: stok terbanyak
+            $query->orderBy('stok', 'desc')->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
+
+        return view('Inventory.gudang', compact('data'));
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
     }
+}
 
     // halaman create untuk menampilkan form tambah data gudang
     public function create()
@@ -162,7 +178,6 @@ class GDController extends Controller
                     'KTG'    => $itm->KTG()->DES ?? '-',
                     'SPP'    => $itm->SPP()->DES ?? '-',
                     'MRK'    => $itm->MRK()->DES ?? '-',
-                    'STOK'   => $stokPerItm[$row->ITM] ?? 0,
                     'HRB'    => $row->HRB ?? 0,
                 ];
             });

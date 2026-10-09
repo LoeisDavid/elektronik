@@ -428,6 +428,9 @@ class kasirController extends Controller
                     'PPN'    => null,
                     'BRT'    => $brtItem,
                 ]);
+
+                // Kurangi STOK di tabel ITM agar tetap sinkron (jumlah ITMDT - jumlah STS)
+                ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
             }
 
             // 4. Update Saldo Penjualan Kas di Tabel KAS

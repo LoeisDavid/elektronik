@@ -127,16 +127,22 @@ class DatabaseSeeder extends Seeder
             DB::table('sls')->insert($data);
         }
 
-        // 8. ITM (Item) & 9. ITMDT (Item Detail)
-        // Stok pada ITM disesuaikan dengan jumlah ITMDT. Beberapa ITM tidak memiliki stok (STOK = 0).
-        $this->command?->info("Seeding ITM & ITMDT (stok ITM sesuai jumlah ITMDT)...");
+        // 8. ITM (Item), 9. ITMDT (Item Detail), 10. ACR & 11. STS (Penjualan)
+        // Aturan: STOK pada ITM HARUS persis sama dengan jumlah ITMDT dikurangi jumlah STS (ITMDT - STS).
+        // Distribusi stok barang elektronik:
+        // - Habis (STOK = 0): ~20% barang (ada yang ludes terjual di STS, ada yang belum ada stok)
+        // - Menipis (STOK = 1..5): ~40% barang (sesuai ambang BATAS_MENIPIS di aplikasi)
+        // - Banyak (STOK = 6..20): ~40% barang (stok aman dan melimpah)
+        $this->command?->info("Seeding ITM, ITMDT, ACR & STS (stok ITM = jumlah ITMDT - jumlah STS)...");
         ITMFactory::resetSequence(1);
         ITMDTFactory::resetSequence(1);
+        ACRFactory::resetSequence(1);
+        STSFactory::resetSequence(0);
 
         $itmData = [];
         $itmdtData = [];
+        $unitsToSell = [];
         $itmdtSequence = 1;
-        $allCreatedItmdts = [];
 
         for ($i = 1; $i <= $totalRecords; $i++) {
             $itmCode = sprintf('ITM%07d', $i);
@@ -144,24 +150,44 @@ class DatabaseSeeder extends Seeder
             $mrkCode = sprintf('MRK%07d', (($i - 1) % $totalRecords) + 1);
             $sppCode = sprintf('SPP%07d', (($i - 1) % $totalRecords) + 1);
 
-            // ~15% barang tidak ada stok (STOK = 0), sisa barang punya stok 1 s/d 6 unit
-            if ($i % 7 === 0) {
-                $stockCount = 0;
+            $mod = $i % 10;
+            if ($mod === 0 || $mod === 5) {
+                // 1. STOK HABIS (200 item / 20%)
+                if ($mod === 0) {
+                    // Pernah ada stok masuk, tetapi seluruh unitnya ludes terjual di STS
+                    $soldUnits = (($i % 4) + 2); // 2..5 unit masuk & terjual
+                    $numItmdt  = $soldUnits;
+                    $finalStok = 0;
+                } else {
+                    // Belum pernah ada stok masuk
+                    $numItmdt  = 0;
+                    $soldUnits = 0;
+                    $finalStok = 0;
+                }
+            } elseif ($mod === 1 || $mod === 3 || $mod === 7 || $mod === 9) {
+                // 2. STOK MENIPIS (400 item / 40% -> STOK 1..5 unit)
+                $finalStok = (($i % 5) + 1); // 1, 2, 3, 4, atau 5 unit
+                $soldUnits = (($i % 4) + 1); // 1, 2, 3, atau 4 unit terjual di STS
+                $numItmdt  = $finalStok + $soldUnits;
             } else {
-                $stockCount = (($i * 3 + 7) % 6) + 1;
+                // 3. STOK BANYAK (400 item / 40% -> STOK 6..20 unit)
+                $finalStok = (($i % 15) + 6); // 6 s/d 20 unit
+                $soldUnits = ($i % 6);        // 0 s/d 5 unit terjual di STS
+                $numItmdt  = $finalStok + $soldUnits;
             }
 
             $itmObj = ITM::factory()->make([
                 'ITM'  => $itmCode,
-                'STOK' => $stockCount,
+                'STOK' => $finalStok, // Tepat jumlah ITMDT dikurangi jumlah STS
                 'KTG'  => $ktgCode,
                 'MRK'  => $mrkCode,
                 'SPP'  => $sppCode,
             ])->getAttributes();
             $itmData[] = $itmObj;
 
-            for ($s = 0; $s < $stockCount; $s++) {
-                $bcOut = sprintf('BCO%017d', $itmdtSequence);
+            // Generate rincian unit masuk di ITMDT
+            for ($s = 0; $s < $numItmdt; $s++) {
+                $bcOut  = sprintf('BCO%017d', $itmdtSequence);
                 $gdCode = sprintf('GD%08d', (($itmdtSequence - 1) % $totalRecords) + 1);
 
                 $itmdtObj = ITMDT::factory()->make([
@@ -172,11 +198,16 @@ class DatabaseSeeder extends Seeder
                 ])->getAttributes();
 
                 $itmdtData[] = $itmdtObj;
-                $allCreatedItmdts[] = [
-                    'BC_OUT' => $bcOut,
-                    'ITM'    => $itmCode,
-                    'HRG'    => $itmObj['HRG'],
-                ];
+
+                // Daftarkan unit yang terjual di STS
+                if ($s < $soldUnits) {
+                    $unitsToSell[] = [
+                        'BC_OUT' => $bcOut,
+                        'ITM'    => $itmCode,
+                        'HRG'    => $itmObj['HRG'],
+                    ];
+                }
+
                 $itmdtSequence++;
             }
         }
@@ -189,16 +220,9 @@ class DatabaseSeeder extends Seeder
             DB::table('itmdt')->insert($chunk);
         }
 
-        // 10. ACR & 11. STS (Penjualan)
-        // Hanya sebagian stok (sekitar 60%) yang terjual di STS, sisanya 40% belum terjual
-        $totalItmdts = count($allCreatedItmdts);
-        $soldCount = (int) ($totalItmdts * 0.6);
-        $soldItmdts = array_slice($allCreatedItmdts, 0, $soldCount);
-
-        $this->command?->info("Seeding ACR & STS ($soldCount unit terjual dari total $totalItmdts unit ITMDT)...");
-
-        ACRFactory::resetSequence(1);
-        STSFactory::resetSequence(0);
+        // 10. ACR & 11. STS (Penjualan / Invoice)
+        $totalSoldUnits = count($unitsToSell);
+        $this->command?->info("Seeding ACR & STS ($totalSoldUnits unit terjual dari ITMDT)...");
 
         $acrData = [];
         $stsData = [];
@@ -208,15 +232,15 @@ class DatabaseSeeder extends Seeder
         $slsIndex = 1;
 
         $soldOffset = 0;
-        while ($soldOffset < $soldCount) {
-            $itemsInInvoice = min(rand(1, 3), $soldCount - $soldOffset);
+        while ($soldOffset < $totalSoldUnits) {
+            $itemsInInvoice = min(rand(1, 3), $totalSoldUnits - $soldOffset);
             $refNo = sprintf('INV%07d', $invIndex);
             $cstCode = sprintf('CST%07d', (($cstIndex - 1) % $totalRecords) + 1);
             $slsCode = sprintf('SLS%07d', (($slsIndex - 1) % $totalRecords) + 1);
 
             $brtTotal = 0;
             for ($j = 0; $j < $itemsInInvoice; $j++) {
-                $soldUnit = $soldItmdts[$soldOffset + $j];
+                $soldUnit = $unitsToSell[$soldOffset + $j];
                 $recKey = str_pad(base_convert((string)$stsRecIndex, 10, 36), 3, '0', STR_PAD_LEFT);
                 $hgj = $soldUnit['HRG'];
                 $brtTotal += $hgj;
@@ -267,6 +291,23 @@ class DatabaseSeeder extends Seeder
         }
         foreach (array_chunk($stsData, $chunkSize) as $chunk) {
             DB::table('sts')->insert($chunk);
+        }
+
+        // Verifikasi konsistensi stok: ITM.STOK == COUNT(ITMDT) - COUNT(STS)
+        $mismatches = DB::select("
+            SELECT itm.ITM, itm.STOK,
+                   COALESCE(dt.total_dt, 0) as total_dt,
+                   COALESCE(st.total_sts, 0) as total_sts
+            FROM itm
+            LEFT JOIN (SELECT ITM, COUNT(*) as total_dt FROM itmdt GROUP BY ITM) dt ON itm.ITM = dt.ITM
+            LEFT JOIN (SELECT ITM, COUNT(*) as total_sts FROM sts GROUP BY ITM) st ON itm.ITM = st.ITM
+            WHERE itm.STOK != (COALESCE(dt.total_dt, 0) - COALESCE(st.total_sts, 0))
+        ");
+
+        if (count($mismatches) > 0) {
+            $this->command?->error("Peringatan: Terdapat " . count($mismatches) . " item dengan stok tidak sinkron!");
+        } else {
+            $this->command?->info("Verifikasi Sukses: 100% item memiliki STOK = jumlah ITMDT - jumlah STS.");
         }
 
         // 12. KAS (Memanggil KASFactory untuk seed riwayat shift kasir)
