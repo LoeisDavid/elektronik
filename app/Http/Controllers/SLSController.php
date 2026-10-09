@@ -18,7 +18,9 @@ class SLSController extends Controller
             if ($request->filled('keyword')) {
                 $search = $request->keyword;
                 $query->where('DES', 'LIKE', "%{$search}%")
-                      ->orWhere('SLS', 'LIKE', "%{$search}%");
+                      ->orWhere('SLS', 'LIKE', "%{$search}%")
+                      ->orWhere('HP', 'LIKE', "%{$search}%")
+                      ->orWhere('AL', 'LIKE', "%{$search}%");
             }
 
             $sort = $request->sort;
