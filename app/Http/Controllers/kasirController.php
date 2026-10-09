@@ -47,13 +47,7 @@ class kasirController extends Controller
         $today = now()->toDateString();
         $user = auth()->user()?->USERNAME ?? 'admin';
 
-        $kas = KAS::where('TGL', $today)->whereNull('TGLK')->first();
-        if (!$kas) {
-            $kas = KAS::where('TGL', $today)->first();
-        }
-
-        if (!$kas) {
-            $cd = 'CD' . sprintf('%08d', KAS::count() + 1);
+        $cd = 'CD' . sprintf('%08d', KAS::count() + 1);
             while (KAS::where('CD', $cd)->exists()) {
                 $cd = 'CD' . sprintf('%08d', rand(10000, 99999999));
             }
@@ -72,12 +66,6 @@ class kasirController extends Controller
                 'TGLM'  => now(),
                 'TGLK'  => null,
             ]);
-        } else {
-            $kas->update([
-                'AWLT' => $nominalOpening,
-                'AKHT' => $nominalOpening,
-            ]);
-        }
 
         try {
             

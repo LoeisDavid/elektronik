@@ -68,7 +68,7 @@
                     type="text"
                     name="keyword"
                     value="<?= e($keyword) ?>"
-                    placeholder="Cari produk"
+                    placeholder="Cari kode atau nama supplier"
                     class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
                 >
             </form>
