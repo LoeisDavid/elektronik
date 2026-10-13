@@ -37,11 +37,16 @@ class MRKController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:45',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:45|unique:mrk,DES',
+        ], [
+            'DES.required' => 'Nama merk wajib diisi.',
+            'DES.string'   => 'Nama merk harus berupa teks.',
+            'DES.max'      => 'Nama merk maksimal 45 karakter.',
+            'DES.unique'   => 'Nama merk sudah terdaftar.',
+        ]);
 
+        try {
             $validated['MRK'] = $this->generateCode($validated['DES'], 'MRK');
 
             MRK::create($validated);
@@ -59,15 +64,20 @@ class MRKController extends Controller
      */
     public function update(Request $request, string $mrk)
     {
+        $decodedMrk = urldecode($mrk);
+        $merk = MRK::where('MRK', $decodedMrk)->firstOrFail();
+
+        $validated = $request->validateWithBag('editMerk', [
+            'MRK' => 'required|string|max:10',
+            'DES' => 'required|string|max:45|unique:mrk,DES,' . $merk->MRK . ',MRK',
+        ], [
+            'DES.required' => 'Nama merk wajib diisi.',
+            'DES.string'   => 'Nama merk harus berupa teks.',
+            'DES.max'      => 'Nama merk maksimal 45 karakter.',
+            'DES.unique'   => 'Nama merk sudah terdaftar.',
+        ]);
+
         try {
-            $merk = MRK::findOrFail($mrk);
-     
-            $validated = $request->validate([
-                'DES' => ['required', 'string', 'max:255'],
-            ], [
-                'DES.required' => 'Nama merk wajib diisi.',
-            ]);
-     
             $merk->update($validated);
      
             return redirect()

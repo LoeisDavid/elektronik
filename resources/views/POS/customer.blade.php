@@ -535,7 +535,7 @@
 
     <div
         id="tambahCustomerModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         <div
@@ -573,7 +573,11 @@
                         name="DES"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('DES') }}"
                     >
+                    @error('DES')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
 
                 </div>
 
@@ -590,7 +594,11 @@
                         name="TLP"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('TLP') }}"
                     >
+                    @error('TLP')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
 
                 </div>
 
@@ -628,7 +636,7 @@
 
     <div
         id="editCustomerModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->editCustomer->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         <div
@@ -650,6 +658,7 @@
             id="editCustomerForm"
             method="POST"
             class="space-y-4"
+            action="{{ $errors->editCustomer->any() && old('CST') ? route('POS.customer.update', ['id' => old('CST')]) : '' }}"
         >
             @csrf
             @method('PUT')
@@ -665,7 +674,8 @@
                     name="CST"
                     readonly
                     required
-                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                    class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                    value="{{ $errors->editCustomer->any() ? old('CST') : '' }}"
                 >
             </div>
 
@@ -681,7 +691,11 @@
                     required
                     placeholder="Masukkan nama customer"
                     class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    value="{{ $errors->editCustomer->any() ? old('DES') : '' }}"
                 >
+                @error('DES', 'editCustomer')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             {{-- TLP (Nomor Telepon) --}}
@@ -696,7 +710,11 @@
                     required
                     placeholder="Masukkan nomor telepon"
                     class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    value="{{ $errors->editCustomer->any() ? old('TLP') : '' }}"
                 >
+                @error('TLP', 'editCustomer')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             {{-- Action Buttons --}}

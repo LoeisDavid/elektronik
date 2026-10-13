@@ -315,7 +315,7 @@
     {{-- ========================================================= --}}
     <div
         id="tambahKategoriModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        class="fixed inset-0 z-50 {{ $errors->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
         <div class="absolute inset-0" onclick="closeTambahKategoriModal()"></div>
 
         <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
@@ -332,7 +332,11 @@
                         name="DES"
                         placeholder="Contoh: Elektronik"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db">
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('DES') }}">
+                    @error('DES')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Action Buttons --}}
@@ -359,13 +363,17 @@
     {{-- ========================================================= --}}
     <div
         id="editKategoriModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        class="fixed inset-0 z-50 {{ $errors->editKategori->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
         <div class="absolute inset-0" onclick="closeEditKategoriModal()"></div>
 
         <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold mb-5">Edit Kategori</h2>
 
-            <form id="editKategoriForm" method="POST" class="space-y-4">
+            <form
+                id="editKategoriForm"
+                method="POST"
+                class="space-y-4"
+                action="{{ $errors->editKategori->any() && old('KTG') ? route('inventory.kategori.update', ['ktg' => old('KTG')]) : '' }}">
                 @csrf
                 @method('PUT')
 
@@ -375,8 +383,10 @@
                     <input
                         id="editKodeKategori"
                         type="text"
+                        name="KTG"
                         readonly
-                        class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none">
+                        class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                        value="{{ $errors->editKategori->any() ? old('KTG') : '' }}">
                 </div>
 
                 {{-- Nama Kategori --}}
@@ -387,7 +397,11 @@
                         type="text"
                         name="DES"
                         required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db">
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ $errors->editKategori->any() ? old('DES') : '' }}">
+                    @error('DES', 'editKategori')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Action Buttons --}}

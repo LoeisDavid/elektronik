@@ -27,8 +27,9 @@
         : '';
 
     // Modal otomatis terbuka lagi setelah simpan stok / error validasi
-    $bukaStok   = !empty($stokList) || $errors->hasBag('stok');
-    $bukaTambah = $errors->hasBag('tambah');
+    $bukaStok   = !empty($stokList) || ($errors->hasBag('stok') && $errors->stok->any());
+    $bukaTambah = $errors->any();
+    $bukaEdit   = $errors->editItem->any();
 
     $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
     $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
@@ -471,7 +472,9 @@
                         <label class="<?= $labelCls ?>">Nama Barang</label>
                         <input type="text" name="DES" maxlength="150" required
                                value="<?= e(old('DES')) ?>" class="<?= $inputCls ?>">
-                        <?= $galat('tambah', 'DES') ?>
+                        @error('DES')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -482,7 +485,9 @@
                                 <option value="<?= e($m->MRK) ?>" <?= old('MRK') == $m->MRK ? 'selected' : '' ?>><?= e($m->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <?= $galat('tambah', 'MRK') ?>
+                        @error('MRK')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -490,7 +495,9 @@
                         <input type="text" inputmode="numeric" name="HRG" required
                                value="<?= e(old('HRG') ? ('Rp ' . number_format((float) old('HRG'), 0, ',', '.')) : '') ?>"
                                placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>">
-                        <?= $galat('tambah', 'HRG') ?>
+                        @error('HRG')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -501,7 +508,9 @@
                                 <option value="<?= e($k->KTG) ?>" <?= old('KTG') == $k->KTG ? 'selected' : '' ?>><?= e($k->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <?= $galat('tambah', 'KTG') ?>
+                        @error('KTG')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -512,7 +521,9 @@
                                 <option value="<?= e($s->SPP) ?>" <?= old('SPP') == $s->SPP ? 'selected' : '' ?>><?= e($s->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <?= $galat('tambah', 'SPP') ?>
+                        @error('SPP')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                 </div>
@@ -540,7 +551,7 @@
     {{-- ========================================================= --}}
     <div
         id="editITMModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 <?= $bukaEdit ? 'flex' : 'hidden' ?> items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
         <div class="absolute inset-0" onclick="tutupModal('editITMModal')"></div>
 
@@ -548,7 +559,12 @@
 
             <h2 class="text-xl font-bold mb-6">Edit Barang</h2>
 
-            <form id="editITMForm" method="POST" class="space-y-6">
+            <form
+                id="editITMForm"
+                method="POST"
+                class="space-y-6"
+                action="<?= ($errors->editItem->any() && old('ITM')) ? e(route('inventory.item.update', ['id' => old('ITM')])) : '' ?>"
+            >
                 <?= csrf_field() ?>
                 <?= method_field('PUT') ?>
 
@@ -557,46 +573,64 @@
                     <div>
                         <label class="<?= $labelCls ?>">Kode Item</label>
                         <input id="editITM" type="text" name="ITM" readonly required
-                               class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 cursor-not-allowed focus:outline-none font-mono">
+                               class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 cursor-not-allowed focus:outline-none font-mono"
+                               value="<?= e($errors->editItem->any() ? old('ITM') : '') ?>">
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Nama Item</label>
                         <input id="editDES" type="text" name="DES" maxlength="150" required placeholder="Masukkan nama item"
-                               class="<?= $inputCls ?>">
+                               class="<?= $inputCls ?>"
+                               value="<?= e($errors->editItem->any() ? old('DES') : '') ?>">
+                        @error('DES', 'editItem')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Merk</label>
                         <select id="editMRK" name="MRK" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($MRK as $m): ?>
-                                <option value="<?= e($m->MRK) ?>"><?= e($m->DES) ?></option>
+                                <option value="<?= e($m->MRK) ?>" <?= ($errors->editItem->any() && old('MRK') == $m->MRK) ? 'selected' : '' ?>><?= e($m->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        @error('MRK', 'editItem')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Harga</label>
                         <input id="editHRG" type="text" inputmode="numeric" name="HRG" required
-                               placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>">
+                               placeholder="Rp 0" oninput="formatInputRupiah(this)" class="input-rupiah <?= $inputCls ?>"
+                               value="<?= e($errors->editItem->any() && old('HRG') ? ('Rp ' . number_format((float) old('HRG'), 0, ',', '.')) : '') ?>">
+                        @error('HRG', 'editItem')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Kategori</label>
                         <select id="editKTG" name="KTG" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($KTG as $k): ?>
-                                <option value="<?= e($k->KTG) ?>"><?= e($k->DES) ?></option>
+                                <option value="<?= e($k->KTG) ?>" <?= ($errors->editItem->any() && old('KTG') == $k->KTG) ? 'selected' : '' ?>><?= e($k->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        @error('KTG', 'editItem')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="<?= $labelCls ?>">Supplier</label>
                         <select id="editSPP" name="SPP" required class="searchable-select <?= $inputCls ?>">
                             <?php foreach ($SPP as $s): ?>
-                                <option value="<?= e($s->SPP) ?>"><?= e($s->DES) ?></option>
+                                <option value="<?= e($s->SPP) ?>" <?= ($errors->editItem->any() && old('SPP') == $s->SPP) ? 'selected' : '' ?>><?= e($s->DES) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        @error('SPP', 'editItem')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                 </div>
@@ -763,6 +797,14 @@
         btn.disabled = true;
         btn.classList.add('opacity-75', 'cursor-not-allowed');
         btn.innerText = 'Menyimpan...';
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        @if ($bukaTambah)
+            bukaModal('tambahITMModal');
+        @elseif ($bukaEdit)
+            bukaModal('editITMModal');
+        @endif
     });
 </script>
 

@@ -43,16 +43,25 @@ class CSTController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:45',
-                'TLP' => 'required|numeric|max_digits:20',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:150|unique:cst,DES',
+            'TLP' => 'required|numeric|max_digits:20|unique:cst,TLP',
+        ], [
+            'DES.required'   => 'Nama Customer wajib diisi.',
+            'DES.string'     => 'Nama Customer harus berupa teks.',
+            'DES.max'        => 'Nama Customer maksimal 150 karakter.',
+            'DES.unique'     => 'Nama Customer sudah terdaftar.',
+            'TLP.required'   => 'Nomor Telepon wajib diisi.',
+            'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
+            'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
+            'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+        ]);
 
+        try {
             $validated['CST'] = $this->generateCode($validated['DES'], 'CST');
 
             CST::create($validated);
-            return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+            return redirect()->route('POS.customer')->with('success', 'Customer berhasil ditambahkan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan data customer');
         }
@@ -60,18 +69,29 @@ class CSTController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Decode parameter ID untuk mengantisipasi karakter khusus
+        $decodedId = urldecode($id);
+
+        $customer = CST::where('CST', $decodedId)->firstOrFail();
+
+        $validated = $request->validateWithBag('editCustomer', [
+            'CST' => 'required|string|max:10|unique:cst,CST,' . $customer->CST . ',CST',
+            'DES' => 'required|string|max:150|unique:cst,DES,' . $customer->CST . ',CST',
+            'TLP' => 'required|numeric|max_digits:20|unique:cst,TLP,' . $customer->CST . ',CST',
+        ], [
+            'DES.required'   => 'Nama Customer wajib diisi.',
+            'DES.string'     => 'Nama Customer harus berupa teks.',
+            'DES.max'        => 'Nama Customer maksimal 150 karakter.',
+            'DES.unique'     => 'Nama Customer sudah terdaftar.',
+            'TLP.required'   => 'Nomor Telepon wajib diisi.',
+            'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
+            'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
+            'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+        ]);
+
         try {
-            // Decode parameter ID untuk mengantisipasi karakter khusus
-            $decodedId = urldecode($id);
-
-            $request->validate([
-                'DES' => 'required|string|max:45',
-                'TLP' => 'required|numeric|max_digits:20',
-            ]);
-
-            $customer = CST::where('CST', $decodedId)->firstOrFail();
-            $customer->update($request->all());
-            return redirect()->back()->with('success', 'Data berhasil diupdate');
+            $customer->update($validated);
+            return redirect()->route('POS.customer')->with('success', 'Customer berhasil diubah.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika mengupdate data customer');
         }
