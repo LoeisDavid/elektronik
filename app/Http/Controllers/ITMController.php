@@ -173,30 +173,50 @@ public function index(Request $request)
     // ================================================================
     public function store(Request $request)
     {
-        try {
-            if ($request->has('HRG')) {
-                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
-                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
-            }
+        if ($request->has('HRG')) {
+            $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+            $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+        }
 
-            $data = $request->validateWithBag('tambah', [
-                'DES' => 'required|string|max:150',
-                'MRK' => 'required|string|max:10',
-                'KTG' => 'required|string|max:10',
-                'SPP' => 'required|string|max:10',
-                'HRG' => 'required|numeric|min:0',
+        $data = $request->validate([
+            'DES' => 'required|string|max:150',
+            'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
+            'SPP' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
+        ], [
+            'DES.required' => 'Nama barang wajib diisi.',
+            'DES.string'   => 'Nama barang harus berupa teks.',
+            'DES.max'      => 'Nama barang maksimal 150 karakter.',
+            'MRK.required' => 'Merk wajib dipilih.',
+            'KTG.required' => 'Kategori wajib dipilih.',
+            'SPP.required' => 'Supplier wajib dipilih.',
+            'HRG.required' => 'Harga jual wajib diisi.',
+            'HRG.numeric'  => 'Harga jual harus berupa angka.',
+            'HRG.min'      => 'Harga jual minimal 0.',
+        ]);
+
+        if (ITM::where('DES', $data['DES'])
+                ->where('MRK', $data['MRK'])
+                ->where('KTG', $data['KTG'])
+                ->exists()) {
+            throw ValidationException::withMessages([
+                'DES' => 'Barang dengan nama, merk, dan kategori tersebut sudah ada.',
             ]);
+        }
 
+        try {
             $data['ITM'] = $this->generateCode($data['DES'], 'ITM');
 
             if (ITM::where('ITM', $data['ITM'])->exists()) {
-                throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.'])
-                    ->errorBag('tambah');
+                throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.']);
             }
 
             ITM::create($data + ['STOK' => 0]);
 
             return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan barang');
         }
@@ -304,23 +324,47 @@ public function index(Request $request)
     // ================================================================
     public function update(Request $request, string $id)
     {
+        $decodedId = urldecode($id);
+        $item = ITM::where('ITM', $decodedId)->firstOrFail();
+
+        if ($request->has('HRG')) {
+            $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+            $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+        }
+
+        $data = $request->validateWithBag('editItem', [
+            'ITM' => 'required|string|max:10',
+            'DES' => 'required|string|max:150',
+            'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
+            'SPP' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
+        ], [
+            'DES.required' => 'Nama barang wajib diisi.',
+            'DES.string'   => 'Nama barang harus berupa teks.',
+            'DES.max'      => 'Nama barang maksimal 150 karakter.',
+            'MRK.required' => 'Merk wajib dipilih.',
+            'KTG.required' => 'Kategori wajib dipilih.',
+            'SPP.required' => 'Supplier wajib dipilih.',
+            'HRG.required' => 'Harga jual wajib diisi.',
+            'HRG.numeric'  => 'Harga jual harus berupa angka.',
+            'HRG.min'      => 'Harga jual minimal 0.',
+        ]);
+
+        if (ITM::where('DES', $data['DES'])
+                ->where('MRK', $data['MRK'])
+                ->where('KTG', $data['KTG'])
+                ->where('ITM', '!=', $item->ITM)
+                ->exists()) {
+            throw ValidationException::withMessages([
+                'DES' => 'Barang dengan nama, merk, dan kategori tersebut sudah ada.',
+            ])->errorBag('editItem');
+        }
+
         try {
-            if ($request->has('HRG')) {
-                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
-                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
-            }
+            $item->update($data);
 
-            $data = $request->validateWithBag('edit', [
-                'DES' => 'required|string|max:150',
-                'MRK' => 'required|string|max:10',
-                'KTG' => 'required|string|max:10',
-                'SPP' => 'required|string|max:10',
-                'HRG' => 'required|numeric|min:0',
-            ]);
-
-            ITM::where('ITM', $id)->update($data);
-
-            return back()->with('success', 'Barang berhasil diperbarui.');
+            return redirect()->route('inventory.item')->with('success', 'Barang berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui barang');
         }

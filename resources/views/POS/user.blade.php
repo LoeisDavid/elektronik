@@ -553,9 +553,13 @@
     {{-- MODAL TAMBAH --}}
     {{-- ========================================================= --}}
 
+    {{-- ========================================================= --}}
+    {{-- MODAL TAMBAH --}}
+    {{-- ========================================================= --}}
+
     <div
         id="tambahUserModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         {{-- Backdrop Click Area --}}
@@ -597,7 +601,11 @@
                         placeholder="Contoh: CST004"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('USERNAME') }}"
                     >
+                    @error('USERNAME')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- PASSWORD --}}
@@ -613,6 +621,9 @@
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
+                    @error('PASS')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- CONFIRM PASSWORD --}}
@@ -628,6 +639,9 @@
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
+                    @error('CONFIRM_PASS')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
             </div>
@@ -650,7 +664,11 @@
                         placeholder="Masukkan nama"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('DES') }}"
                     >
+                    @error('DES')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- NOMOR HANDPHONE (HP) --}}
@@ -665,7 +683,11 @@
                         placeholder="08123456789"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('HP') }}"
                     >
+                    @error('HP')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
             </div>
@@ -689,7 +711,10 @@
                     rows="2"
                     placeholder="Contoh: Jl. Jend. Sudirman No. 1, Jakarta Selatan"
                     class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5"
-                ></textarea>
+                >{{ old('AL') }}</textarea>
+                @error('AL')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
         </div>
@@ -728,7 +753,7 @@
 
     <div
         id="editUserModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->editUser->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         {{-- Backdrop Click Area --}}
@@ -750,6 +775,7 @@
                 id="editUserForm"
                 method="POST"
                 class="space-y-5"
+                action="{{ $errors->editUser->any() && old('USERNAME') ? route('POS.user.update', ['id' => old('USERNAME')]) : '' }}"
             >
                 @csrf
                 @method('PUT')
@@ -769,6 +795,7 @@
                                 placeholder="Contoh: David Loes"
                                 readonly
                                 class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                                value="{{ $errors->editUser->any() ? old('USERNAME') : '' }}"
                             >
                         </div>
 
@@ -784,6 +811,9 @@
                                 placeholder="Masukkan password"
                                 class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                             >
+                            @error('PASS', 'editUser')
+                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -803,7 +833,11 @@
                                 placeholder="Masukkan nama"
                                 required
                                 class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                                value="{{ $errors->editUser->any() ? old('DES') : '' }}"
                             >
+                            @error('DES', 'editUser')
+                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- NOMOR HANDPHONE (HP) --}}
@@ -818,7 +852,11 @@
                                 placeholder="08123456789"
                                 required
                                 class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                                value="{{ $errors->editUser->any() ? old('HP') : '' }}"
                             >
+                            @error('HP', 'editUser')
+                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -839,7 +877,10 @@
                             rows="2"
                             placeholder="Masukkan alamat lengkap..."
                             class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5"
-                        ></textarea>
+                        >{{ $errors->editUser->any() ? old('AL') : '' }}</textarea>
+                        @error('AL', 'editUser')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 

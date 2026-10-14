@@ -51,13 +51,23 @@ class SLSController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'DES' => 'required|string|max:150',
+            'HP'  => 'required|numeric|max_digits:20|unique:sls,HP',
+            'AL'  => 'required|string|max:100',
+        ],[
+            'DES.required' => 'Nama Sales wajib diisi.',
+            'DES.string'   => 'Nama Sales harus berupa teks.',
+            'DES.max'      => 'Nama Sales maksimal 150 karakter.',
+            'HP.required'  => 'Nomor HP wajib diisi.',
+            'HP.numeric'   => 'Nomor HP harus berupa angka.',
+            'HP.max_digits' => 'Nomor HP maksimal 20 digit.',
+            'HP.unique'     => 'Nomor HP sudah digunakan.',
+            'AL.required'  => 'Alamat wajib diisi.',
+            'AL.string'    => 'Alamat harus berupa teks.',
+            'AL.max'       => 'Alamat maksimal 100 karakter.',
+        ]);
         try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:150',
-                'HP'  => 'required|numeric|max_digits:20',
-                'AL'  => 'required|string|max:100',
-            ]);
-
             $validated['SLS'] = $this->generateCode($validated['DES'], 'SLS');
 
             SLS::create($validated);
@@ -91,18 +101,29 @@ class SLSController extends Controller
      */
     public function update(Request $request, $sls)
     {
-        try {
-            // Decode parameter ID untuk mengantisipasi karakter khusus
+        // Decode parameter ID untuk mengantisipasi karakter khusus
             $decodedId = urldecode($sls);
 
             $sales = SLS::where('sls', $decodedId)->firstOrFail();
 
-            $validated = $request->validate([
-                'SLS' => 'required|string|max:10|unique:sls,SLS,' . $sales->SLS . ',sls',
+            $validated = $request->validateWithBag('editSales', [
+                'SLS' => 'required|string|max:10|unique:sls,SLS,' . $sales->SLS . ',SLS',
                 'DES' => 'required|string|max:150',
-                'HP'  => 'required|numeric|max_digits:20',
+                'HP'  => 'required|numeric|max_digits:20|unique:sls,HP,' . $sales->SLS . ',SLS',
                 'AL'  => 'required|string|max:100',
+            ],[
+                'DES.required' => 'Nama Sales wajib diisi.',
+                'DES.string'   => 'Nama Sales harus berupa teks.',
+                'DES.max'      => 'Nama Sales maksimal 150 karakter.',
+                'HP.required'  => 'Nomor HP wajib diisi.',
+                'HP.numeric'   => 'Nomor HP harus berupa angka.',
+                'HP.max_digits' => 'Nomor HP maksimal 20 digit.',
+                'HP.unique'     => 'Nomor HP sudah digunakan.',
+                'AL.required'  => 'Alamat wajib diisi.',
+                'AL.string'    => 'Alamat harus berupa teks.',
+                'AL.max'       => 'Alamat maksimal 100 karakter.',
             ]);
+        try {
 
             $sales->update($validated);
 

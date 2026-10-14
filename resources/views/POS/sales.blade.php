@@ -543,7 +543,7 @@
 
     <div
         id="tambahSalesModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->any() ? 'flex' :  'hidden'}} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         <div
@@ -582,8 +582,11 @@
                         name="DES"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('DES') }}"
                     >
-
+                    @error('DES')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
@@ -599,8 +602,11 @@
                         name="HP"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('HP') }}"
                     >
-
+                    @error('HP')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
@@ -616,8 +622,11 @@
                         name="AL"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ old('AL') }}"
                     >
-
+                    @error('AL')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
@@ -655,7 +664,7 @@
 
     <div
         id="editSalesModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-50 {{ $errors->editSales->any() ? 'flex' :  'hidden'}} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
 
         <div
@@ -677,6 +686,7 @@
                 id="editSalesForm"
                 method="POST"
                 class="space-y-4"
+                action="{{ $errors->editSales->any() && old('SLS') ? route('POS.sales.update', ['id' => old('SLS')]) : '' }}"
             >
 
                 @csrf
@@ -696,6 +706,7 @@
                         name="SLS"
                         readonly
                         class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
+                        value="{{ $errors->editSales->any() ? old('SLS') : '' }}"
                     >
 
                 </div>
@@ -714,8 +725,11 @@
                         name="DES"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ $errors->editSales->any() ? old('DES') : '' }}"
                     >
-
+                    @error('DES', 'editSales')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
@@ -732,8 +746,11 @@
                         name="HP"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ $errors->editSales->any() ? old('HP') : '' }}"
                     >
-
+                    @error('HP', 'editSales')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
@@ -750,8 +767,11 @@
                         name="AL"
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                        value="{{ $errors->editSales->any() ? old('AL') : '' }}"
                     >
-
+                    @error('AL', 'editSales')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
 
