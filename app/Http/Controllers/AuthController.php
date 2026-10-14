@@ -10,14 +10,18 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('POS.kasir');
         }
 
-        return view('auth.login');
+        return view('login');
     }
 
     public function login(Request $request)
     {
+        if (!$request->has('USERNAME') && $request->has('username')) {
+            $request->merge(['USERNAME' => $request->input('username')]);
+        }
+
         $credentials = $request->validate([
             'USERNAME' => ['required', 'string'],
             'password' => ['required', 'string'],
@@ -26,7 +30,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('POS.kasir'));
         }
 
         return back()->withErrors([
@@ -36,6 +40,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Cek apakah ada shift kasir yang masih aktif / belum ditutup
+        if (\App\Models\KAS::whereNull('TGLK')->exists()) {
+            return redirect()->route('POS.kasir')->with('error', 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.');
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -670,20 +670,8 @@
 
             </div>
 
-            {{-- ROLE --}}
-            <div>
-                <label class="block text-sm font-semibold mb-1">
-                    Role
-                </label>
-
-                <input
-                    type="text"
-                    name="ROLE"
-                    placeholder=""
-                    required
-                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                >
-            </div>
+            {{-- ROLE (Hidden, default 1) --}}
+            <input type="hidden" name="ROLE" value="1">
 
         </div>
 
@@ -834,20 +822,8 @@
                         </div>
                     </div>
 
-                    {{-- ROLE --}}
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">
-                            Role
-                        </label>
-                        <input
-                            id="editROLE"
-                            type="text"
-                            name="ROLE"
-                            placeholder=""
-                            required
-                            class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        >
-                    </div>
+                    {{-- ROLE (Hidden, default 1) --}}
+                    <input type="hidden" id="editROLE" name="ROLE" value="1">
                 </div>
 
                 {{-- GROUP 3: Alamat --}}

@@ -30,8 +30,17 @@
                 BACKEND INTEGRATION NOTE:
                 Change action to route('login.post') with method="POST" and add @csrf when hooking up backend auth.
             --}}
-            <form action="{{ route('POS.kasir') }}" method="GET" class="space-y-6">
-                
+            <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
+                @csrf
+
+                @if ($errors->any())
+                    <div class="p-3 bg-red-100/90 border-l-4 border-red-500 text-red-700 text-sm rounded-r">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
                 {{-- Username Input --}}
                 <div class="space-y-2">
                     <label for="username" class="block text-sm font-medium text-black">
@@ -41,6 +50,7 @@
                         type="text" 
                         id="username" 
                         name="username" 
+                        value="{{ old('username', old('USERNAME')) }}"
                         required
                         autocomplete="username"
                         class="w-full bg-transparent border-b-2 focus:border-black py-1 px-0.5 text-base text-black outline-none transition-colors duration-150"
