@@ -146,9 +146,9 @@ class kasirController extends Controller
     public function tutupKasir(Request $request)
     {
         try {
-            $kas = $this->kasAktif();
+            $activeKasList = KAS::whereNull('TGLK')->get();
 
-            if ($kas) {
+            foreach ($activeKasList as $kas) {
                 $saldoAkhirTunai    = ($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0);
                 $saldoAkhirNonTunai = ($kas->AWLNT ?? 0) + ($kas->DBNT ?? 0) - ($kas->CRNT ?? 0);
 

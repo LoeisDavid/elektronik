@@ -785,6 +785,7 @@
     let voucherAmount = {{ (float)($voucher ?? 0) }};
     let discountPercent = {{ (float)($discountPercent ?? 0) }};
     let isKasirOpen = {{ !empty($isKasirOpen) ? 'true' : 'false' }};
+    window.isKasirOpen = isKasirOpen;
     let activeItemKeyForDiscount = null;
     let currentGrandTotal = 0;
     let activePaymentMethod = 'Cash';
@@ -869,6 +870,7 @@
 
                 if (data.success) {
                     isKasirOpen = true;
+                    window.isKasirOpen = true;
 
                     // Sembunyikan tampilan awal "Buka Kasir"
                     const viewAwal = document.getElementById('viewBukaKasir');
@@ -962,7 +964,7 @@
             btn.innerText = 'Menutup...';
         }
 
-        fetch('{{ route('POS.tutup-kasir') }}', {
+        fetch('{{ route('POS.tutup-kasir', [], false) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -978,6 +980,7 @@
 
                 if (data.success) {
                     isKasirOpen = false;
+                    window.isKasirOpen = false;
                     cartData = {};
                     voucherAmount = 0;
                     discountPercent = 0;
@@ -1018,7 +1021,26 @@
 
                     tutupModalTutupKasir();
                     hapusDraft();
-                    alert('Kasir berhasil ditutup.');
+
+                    // Jika penutupan kasir dipicu oleh niat Logout, langsung logout otomatis!
+                    if (window.__shouldLogoutAfterTutup) {
+                        const formLogout = document.getElementById('formSidebarLogout');
+                        if (formLogout) {
+                            if (typeof showToast === 'function') {
+                                showToast('Kasir berhasil ditutup. Mengalihkan keluar...', 'success');
+                            }
+                            setTimeout(() => {
+                                formLogout.submit();
+                            }, 500);
+                            return;
+                        }
+                    }
+
+                    if (typeof showToast === 'function') {
+                        showToast('Kasir berhasil ditutup.', 'success');
+                    } else {
+                        alert('Kasir berhasil ditutup.');
+                    }
                 } else {
                     alert(data.message || 'Gagal menutup kasir!');
                 }
@@ -2512,6 +2534,17 @@
             // Fokus ke kolom scan agar scanner fisik langsung bisa dipakai
             const inputScan = document.getElementById('inputScanUtama');
             if (inputScan) inputScan.focus();
+        }
+
+        // Cek apakah halaman dibuka dengan query parameter ?action=tutup_kasir
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'tutup_kasir') {
+            window.__shouldLogoutAfterTutup = true;
+            setTimeout(() => {
+                if (typeof modalTutupKasir === 'function') {
+                    modalTutupKasir();
+                }
+            }, 300);
         }
     });
 </script>

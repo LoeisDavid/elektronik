@@ -42,7 +42,7 @@ class AuthController extends Controller
     {
         // Cek apakah ada shift kasir yang masih aktif / belum ditutup
         if (\App\Models\KAS::whereNull('TGLK')->exists()) {
-            return redirect()->route('POS.kasir')->with('error', 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.');
+            return redirect()->route('POS.kasir', ['action' => 'tutup_kasir'])->with('error', 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.');
         }
 
         Auth::logout();
