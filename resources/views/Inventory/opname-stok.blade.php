@@ -584,8 +584,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Scanner fisik / ketik manual
     formScan.addEventListener('submit', function (e) {
         e.preventDefault();
-        prosesKode(inputKode.value);
+        e.stopPropagation(); // Cegah bubble ke global anti-double-submit di app.blade.php
+        const kodeValue = inputKode.value;
         inputKode.value = '';
+        try {
+            prosesKode(kodeValue);
+        } catch (err) {
+            console.error('Error prosesKode:', err);
+        }
+        // Re-focus input untuk scan berikutnya
         inputKode.focus();
     });
 
@@ -598,14 +605,20 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('Elemen #bcam-opname tidak ditemukan; scan lewat kamera dinonaktifkan. Cek partial barcode-camera.');
     }
 
-    // Scanner fisik tetap bisa dipakai walau fokus sedang di tombol kamera:
+    // Scanner fisik tetap bisa dipakai walau fokus sedang di tombol kamera
+    // atau fokus tercuri oleh scroll tabel di belakang modal:
     // ketikan pertama otomatis dialihkan ke kolom kode.
-    modalScan.addEventListener('keydown', function (e) {
+    function redirectKeystrokeToInput(e) {
+        if (modalScan.classList.contains('hidden')) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         const tag = (e.target.tagName || '').toLowerCase();
         if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-        if (e.key.length === 1) inputKode.focus(); // karakter akan masuk ke input
-    });
+        if (e.key.length === 1) {
+            inputKode.focus();
+        }
+    }
+    modalScan.addEventListener('keydown', redirectKeystrokeToInput);
+    document.addEventListener('keydown', redirectKeystrokeToInput);
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && !modalScan.classList.contains('hidden')) closeScanModal();
