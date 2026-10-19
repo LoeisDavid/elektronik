@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\GD;
 use App\Models\ITM;
 use App\Models\ITMDT;
+use App\Models\SPP;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -35,9 +36,19 @@ class ITMDTFactory extends Factory
             'TM' => fake()->date(),
             'HRB' => fake()->numberBetween(100, 12000) * 1000,
             'GD' => fn () => GD::factory(),
+            'SPP' => fn () => SPP::factory(),
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (ITMDT $itmdt) {
+            $totalDt = ITMDT::where('ITM', $itmdt->ITM)->count();
+            $totalSts = \App\Models\STS::where('ITM', $itmdt->ITM)->count();
+            ITM::where('ITM', $itmdt->ITM)->update(['STOK' => max(0, $totalDt - $totalSts)]);
+        });
     }
 }
 

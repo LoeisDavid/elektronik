@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\ITM;
 use App\Models\KTG;
 use App\Models\MRK;
-use App\Models\SPP;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -95,10 +94,75 @@ class ITMFactory extends Factory
             'HRG' => fake()->numberBetween(150, 15000) * 1000,
             'KTG' => fn () => KTG::factory(),
             'MRK' => fn () => MRK::factory(),
-            'SPP' => fn () => SPP::factory(),
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (ITM $itm) {
+            $totalDt = \App\Models\ITMDT::where('ITM', $itm->ITM)->count();
+            if ($totalDt > 0) {
+                $totalSts = \App\Models\STS::where('ITM', $itm->ITM)->count();
+                $itm->update(['STOK' => max(0, $totalDt - $totalSts)]);
+            }
+        });
+    }
+
+    /**
+     * State untuk barang dengan stok habis (STOK = 0).
+     */
+    public function habis(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'STOK' => 0,
+        ]);
+    }
+
+    /**
+     * State untuk barang dengan stok menipis (1..5).
+     */
+    public function menipis(int $stok = 3): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'STOK' => max(1, min(5, $stok)),
+        ]);
+    }
+
+    /**
+     * State untuk barang dengan stok banyak (> 5).
+     */
+    public function banyak(int $stok = 15): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'STOK' => max(6, $stok),
+        ]);
+    }
+
+    /**
+     * Membuat barang lengkap dengan relasi ITMDT dan STS,
+     * sehingga STOK = jumlah ITMDT - jumlah STS.
+     */
+    public function withStockDetails(int $inStock = 5, int $sold = 0): static
+    {
+        return $this->afterCreating(function (ITM $itm) use ($inStock, $sold) {
+            $totalDt = $inStock + $sold;
+            for ($i = 0; $i < $totalDt; $i++) {
+                $dt = \App\Models\ITMDT::factory()->create([
+                    'ITM' => $itm->ITM,
+                ]);
+
+                if ($i < $sold) {
+                    \App\Models\STS::factory()->create([
+                        'ITM'    => $itm->ITM,
+                        'BC_OUT' => $dt->BC_OUT,
+                    ]);
+                }
+            }
+
+            $itm->update(['STOK' => $inStock]);
+        });
     }
 }
 

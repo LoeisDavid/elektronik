@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckLogin::class,
+        ]);
+
+        $middleware->alias([
+            'auth' => \App\Http\Middleware\CheckLogin::class,
+            'check.login' => \App\Http\Middleware\CheckLogin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -17,200 +17,231 @@ class ITMController extends Controller
 {
     private const PER_PAGE      = 10;
     private const BATAS_MENIPIS = 5; // STOK 1..5 dianggap menipis
-
-    private const OPSI_SORT = [
+    const OPSI_SORT = [
         'nama_asc'        => 'Nama (A-Z)',
         'nama_desc'       => 'Nama (Z-A)',
-        'tgl_terbaru'     => 'Tanggal Masuk (Terbaru)',
-        'tgl_terlama'     => 'Tanggal Masuk (Terlama)',
+        'tgl_terbaru'     => 'Terbaru',
+        'tgl_terlama'     => 'Terlama',
         'stok_terbanyak'  => 'Stok Terbanyak',
         'stok_tersedikit' => 'Stok Tersedikit',
+        'aset_terbanyak'  => 'Aset Terbanyak',
+        'aset_tersedikit' => 'Aset Tersedikit',
     ];
 
-    // ================================================================
-    // INDEX
-    // ================================================================
-    public function index(Request $request)
-    {
-        try {
-            $keyword = trim((string) $request->query('keyword', ''));
-            $sort    = (string) $request->query('sort', 'nama_asc');
-            if (!isset(self::OPSI_SORT[$sort])) {
-                $sort = 'nama_asc';
-            }
-            $page = max(1, (int) $request->query('page', 1));
-
-            // ------------------------------------------------------------
-            // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
-            // ------------------------------------------------------------
-            $KTG = KTG::all();
-            $MRK = MRK::all();
-            $SPP = SPP::all();
-            $GD  = GD::all();
-
-            $namaKTG = $KTG->pluck('DES', 'KTG')->all();
-            $namaMRK = $MRK->pluck('DES', 'MRK')->all();
-            $namaSPP = $SPP->pluck('DES', 'SPP')->all();
-
-            // ------------------------------------------------------------
-            // 2. Tanggal masuk terakhir per ITM — hanya bila sort butuh
-            // ------------------------------------------------------------
-            $tglMasuk = [];
-            if ($sort === 'tgl_terbaru' || $sort === 'tgl_terlama') {
-                foreach (ITMDT::selectRaw('ITM, MAX(TM) AS TM_AKHIR')->groupBy('ITM')->get() as $dt) {
-                    $tglMasuk[$dt->ITM] = substr((string) $dt->TM_AKHIR, 0, 10);
-                }
-            }
-
-            // ------------------------------------------------------------
-            // 3. Ambil semua ITM
-            // ------------------------------------------------------------
-            $semuaRow = [];
-
-            foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'SPP', 'HRG', 'STOK']) as $itm) {
-                $semuaRow[] = (object) [
-                    'itm'       => $itm->ITM,
-                    'des'       => $itm->DES,
-                    'ktg'       => $itm->KTG,
-                    'ktg_nama'  => $namaKTG[$itm->KTG] ?? '-',
-                    'mrk'       => $itm->MRK,
-                    'mrk_nama'  => $namaMRK[$itm->MRK] ?? '-',
-                    'spp'       => $itm->SPP,
-                    'spp_nama'  => $namaSPP[$itm->SPP] ?? '-',
-                    'hrg'       => $itm->HRG,
-                    'stok'      => (int) $itm->STOK,
-                    'tgl_masuk' => $tglMasuk[$itm->ITM] ?? null,
-                ];
-            }
-
-            // Daftar ITM untuk dropdown "Nama Barang" di modal tambah stok
-            $daftarITM = $semuaRow;
-            usort($daftarITM, fn ($a, $b) => strcasecmp($a->des, $b->des));
-
-            // ------------------------------------------------------------
-            // 4. Statistik (semua ITM)
-            // ------------------------------------------------------------
-            $stat = ['total' => count($semuaRow), 'menipis' => 0, 'habis' => 0];
-            foreach ($semuaRow as $r) {
-                if ($r->stok === 0) {
-                    $stat['habis']++;
-                } elseif ($r->stok <= self::BATAS_MENIPIS) {
-                    $stat['menipis']++;
-                }
-            }
-
-            // ------------------------------------------------------------
-            // 5. Search PHP murni
-            // ------------------------------------------------------------
-            $hasil = $semuaRow;
-
-            if ($keyword !== '') {
-                $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
-                    foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama, $r->spp_nama] as $field) {
-                        if (mb_stripos((string) $field, $keyword) !== false) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }));
-            }
-
-            // ------------------------------------------------------------
-            // 6. Sort PHP murni
-            // ------------------------------------------------------------
-            usort($hasil, function ($a, $b) use ($sort) {
-                $nama = strcasecmp($a->des, $b->des);
-
-                switch ($sort) {
-                    case 'nama_desc':
-                        return -$nama;
-
-                    case 'tgl_terbaru':
-                    case 'tgl_terlama':
-                        if ($a->tgl_masuk === $b->tgl_masuk) return $nama;
-                        if ($a->tgl_masuk === null) return 1;
-                        if ($b->tgl_masuk === null) return -1;
-                        $cmp = strcmp($a->tgl_masuk, $b->tgl_masuk);
-                        return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
-
-                    case 'stok_terbanyak':
-                        return ($b->stok <=> $a->stok) ?: $nama;
-
-                    case 'stok_tersedikit':
-                        return ($a->stok <=> $b->stok) ?: $nama;
-
-                    default:
-                        return $nama;
-                }
-            });
-
-            // ------------------------------------------------------------
-            // 7. Pagination PHP murni
-            // ------------------------------------------------------------
-            $totalData  = count($hasil);
-            $totalPages = max(1, (int) ceil($totalData / self::PER_PAGE));
-            $page       = min($page, $totalPages);
-            $offset     = ($page - 1) * self::PER_PAGE;
-
-            $produk = array_slice($hasil, $offset, self::PER_PAGE);
-
-            $pagination = [
-                'page'        => $page,
-                'total_data'  => $totalData,
-                'total_pages' => $totalPages,
-                'dari'        => $totalData > 0 ? $offset + 1 : 0,
-                'sampai'      => $offset + count($produk),
-            ];
-
-            return view('inventory.item', [
-                'produk'     => $produk,
-                'stat'       => $stat,
-                'pagination' => $pagination,
-                'daftarITM'  => $daftarITM,
-                'opsiSort'   => self::OPSI_SORT,
-                'keyword'    => $keyword,
-                'sort'       => $sort,
-                'MRK'        => $MRK,
-                'KTG'        => $KTG,
-                'SPP'        => $SPP,
-                'GD'         => $GD,
-                'stokList'   => session('stok_list', []),
-            ]);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan daftar barang');
+public function index(Request $request)
+{
+    try {
+        $keyword = trim((string) $request->query('keyword', ''));
+        $sort    = (string) $request->query('sort', 'nama_asc');
+        if (!isset(self::OPSI_SORT[$sort])) {
+            $sort = 'nama_asc';
         }
+        $page = max(1, (int) $request->query('page', 1));
+
+        // ------------------------------------------------------------
+        // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
+        // ------------------------------------------------------------
+        $KTG = KTG::all();
+        $MRK = MRK::all();
+        $SPP = SPP::all();
+        $GD  = GD::all();
+
+        $namaKTG = $KTG->pluck('DES', 'KTG')->all();
+        $namaMRK = $MRK->pluck('DES', 'MRK')->all();
+        $namaSPP = $SPP->pluck('DES', 'SPP')->all();
+
+        // ------------------------------------------------------------
+        // 2. Ambil total aset (HRB dari ITMDT yang belum terjual / belum ada di STS)
+        // ------------------------------------------------------------
+        $asetPerItm = DB::table('itmdt')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('sts')
+                    ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+            })
+            ->select('ITM', DB::raw('SUM(HRB) as total_aset'))
+            ->groupBy('ITM')
+            ->pluck('total_aset', 'ITM')
+            ->all();
+
+        $semuaRow = [];
+        $totalAsetKeseluruhan = 0;
+
+        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK', 'created_at']) as $itm) {
+            $totalAset = (float) ($asetPerItm[$itm->ITM] ?? 0);
+            $totalAsetKeseluruhan += $totalAset;
+
+            $semuaRow[] = (object) [
+                'itm'        => $itm->ITM,
+                'des'        => $itm->DES,
+                'ktg'        => $itm->KTG,
+                'ktg_nama'   => $namaKTG[$itm->KTG] ?? '-',
+                'mrk'        => $itm->MRK,
+                'mrk_nama'   => $namaMRK[$itm->MRK] ?? '-',
+                'hrg'        => $itm->HRG,
+                'stok'       => (int) $itm->STOK,
+                'total_aset' => $totalAset,
+                'created_at' => $itm->created_at ? (string) $itm->created_at : null,
+            ];
+        }
+
+        // Daftar ITM untuk dropdown "Nama Barang" di modal tambah stok
+        $daftarITM = $semuaRow;
+        usort($daftarITM, fn ($a, $b) => strcasecmp($a->des, $b->des));
+
+        // ------------------------------------------------------------
+        // 3. Statistik (semua ITM)
+        // ------------------------------------------------------------
+        $stat = [
+            'total'      => count($semuaRow),
+            'menipis'    => 0,
+            'habis'      => 0,
+            'total_aset' => $totalAsetKeseluruhan,
+        ];
+        foreach ($semuaRow as $r) {
+            if ($r->stok === 0) {
+                $stat['habis']++;
+            } elseif ($r->stok <= self::BATAS_MENIPIS) {
+                $stat['menipis']++;
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 4. Search PHP murni
+        // ------------------------------------------------------------
+        $hasil = $semuaRow;
+
+        if ($keyword !== '') {
+            $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
+                foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama] as $field) {
+                    if (mb_stripos((string) $field, $keyword) !== false) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }));
+        }
+
+        // ------------------------------------------------------------
+        // 5. Sort PHP murni
+        // ------------------------------------------------------------
+        usort($hasil, function ($a, $b) use ($sort) {
+            $nama = strcasecmp($a->des, $b->des);
+
+            switch ($sort) {
+                case 'nama_desc':
+                    return -$nama;
+
+                case 'tgl_terbaru':
+                case 'tgl_terlama':
+                    if ($a->created_at === $b->created_at) return $nama;
+                    if ($a->created_at === null) return 1;   // tanpa tanggal selalu di bawah
+                    if ($b->created_at === null) return -1;
+                    $cmp = strcmp($a->created_at, $b->created_at);
+                    return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
+
+                case 'stok_terbanyak':
+                    return ($b->stok <=> $a->stok) ?: $nama;
+
+                case 'stok_tersedikit':
+                    return ($a->stok <=> $b->stok) ?: $nama;
+
+                case 'aset_terbanyak':
+                    return ($b->total_aset <=> $a->total_aset) ?: $nama;
+
+                case 'aset_tersedikit':
+                    return ($a->total_aset <=> $b->total_aset) ?: $nama;
+
+                default:
+                    return $nama;
+            }
+        });
+
+        // ------------------------------------------------------------
+        // 6. Pagination PHP murni
+        // ------------------------------------------------------------
+        $totalData  = count($hasil);
+        $totalPages = max(1, (int) ceil($totalData / self::PER_PAGE));
+        $page       = min($page, $totalPages);
+        $offset     = ($page - 1) * self::PER_PAGE;
+
+        $produk = array_slice($hasil, $offset, self::PER_PAGE);
+
+        $pagination = [
+            'page'        => $page,
+            'total_data'  => $totalData,
+            'total_pages' => $totalPages,
+            'dari'        => $totalData > 0 ? $offset + 1 : 0,
+            'sampai'      => $offset + count($produk),
+        ];
+
+        return view('inventory.item', [
+            'produk'     => $produk,
+            'stat'       => $stat,
+            'pagination' => $pagination,
+            'daftarITM'  => $daftarITM,
+            'opsiSort'   => self::OPSI_SORT,
+            'keyword'    => $keyword,
+            'sort'       => $sort,
+            'MRK'        => $MRK,
+            'KTG'        => $KTG,
+            'SPP'        => $SPP,
+            'GD'         => $GD,
+            'stokList'   => session('stok_list', []),
+        ]);
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan daftar barang');
     }
+}
 
     // ================================================================
     // TAMBAH BARANG (ITM) — STOK awal selalu 0, stok masuk lewat ITMDT
     // ================================================================
     public function store(Request $request)
     {
-        try {
-            if ($request->has('HRG')) {
-                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
-                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
-            }
+        if ($request->has('HRG')) {
+            $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+            $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+        }
 
-            $data = $request->validateWithBag('tambah', [
-                'DES' => 'required|string|max:150',
-                'MRK' => 'required|string|max:10',
-                'KTG' => 'required|string|max:10',
-                'SPP' => 'required|string|max:10',
-                'HRG' => 'required|numeric|min:0',
+        $data = $request->validate([
+            'DES' => 'required|string|max:150',
+            'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
+        ], [
+            'DES.required' => 'Nama barang wajib diisi.',
+            'DES.string'   => 'Nama barang harus berupa teks.',
+            'DES.max'      => 'Nama barang maksimal 150 karakter.',
+            'MRK.required' => 'Merk wajib dipilih.',
+            'KTG.required' => 'Kategori wajib dipilih.',
+            'HRG.required' => 'Harga jual wajib diisi.',
+            'HRG.numeric'  => 'Harga jual harus berupa angka.',
+            'HRG.min'      => 'Harga jual minimal 0.',
+        ]);
+
+        if (ITM::where('DES', $data['DES'])
+                ->where('MRK', $data['MRK'])
+                ->where('KTG', $data['KTG'])
+                ->exists()) {
+            throw ValidationException::withMessages([
+                'DES' => 'Barang dengan nama, merk, dan kategori tersebut sudah ada.',
             ]);
+        }
 
+        try {
             $data['ITM'] = $this->generateCode($data['DES'], 'ITM');
 
             if (ITM::where('ITM', $data['ITM'])->exists()) {
-                throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.'])
-                    ->errorBag('tambah');
+                throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.']);
             }
 
             ITM::create($data + ['STOK' => 0]);
 
             return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan barang');
         }
@@ -223,7 +254,7 @@ class ITMController extends Controller
             $item = Itm::findOrFail($itm);
 
             // Semua detail stok milik item ini (ITMDT) + hitung field turunan
-            $all = Itmdt::where('ITM', $item->ITM)->get()->map(function ($d) {
+            $all = Itmdt::where('ITM', $item->ITM)->get()->map(function ($d) use ($item) {
                 $masuk  = $d->TM ? Carbon::parse($d->TM) : null;
                 $sts    = $d->sts();
                 $keluar = $sts && $sts->created_at ? Carbon::parse($sts->created_at) : null;
@@ -238,6 +269,8 @@ class ITMController extends Controller
                     'nama_gudang' => $gudang->DES ?? '-',
                     'terjual'     => $keluar !== null,
                     'status'      => $keluar === null ? 'IN STOK' : 'Terjual',
+                    'HRB'         => $d->HRB,
+                    'supplier'    => $d->spp()?->DES ?? '-',
                 ];
             });
 
@@ -258,7 +291,8 @@ class ITMController extends Controller
                 ->when($q !== '', function ($c) use ($q) {
                     return $c->filter(fn ($r) =>
                         stripos($r->nama_gudang, $q) !== false ||
-                        stripos((string) $r->kode_stok, $q) !== false
+                        stripos((string) $r->kode_stok, $q) !== false ||
+                        stripos((string) $r->supplier, $q) !== false
                     );
                 })
                 ->when($tanggal, function ($c) use ($tanggal) {
@@ -318,23 +352,45 @@ class ITMController extends Controller
     // ================================================================
     public function update(Request $request, string $id)
     {
+        $decodedId = urldecode($id);
+        $item = ITM::where('ITM', $decodedId)->firstOrFail();
+
+        if ($request->has('HRG')) {
+            $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
+            $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
+        }
+
+        $data = $request->validateWithBag('editItem', [
+            'ITM' => 'required|string|max:10',
+            'DES' => 'required|string|max:150',
+            'MRK' => 'required|string|max:10',
+            'KTG' => 'required|string|max:10',
+            'HRG' => 'required|numeric|min:0',
+        ], [
+            'DES.required' => 'Nama barang wajib diisi.',
+            'DES.string'   => 'Nama barang harus berupa teks.',
+            'DES.max'      => 'Nama barang maksimal 150 karakter.',
+            'MRK.required' => 'Merk wajib dipilih.',
+            'KTG.required' => 'Kategori wajib dipilih.',
+            'HRG.required' => 'Harga jual wajib diisi.',
+            'HRG.numeric'  => 'Harga jual harus berupa angka.',
+            'HRG.min'      => 'Harga jual minimal 0.',
+        ]);
+
+        if (ITM::where('DES', $data['DES'])
+                ->where('MRK', $data['MRK'])
+                ->where('KTG', $data['KTG'])
+                ->where('ITM', '!=', $item->ITM)
+                ->exists()) {
+            throw ValidationException::withMessages([
+                'DES' => 'Barang dengan nama, merk, dan kategori tersebut sudah ada.',
+            ])->errorBag('editItem');
+        }
+
         try {
-            if ($request->has('HRG')) {
-                $cleanHrg = preg_replace('/[^\d]/', '', (string) $request->input('HRG'));
-                $request->merge(['HRG' => $cleanHrg !== '' ? (float) $cleanHrg : null]);
-            }
+            $item->update($data);
 
-            $data = $request->validateWithBag('edit', [
-                'DES' => 'required|string|max:150',
-                'MRK' => 'required|string|max:10',
-                'KTG' => 'required|string|max:10',
-                'SPP' => 'required|string|max:10',
-                'HRG' => 'required|numeric|min:0',
-            ]);
-
-            ITM::where('ITM', $id)->update($data);
-
-            return back()->with('success', 'Barang berhasil diperbarui.');
+            return redirect()->route('inventory.item')->with('success', 'Barang berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui barang');
         }
@@ -354,11 +410,13 @@ class ITMController extends Controller
 
             $data = $request->validateWithBag('stok', [
                 'stok_itm' => 'required|string|max:10',
+                'stok_spp' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',
                 'stok_hrb' => 'required|numeric|min:0',
                 'stok_bc'  => 'required|string|max:20',
             ], [
                 'stok_itm.required' => 'Pilih nama barang.',
+                'stok_spp.required' => 'Pilih supplier.',
                 'stok_gd.required'  => 'Pilih gudang.',
                 'stok_hrb.required' => 'Harga beli wajib diisi.',
                 'stok_bc.required'  => 'Kode barcode wajib diisi.',
@@ -369,7 +427,7 @@ class ITMController extends Controller
 
             if (!empty($listAktif) && $listAktif[0]['itm'] !== $data['stok_itm']) {
                 return back()
-                    ->withInput(['stok_itm' => $listAktif[0]['itm']] + $request->only(['stok_gd', 'stok_hrb']))
+                    ->withInput(['stok_itm' => $listAktif[0]['itm']] + $request->only(['stok_spp', 'stok_gd', 'stok_hrb']))
                     ->withErrors([
                         'stok_itm' => 'Masih ada ' . count($listAktif) . ' kode untuk "' . $listAktif[0]['des'] . '". Generate barcode dulu sebelum mengganti barang.',
                     ], 'stok');
@@ -377,6 +435,11 @@ class ITMController extends Controller
 
             if (!ITM::where('ITM', $data['stok_itm'])->exists()) {
                 throw ValidationException::withMessages(['stok_itm' => 'Barang tidak ditemukan.'])
+                    ->errorBag('stok');
+            }
+
+            if (!SPP::where('SPP', $data['stok_spp'])->exists()) {
+                throw ValidationException::withMessages(['stok_spp' => 'Supplier tidak ditemukan.'])
                     ->errorBag('stok');
             }
 
@@ -397,25 +460,28 @@ class ITMController extends Controller
                     'TM'     => date('Y-m-d'),
                     'HRB'    => $data['stok_hrb'],
                     'GD'     => $data['stok_gd'],
+                    'SPP'    => $data['stok_spp'],
                 ]);
 
                 ITM::where('ITM', $data['stok_itm'])->increment('STOK');
             });
 
-            $namaItem   = ITM::where('ITM', $data['stok_itm'])->value('DES');
-            $namaGudang = GD::where('GD', $data['stok_gd'])->value('DES');
+            $namaItem     = ITM::where('ITM', $data['stok_itm'])->value('DES');
+            $namaGudang   = GD::where('GD', $data['stok_gd'])->value('DES');
+            $namaSupplier = SPP::where('SPP', $data['stok_spp'])->value('DES');
 
             // Tambah ke array session (bertahan sampai di-generate)
             session()->push('stok_list', [
                 'itm'    => $data['stok_itm'],
                 'des'    => $namaItem,
                 'gd'     => $namaGudang,
+                'spp'    => $namaSupplier,
                 'bc_in'  => $data['stok_bc'],
                 'bc_out' => $bcOut,
             ]);
 
-            // Pilihan barang, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
-            return back()->withInput($request->only(['stok_itm', 'stok_gd', 'stok_hrb']));
+            // Pilihan barang, supplier, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
+            return back()->withInput($request->only(['stok_itm', 'stok_spp', 'stok_gd', 'stok_hrb']));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan stok');
         }

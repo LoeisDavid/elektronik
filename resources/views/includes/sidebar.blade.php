@@ -135,6 +135,26 @@
         </div>
 
     </div>
+
+    {{-- Logout Section --}}
+    <div class="p-3 border-t border-white/10 shrink-0">
+        <form action="{{ route('logout', [], false) }}" method="POST" id="formSidebarLogout">
+            @csrf
+            <button 
+                type="submit" 
+                class="sidebar-logout-btn w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold text-red-300 hover:text-white hover:bg-red-500/20 active:bg-red-500/30 rounded-lg transition-all duration-200 cursor-pointer group"
+                title="Keluar / Logout"
+            >
+                {{-- Logout Icon --}}
+                <svg class="w-5 h-5 shrink-0 text-red-300 group-hover:text-red-100 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+                <span class="sidebar-text whitespace-nowrap transition-opacity duration-200">
+                    Logout
+                </span>
+            </button>
+        </form>
+    </div>
 </aside>
 
 <style>
@@ -147,6 +167,13 @@
         padding-bottom: 0.9rem;
         justify-content: center;
         gap: 0;
+    }
+
+    /* Center logout button icon in collapsed mode */
+    #sidebar.is-collapsed .sidebar-logout-btn {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     /* Rotate the chevron to point sideways when its section is collapsed */
@@ -229,5 +256,67 @@
                 chevron.classList.toggle('rotate-closed', isOpen);
             });
         });
+
+        // ---------- Validasi Tutup Kasir sebelum Logout ----------
+        const formLogout = document.getElementById('formSidebarLogout');
+        if (formLogout) {
+            formLogout.addEventListener('submit', function (e) {
+                // Cek apakah sedang berada di halaman POS Kasir (case-insensitive)
+                const currentPath = (window.location.pathname || '').toLowerCase();
+                const isPosPage = currentPath.includes('/pos/kasir');
+
+                if (isPosPage) {
+                    const btnHeaderTutup = document.getElementById('btnHeaderTutupKasir');
+                    const isHeaderOpen = btnHeaderTutup && !btnHeaderTutup.classList.contains('hidden');
+                    const isOpen = (typeof window.isKasirOpen !== 'undefined') ? window.isKasirOpen : isHeaderOpen;
+
+                    if (isOpen) {
+                        e.preventDefault();
+                        window.__shouldLogoutAfterTutup = true;
+
+                        const msg = 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.';
+                        if (typeof showToast === 'function') {
+                            showToast(msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+
+                        if (typeof modalTutupKasir === 'function') {
+                            modalTutupKasir();
+                        }
+                        return;
+                    }
+
+                    // Kasir sudah ditutup, biarkan form langsung tersubmit ke /logout
+                    return;
+                }
+
+                // Jika di luar halaman POS Kasir, periksa status kasir aktif ke server secara dinamis
+                e.preventDefault();
+                fetch('{{ route('POS.kas-status', [], false) }}')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.kas) {
+                            const msg = 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.';
+                            if (typeof showToast === 'function') {
+                                showToast(msg, 'error');
+                            } else {
+                                alert(msg);
+                            }
+
+                            setTimeout(() => {
+                                window.location.href = "{{ route('POS.kasir', [], false) }}?action=tutup_kasir";
+                            }, 800);
+                        } else {
+                            // Kasir sudah tutup, lakukan submit logout
+                            formLogout.submit();
+                        }
+                    })
+                    .catch(() => {
+                        // Jika fetch bermasalah, langsung submit dan biarkan middleware backend yang menangani
+                        formLogout.submit();
+                    });
+            });
+        }
     });
 </script>

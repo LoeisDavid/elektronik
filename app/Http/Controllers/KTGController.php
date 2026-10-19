@@ -37,11 +37,16 @@ class KTGController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:45',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:45|unique:ktg,DES',
+        ], [
+            'DES.required' => 'Nama kategori wajib diisi.',
+            'DES.string'   => 'Nama kategori harus berupa teks.',
+            'DES.max'      => 'Nama kategori maksimal 45 karakter.',
+            'DES.unique'   => 'Nama kategori sudah terdaftar.',
+        ]);
 
+        try {
             $validated['KTG'] = $this->generateCode($validated['DES'], 'KTG');
      
             KTG::create($validated);
@@ -57,15 +62,20 @@ class KTGController extends Controller
      */
     public function update(Request $request, string $ktg)
     {
+        $decodedKtg = urldecode($ktg);
+        $kategori = KTG::where('KTG', $decodedKtg)->firstOrFail();
+
+        $validated = $request->validateWithBag('editKategori', [
+            'KTG' => 'required|string|max:10',
+            'DES' => 'required|string|max:45|unique:ktg,DES,' . $kategori->KTG . ',KTG',
+        ], [
+            'DES.required' => 'Nama kategori wajib diisi.',
+            'DES.string'   => 'Nama kategori harus berupa teks.',
+            'DES.max'      => 'Nama kategori maksimal 45 karakter.',
+            'DES.unique'   => 'Nama kategori sudah terdaftar.',
+        ]);
+
         try {
-            $kategori = KTG::findOrFail($ktg);
-     
-            $validated = $request->validate([
-                'DES' => ['required', 'string', 'max:255'],
-            ], [
-                'DES.required' => 'Nama kategori wajib diisi.',
-            ]);
-     
             $kategori->update($validated);
      
             return redirect()

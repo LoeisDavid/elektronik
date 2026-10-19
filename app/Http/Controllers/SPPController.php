@@ -44,17 +44,26 @@ class SPPController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:150',
-                'TLP' => 'required|numeric|max_digits:20',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:150|unique:spp,DES',
+            'TLP' => 'required|numeric|max_digits:20|unique:spp,TLP',
+        ], [
+            'DES.required'   => 'Nama Supplier wajib diisi.',
+            'DES.string'     => 'Nama Supplier harus berupa teks.',
+            'DES.max'        => 'Nama Supplier maksimal 150 karakter.',
+            'DES.unique'     => 'Nama Supplier sudah terdaftar.',
+            'TLP.required'   => 'Nomor Telepon wajib diisi.',
+            'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
+            'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
+            'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+        ]);
 
+        try {
             $validated['SPP'] = $this->generateCode($validated['DES'], 'SPP');
 
             SPP::create($validated);
 
-            return redirect()->back()->with('success', 'Data Supplier berhasil ditambahkan.');
+            return redirect()->route('inventory.supplier')->with('success', 'Data Supplier berhasil ditambahkan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan supplier.');
         }
@@ -73,17 +82,28 @@ class SPPController extends Controller
 
     public function update(Request $request, $spp)
     {
+        $decodedSpp = urldecode($spp);
+        $supplier = SPP::where('SPP', $decodedSpp)->firstOrFail();
+
+        $validated = $request->validateWithBag('editSupplier', [
+            'SPP' => 'required|string|max:10|unique:spp,SPP,' . $supplier->SPP . ',SPP',
+            'DES' => 'required|string|max:150|unique:spp,DES,' . $supplier->SPP . ',SPP',
+            'TLP' => 'required|numeric|max_digits:20|unique:spp,TLP,' . $supplier->SPP . ',SPP',
+        ], [
+            'DES.required'   => 'Nama Supplier wajib diisi.',
+            'DES.string'     => 'Nama Supplier harus berupa teks.',
+            'DES.max'        => 'Nama Supplier maksimal 150 karakter.',
+            'DES.unique'     => 'Nama Supplier sudah terdaftar.',
+            'TLP.required'   => 'Nomor Telepon wajib diisi.',
+            'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
+            'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
+            'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+        ]);
+
         try {
-            $validated = $request->validate([
-                'SPP' => 'required|string|max:10',
-                'DES' => 'required|string|max:45',
-                'TLP' => 'required|numeric|max_digits:20',
-            ]);
+            $supplier->update($validated);
 
-            $spp = SPP::findOrFail($spp);
-            $spp->update($validated);
-
-            return redirect()->back()->with('success', 'Data supplier berhasil diperbarui.');
+            return redirect()->route('inventory.supplier')->with('success', 'Data supplier berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui supplier.');
         }

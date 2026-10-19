@@ -159,9 +159,9 @@
                 <span class="block text-[13px] text-gray-500 font-normal">Subtotal</span>
                 <span id="labelSubtotal" class="block text-[15px] text-black font-medium">Rp 0</span>
                 <span class="block text-[11px] text-gray-500 font-medium tracking-wide mt-1.5">TOTAL</span>
-                <div class="flex items-baseline gap-2.5 flex-wrap">
+                <div class="flex items-center gap-2.5 flex-wrap">
                     <span id="labelGrandTotal" class="text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
-                    <span id="labelPromoGlobal" class="hidden text-[13px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
+                    <span id="labelPromoGlobal" class="hidden self-start mt-[3px] text-[15px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
                 </div>
                 {{-- Rincian diskon/voucher tetap di DOM (hidden) agar JS tidak error, tidak tampil sesuai referensi --}}
                 <span id="labelDiskonGlobal" class="hidden">Rp 0</span>
@@ -366,18 +366,6 @@
                             ✕
                         </button>
                     </div>
-                </div>
-
-                <!-- Catatan Opening -->
-                <div>
-                    <label for="catatanOpening" class="block text-sm font-semibold text-black mb-1">
-                        Catatan opening:
-                    </label>
-                    <textarea
-                        id="catatanOpening"
-                        rows="3"
-                        placeholder="Tambahkan catatan opening jika ada..."
-                        class="w-full bg-white border rounded-lg p-3 text-sm text-black outline-none resize-none font-medium"></textarea>
                 </div>
             </div>
 
@@ -699,6 +687,7 @@
                 </div>
 
                 <!-- Field 2: Pelanggan -->
+                <!-- Field 2: Pelanggan -->
                 <div class="space-y-1">
                     <label for="inputPelangganKonfirmasi" class="block text-sm font-semibold text-black">
                         Pelanggan
@@ -708,7 +697,10 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Pelanggan</option>
                         @foreach($customers ?? [] as $cst)
-                        <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
+                            {{-- Tambahkan atribut data-phone dan tampilkan nomor telp di dalam teks option --}}
+                            <option value="{{ $cst->DES }}" data-phone="{{ $cst->TLP ?? '' }}">
+                                {{ $cst->DES }} {{ !empty($cst->TLP) ? '- ' . $cst->TLP : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -723,7 +715,7 @@
                         class="searchable-select w-full bg-white border rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
                         <option value="">Cari / Pilih Sales</option>
                         @foreach($salesList ?? [] as $sls)
-                        <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
+                        <option value="{{ $sls->DES }}" data-phone="{{ $sls->HP ?? '' }}">{{ $sls->DES }} {{ !empty($sls->HP) ? '- ' . $sls->HP : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -793,6 +785,7 @@
     let voucherAmount = {{ (float)($voucher ?? 0) }};
     let discountPercent = {{ (float)($discountPercent ?? 0) }};
     let isKasirOpen = {{ !empty($isKasirOpen) ? 'true' : 'false' }};
+    window.isKasirOpen = isKasirOpen;
     let activeItemKeyForDiscount = null;
     let currentGrandTotal = 0;
     let activePaymentMethod = 'Cash';
@@ -846,7 +839,6 @@
     function simpanBukaKasir() {
         const rawKasOpening = document.getElementById('kasOpening').value;
         const cleanOpening = parseFloat(rawKasOpening.replace(/\D/g, '')) || 0;
-        const catatanOpening = document.getElementById('catatanOpening').value;
 
         if (rawKasOpening === '' || cleanOpening < 0) {
             alert('Silakan masukkan nominal Kas Opening yang valid!');
@@ -866,8 +858,7 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        kas_opening: cleanOpening,
-                        catatan_opening: catatanOpening
+                        kas_opening: cleanOpening
                     })
                 })
             .then(res => res.json())
@@ -879,6 +870,7 @@
 
                 if (data.success) {
                     isKasirOpen = true;
+                    window.isKasirOpen = true;
 
                     // Sembunyikan tampilan awal "Buka Kasir"
                     const viewAwal = document.getElementById('viewBukaKasir');
@@ -972,7 +964,7 @@
             btn.innerText = 'Menutup...';
         }
 
-        fetch('{{ route('POS.tutup-kasir') }}', {
+        fetch('{{ route('POS.tutup-kasir', [], false) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -988,6 +980,7 @@
 
                 if (data.success) {
                     isKasirOpen = false;
+                    window.isKasirOpen = false;
                     cartData = {};
                     voucherAmount = 0;
                     discountPercent = 0;
@@ -1028,7 +1021,26 @@
 
                     tutupModalTutupKasir();
                     hapusDraft();
-                    alert('Kasir berhasil ditutup.');
+
+                    // Jika penutupan kasir dipicu oleh niat Logout, langsung logout otomatis!
+                    if (window.__shouldLogoutAfterTutup) {
+                        const formLogout = document.getElementById('formSidebarLogout');
+                        if (formLogout) {
+                            if (typeof showToast === 'function') {
+                                showToast('Kasir berhasil ditutup. Mengalihkan keluar...', 'success');
+                            }
+                            setTimeout(() => {
+                                formLogout.submit();
+                            }, 500);
+                            return;
+                        }
+                    }
+
+                    if (typeof showToast === 'function') {
+                        showToast('Kasir berhasil ditutup.', 'success');
+                    } else {
+                        alert('Kasir berhasil ditutup.');
+                    }
                 } else {
                     alert(data.message || 'Gagal menutup kasir!');
                 }
@@ -1624,11 +1636,35 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
             if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
                 $(modal).find('select.searchable-select').each(function() {
                     $(this).select2({
                         width: '100%',
-                        dropdownParent: $(modal)
+                        dropdownParent: $(modal),
+                        // Tambahkan logika pencarian custom
+                        matcher: function(params, data) {
+                            // Jika kolom pencarian kosong, tampilkan semua opsi
+                            if ($.trim(params.term) === '') {
+                                return data;
+                            }
+
+                            // Jika tidak ada data element (misal placeholder), lewati
+                            if (!data.element) {
+                                return null;
+                            }
+
+                            var term = params.term.toLowerCase();
+                            var text = (data.text || '').toLowerCase();
+                            var phone = ($(data.element).data('phone') || '').toString().toLowerCase();
+
+                            // Pencarian cocok jika term ada di Nama/Kode (text) ATAU di No. HP (data-phone)
+                            if (text.indexOf(term) > -1 || phone.indexOf(term) > -1) {
+                                return data;
+                            }
+
+                            return null;
+                        }
                     });
                 });
             }
@@ -2498,6 +2534,17 @@
             // Fokus ke kolom scan agar scanner fisik langsung bisa dipakai
             const inputScan = document.getElementById('inputScanUtama');
             if (inputScan) inputScan.focus();
+        }
+
+        // Cek apakah halaman dibuka dengan query parameter ?action=tutup_kasir
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'tutup_kasir') {
+            window.__shouldLogoutAfterTutup = true;
+            setTimeout(() => {
+                if (typeof modalTutupKasir === 'function') {
+                    modalTutupKasir();
+                }
+            }, 300);
         }
     });
 </script>

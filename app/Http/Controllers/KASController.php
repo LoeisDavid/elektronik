@@ -13,7 +13,7 @@ class KASController extends Controller
             $tanggal = trim((string) $request->query('tanggal', ''));
             $kasir   = trim((string) $request->query('kasir', ''));
             $page    = max(1, (int) $request->query('page', 1));
-            $perPage = 10;
+            $perPage = 4;
 
             // ------------------------------------------------------------
             // 1. Ambil semua kas dari model KAS (tanpa dengan limit)

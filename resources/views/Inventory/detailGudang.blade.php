@@ -124,23 +124,19 @@
                             <tr class="bg-primary-db text-white text-xs font-semibold">
                                 <th class="py-3 px-4 text-center font-semibold">Kode Barang</th>
                                 <th class="py-3 px-4 text-center font-semibold">Nama Barang</th>
+                                <th class="py-3 px-4 text-center font-semibold">QTY</th>
                                 <th class="py-3 px-4 text-center font-semibold">Kategori</th>
-                                <th class="py-3 px-4 text-center font-semibold">Supplier</th>
                                 <th class="py-3 px-4 text-center font-semibold">Merek</th>
-                                <th class="py-3 px-4 text-center font-semibold">Stok</th>
-                                <th class="py-3 px-4 text-center font-semibold">Harga</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-300 text-xs text-black">
                             @forelse($items as $item)
                                 <tr class="h-10 hover:bg-gray-50/80 transition-colors">
-                                    <td class="px-4 font-mono text-center">{{ $item->BC_OUT }}</td>
+                                    <td class="px-4 font-mono text-center">{{ $item->ITM }}</td>
                                     <td class="px-4 text-center">{{ $item->DES }}</td>
+                                    <td class="px-4 text-center">{{ $item->QTY }}</td>
                                     <td class="px-4 text-center">{{ $item->KTG }}</td>
-                                    <td class="px-4 text-center">{{ $item->SPP }}</td>
                                     <td class="px-4 text-center">{{ $item->MRK }}</td>
-                                    <td class="px-4 text-center">{{ number_format($item->STOK, 0, ',', '.') }} Unit</td>
-                                    <td class="px-4 text-center">Rp {{ number_format($item->HRB, 0, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr class="h-10">

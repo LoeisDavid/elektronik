@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('itm', function (Blueprint $table) {
             $table->string('ITM', 10)->primary();
-            $table->string('DES', 150);
+            $table->string('DES', 150)->collation('utf8mb4_unicode_ci');
             $table->unsignedInteger('STOK');
             $table->decimal('HRG', 10, 2);
             $table->string('KTG', 10);
             $table->string('MRK', 10);
-            $table->string('SPP', 10);
+            $table->unique(['DES', 'MRK', 'KTG']);
             $table->timestamps();
         });
     }

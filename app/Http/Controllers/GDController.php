@@ -7,44 +7,60 @@ use App\Models\GD;
 use App\Models\ITM;
 use App\Models\ITMDT;
 use App\Models\STS;
+use Illuminate\Support\Facades\DB;
 
 class GDController extends Controller
 {
     // halaman index untuk menampilkan semua data gudang
-    public function index(Request $request)
-    {
-        try {
-            $query = GD::query();
+public function index(Request $request)
+{
+    try {
+        // Stok = jumlah itmdt di gudang tsb yang BC_OUT-nya tidak ada di sts
+        $stokSub = DB::table('itmdt')
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('itmdt.GD', 'gd.GD')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('sts')
+                  ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+            });
 
-            if ($request->filled('keyword')) {
-                $search = $request->keyword;
-                $query->where(function ($q) use ($search) {
-                    $q->where('DES', 'LIKE', "%{$search}%")
-                    ->orWhere('GD', 'LIKE', "%{$search}%");
-                });
-            }
+        $query = GD::query()
+            ->select('gd.*')
+            ->selectSub($stokSub, 'stok');
 
-            $sort = $request->sort;
-
-            if ($sort == 'a-z') {
-                $query->orderBy('DES', 'asc');
-            } else if ($sort == 'z-a') {
-                $query->orderBy('DES', 'desc');
-            } else if ($sort == 'new-old') {
-                $query->orderBy('created_at', 'desc');
-            } else if ($sort == 'old-new') {
-                $query->orderBy('created_at', 'asc');
-            } else {
-                $query->orderBy('DES', 'asc');
-            }
-
-            $data = $query->paginate(10);
-
-            return view('Inventory.gudang', compact('data'));
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
+        if ($request->filled('keyword')) {
+            $search = $request->keyword;
+            $query->where(function ($q) use ($search) {
+                $q->where('DES', 'LIKE', "%{$search}%")
+                  ->orWhere('GD', 'LIKE', "%{$search}%");
+            });
         }
+
+        $sort = $request->sort;
+
+        if ($sort == 'a-z') {
+            $query->orderBy('DES', 'asc');
+        } else if ($sort == 'z-a') {
+            $query->orderBy('DES', 'desc');
+        } else if ($sort == 'new-old') {
+            $query->orderBy('created_at', 'desc');
+        } else if ($sort == 'old-new') {
+            $query->orderBy('created_at', 'asc');
+        } else if ($sort == 'stok-sedikit') {
+            $query->orderBy('stok', 'asc')->orderBy('DES', 'asc');
+        } else {
+            // default: stok terbanyak
+            $query->orderBy('stok', 'desc')->orderBy('DES', 'asc');
+        }
+
+        $data = $query->paginate(10);
+
+        return view('Inventory.gudang', compact('data'));
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
     }
+}
 
     // halaman create untuk menampilkan form tambah data gudang
     public function create()
@@ -85,12 +101,12 @@ class GDController extends Controller
         try {
             $gd = GD::findOrFail($gd);
 
-            // Belum terjual = ada di itmdt, TIDAK ada di sts (dicek lewat BC_OUT)
+            // Barang yang belum terjual di gudang ini
             $query = ITMDT::query()
                 ->where('GD', $gd->GD)
                 ->whereNotIn('BC_OUT', STS::select('BC_OUT'));
 
-            // SEARCH: BC_OUT, atau nama/kode barang (nama ada di tabel ITM)
+            // SEARCH: barcode, nama barang, atau kode ITM
             if ($request->filled('keyword')) {
                 $keyword = $request->keyword;
 
@@ -100,50 +116,69 @@ class GDController extends Controller
 
                 $query->where(function ($q) use ($keyword, $kodeItm) {
                     $q->where('BC_OUT', 'LIKE', "%{$keyword}%")
-                    ->orWhereIn('ITM', $kodeItm);
+                        ->orWhereIn('ITM', $kodeItm);
                 });
             }
 
-            // SORT: a-z, z-a, new-old (terbaru), old-new (terlama, default)
+            // SORT
             $sort = $request->input('sort', 'old-new');
+
             if (!in_array($sort, ['a-z', 'z-a', 'new-old', 'old-new'])) {
                 $sort = 'old-new';
             }
 
             $itmTable = (new ITM)->getTable();
-            $dtTable  = (new ITMDT)->getTable();
+            $dtTable = (new ITMDT)->getTable();
 
-            // nama barang ada di tabel ITM, jadi diurutkan lewat subquery
+            // Kelompokkan berdasarkan kode ITM
+            // Satu kode ITM hanya menghasilkan satu baris
+            $groupedQuery = (clone $query)
+                ->select("{$dtTable}.ITM")
+                ->selectRaw("MIN({$dtTable}.created_at) as first_date")
+                ->selectRaw("MAX({$dtTable}.created_at) as last_date")
+                ->groupBy("{$dtTable}.ITM");
+
+            // Subquery untuk nama barang
             $namaBarang = ITM::select('DES')
-                ->whereColumn("{$itmTable}.ITM", "{$dtTable}.ITM")
+                ->whereColumn(
+                    "{$itmTable}.ITM",
+                    "{$dtTable}.ITM"
+                )
                 ->limit(1);
 
             switch ($sort) {
                 case 'a-z':
-                    $query->orderBy($namaBarang, 'asc');
+                    $groupedQuery->orderBy($namaBarang, 'asc');
                     break;
+
                 case 'z-a':
-                    $query->orderBy($namaBarang, 'desc');
+                    $groupedQuery->orderBy($namaBarang, 'desc');
                     break;
+
                 case 'new-old':
-                    $query->orderBy("{$dtTable}.created_at", 'desc');
+                    $groupedQuery->orderBy('last_date', 'desc');
                     break;
-                default: // old-new
-                    $query->orderBy("{$dtTable}.created_at", 'asc');
+
+                default:
+                    $groupedQuery->orderBy('first_date', 'asc');
                     break;
             }
 
-            // urutan kedua agar hasil stabil antar halaman
-            $query->orderBy('BC_OUT');
+            // Urutan kedua agar hasil stabil
+            $groupedQuery->orderBy("{$dtTable}.ITM");
 
-            $rows = $query
+            // Pagination berdasarkan barang unik, bukan barcode
+            $rows = $groupedQuery
                 ->paginate(10)
                 ->withQueryString();
 
-            // STOK: jumlah barang belum terjual dengan ITM yang sama di gudang ini
-            // (satu query untuk semua baris di halaman ini)
-            $kodeItmHalaman = $rows->getCollection()->pluck('ITM')->unique()->values();
+            // Kode ITM pada halaman saat ini
+            $kodeItmHalaman = $rows->getCollection()
+                ->pluck('ITM')
+                ->unique()
+                ->values();
 
+            // Hitung seluruh stok belum terjual per ITM di gudang ini
             $stokPerItm = ITMDT::query()
                 ->where('GD', $gd->GD)
                 ->whereNotIn('BC_OUT', STS::select('BC_OUT'))
@@ -152,25 +187,31 @@ class GDController extends Controller
                 ->groupBy('ITM')
                 ->pluck('total', 'ITM');
 
-            // Lengkapi data barang lewat function itm(), bukan relasi
+            // Ambil informasi barang dan jumlah stok
             $items = $rows->through(function ($row) use ($stokPerItm) {
-                $itm = $row->itm();
+                $itm = ITM::where('ITM', $row->ITM)->first();
 
                 return (object) [
-                    'BC_OUT' => $row->BC_OUT,
-                    'DES'    => $itm->DES ?? '-',
-                    'KTG'    => $itm->KTG()->DES ?? '-',
-                    'SPP'    => $itm->SPP()->DES ?? '-',
-                    'MRK'    => $itm->MRK()->DES ?? '-',
-                    'STOK'   => $stokPerItm[$row->ITM] ?? 0,
-                    'HRB'    => $row->HRB ?? 0,
+                    'DES' => $itm->DES ?? '-',
+                    'MRK' => $itm?->MRK()?->DES ?? '-',
+                    'KTG' => $itm?->KTG()?->DES ?? '-',
+                    'ITM' => $row->ITM,
+                    'QTY' => $stokPerItm[$row->ITM] ?? 0,
                 ];
             });
 
-            return view('inventory.detailGudang', compact('gd', 'items', 'sort'));
+            return view(
+                'inventory.detailGudang',
+                compact('gd', 'items', 'sort')
+            );
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan detail gudang');
+            return redirect()->back()->with(
+                'error',
+                'Terjadi kesalahan ketika menampilkan detail gudang'
+            );
         }
+
     }
 
     public function update(Request $request, $gd)

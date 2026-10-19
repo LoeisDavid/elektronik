@@ -34,9 +34,9 @@
         @endif
 
         {{-- User Info dengan Avatar --}}
-        <a href="{{ route('login') }}" class="flex items-center gap-2.5 hover:opacity-85 transition-all cursor-pointer py-1 px-1.5 rounded-lg hover:bg-gray-100" title="Keluar / Ke Login">
+        <div class="flex items-center gap-2.5 py-1 px-1.5 rounded-lg" title="User: {{ Auth::user()->USERNAME ?? 'User' }}">
             <span class="text-base font-medium italic text-primary-db tracking-tight">
-                User 2
+                {{ Auth::user()->USERNAME ?? 'User' }}
             </span>
             
             {{-- Circular Avatar --}}
@@ -48,10 +48,10 @@
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                 />
                 <div class="w-full h-full bg-[#DBEAFE] text-[#2D8CFF] font-bold text-xs hidden items-center justify-center">
-                    U2
+                    {{ strtoupper(substr(Auth::user()->USERNAME ?? 'U', 0, 2)) }}
                 </div>
             </div>
-        </a>
+        </div>
 
     </div>
 </header>
