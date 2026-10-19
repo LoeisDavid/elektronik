@@ -111,6 +111,11 @@ Route::middleware('auth')->group(function () {
         Route::get('gudang/{gd}/barang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
         Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
 
+        // Perpindahan Gudang — FRONTEND ONLY (backend to implement RPController)
+        Route::get('perpindahan', function () {
+            return view('Inventory.perpindahan');
+        })->name('perpindahan');
+
         Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
         Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
 
