@@ -66,6 +66,12 @@
                     <span id="strukVoucher" class="font-semibold text-red-600">- Rp 0</span>
                 </div>
 
+                <!-- PPN (Tampil jika ada) -->
+                <div id="wrapperStrukPPN" class="hidden justify-between text-gray-600">
+                    <span id="labelStrukPPN">PPN</span>
+                    <span id="strukPPN" class="font-semibold text-gray-900">+ Rp 0</span>
+                </div>
+
                 <!-- Total -->
                 <div class="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
                     <span>Total</span>

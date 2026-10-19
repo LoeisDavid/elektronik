@@ -160,6 +160,13 @@
             </tr>
         @endif
 
+        @if (!empty($struk['ppn_nominal']) && $struk['ppn_nominal'] > 0)
+            <tr>
+                <td class="label">PPN {{ !empty($struk['ppn']) ? '(' . $struk['ppn'] . '%)' : '' }}</td>
+                <td class="right bold value">+ Rp {{ number_format($struk['ppn_nominal'], 0, ',', '.') }}</td>
+            </tr>
+        @endif
+
         <tr class="total-row">
             <td>Total</td>
             <td class="right">Rp {{ number_format($struk['total'], 0, ',', '.') }}</td>

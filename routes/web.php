@@ -67,8 +67,10 @@ Route::middleware('auth')->group(function () {
         Route::put('desa/{id}', [DSController::class, 'update'])->name('desa.update');
         Route::delete('desa/{id}', [DSController::class, 'destroy'])->name('desa.destroy');
 
-        // Riwayat Transaksi View
+        // Riwayat Transaksi View, Edit, & Update
         Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
+        Route::get('transaksi/{id}/edit', [ACRController::class, 'edit'])->name('transaksi.edit');
+        Route::put('transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
 
         // Laporan View
         Route::get('laporan', [KASController::class, 'index'])->name('laporan');

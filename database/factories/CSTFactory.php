@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CST;
+use App\Models\DS;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -51,9 +52,11 @@ class CSTFactory extends Factory
         }
 
         return [
-            'CST' => sprintf('CST%07d', $num), // 10 chars, fits string(10)
-            'DES' => substr($cstName, 0, 150),
-            'TLP' => substr('08' . fake()->numerify('##########'), 0, 20),
+            'CST' => sprintf('CST%07d', $num), // 10 chars, fits string(10) PK
+            'DES' => substr($cstName, 0, 150), // fits string(150) unique
+            'AL' => substr(fake('id_ID')->address(), 0, 100), // fits string(100)
+            'TLP' => sprintf('0812%08d', $num), // fits string(20) unique & numeric
+            'DS' => DS::factory(), // references string(15) DS PK
             'created_at' => now(),
             'updated_at' => now(),
         ];

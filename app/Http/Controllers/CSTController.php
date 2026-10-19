@@ -24,7 +24,7 @@ class CSTController extends Controller
             if($sort == 'a-z') {
                 $query->orderBy('DES', 'asc');
             } else if ($sort == 'z-a') {
-                $query->orderBy('DES', 'desc');
+                $query->orderBy('DES', 'desc'); 
             } else if($sort == 'new-old') {
                 $query->orderBy('created_at', 'desc');
             } else if ($sort == 'old-new') {

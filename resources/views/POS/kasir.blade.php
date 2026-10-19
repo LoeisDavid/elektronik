@@ -161,7 +161,8 @@
                 <span class="block text-[11px] text-gray-500 font-medium tracking-wide mt-1.5">TOTAL</span>
                 <div class="flex items-center gap-2.5 flex-wrap">
                     <span id="labelGrandTotal" class="text-[26px] leading-none font-extrabold text-black tracking-tight">Rp 0</span>
-                    <span id="labelPromoGlobal" class="hidden self-start mt-[3px] text-[15px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
+                    <span id="labelPromoGlobal" class="hidden self-start mt-0.75 text-[15px] font-medium text-gray-500 whitespace-nowrap">Diskon: Rp 0&nbsp;&nbsp;Voucher: Rp 0</span>
+                    <span id="labelPPNGlobal" class="hidden self-start mt-0.75 text-[15px] font-medium text-gray-500 whitespace-nowrap">PPN: Rp 0</span>
                 </div>
                 {{-- Rincian diskon/voucher tetap di DOM (hidden) agar JS tidak error, tidak tampil sesuai referensi --}}
                 <span id="labelDiskonGlobal" class="hidden">Rp 0</span>
@@ -171,7 +172,23 @@
             </div>
 
             {{-- Kanan: Tombol aksi (vertikal center / floating sesuai referensi) --}}
-            <div class="flex items-center gap-2.5 shrink-0 self-center">
+            <div class="flex items-end gap-2.5 shrink-0">
+                <!-- PPN -->
+                <div class="w-16 flex flex-col items-start">
+                    <label for="ppnInput" class="text-xs font-bold text-black mb-1">PPN</label>
+                    <div class="relative w-full">
+                        <input
+                            id="ppnInput"
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0%"
+                            title="PPN (%)"
+                            value="{{ $ppn ?? '' }}"
+                            oninput="handlePpnInput(this)"
+                            class="w-full h-11 bg-white border border-black rounded-lg px-2 text-sm font-semibold text-black placeholder-gray-400 outline-none text-center focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    </div>
+                </div>
                 {{-- Kosongkan Keranjang (trash) --}}
                 <button
                     type="button"
@@ -765,6 +782,8 @@
         <input type="hidden" name="discount_item" id="printDiscountItem">
         <input type="hidden" name="discount_global" id="printDiscountGlobal">
         <input type="hidden" name="voucher" id="printVoucher">
+        <input type="hidden" name="ppn" id="printPpn">
+        <input type="hidden" name="ppn_nominal" id="printPpnNominal">
         <input type="hidden" name="total" id="printTotal">
         <input type="hidden" name="dibayar" id="printDibayar">
         <input type="hidden" name="kembalian" id="printKembalian">
@@ -784,6 +803,7 @@
     let cartData = @json($cart ?? []);
     let voucherAmount = {{ (float)($voucher ?? 0) }};
     let discountPercent = {{ (float)($discountPercent ?? 0) }};
+    let ppnPercent = @json($ppn !== null ? (int)$ppn : null);
     let isKasirOpen = {{ !empty($isKasirOpen) ? 'true' : 'false' }};
     window.isKasirOpen = isKasirOpen;
     let activeItemKeyForDiscount = null;
@@ -1223,8 +1243,23 @@
         // Hitung diskon transaksi global
         const diskonTransaksiNominal = subtotal * (discountPercent / 100);
 
-        // Grand Total = Subtotal - Voucher Global - Diskon Transaksi Global
-        let grandTotal = Math.max(0, subtotal - voucherAmount - diskonTransaksiNominal);
+        // Total barang setelah mengurangi diskon yang ada
+        const totalSetelahDiskon = Math.max(0, subtotal - voucherAmount - diskonTransaksiNominal);
+
+        // Hitung PPN setelah total semua barang dan setelah mengurangi diskon yang ada
+        const inputPpnEl = document.getElementById('ppnInput');
+        let currentPpnVal = (inputPpnEl && inputPpnEl.value.trim() !== '') ? parseFloat(inputPpnEl.value) : null;
+        if (currentPpnVal !== null && (isNaN(currentPpnVal) || currentPpnVal < 0)) currentPpnVal = 0;
+        if (currentPpnVal !== null && currentPpnVal > 100) currentPpnVal = 100;
+        ppnPercent = currentPpnVal;
+
+        let ppnNominal = 0;
+        if (ppnPercent !== null && ppnPercent > 0) {
+            ppnNominal = totalSetelahDiskon * (ppnPercent / 100);
+        }
+
+        // Grand Total = Total setelah diskon + PPN
+        let grandTotal = totalSetelahDiskon + ppnNominal;
         currentGrandTotal = grandTotal;
 
         // Perbarui teks di bar total
@@ -1249,6 +1284,17 @@
             }
         }
 
+        // Tampilkan label PPN jika PPN diisi dan > 0
+        const elPPNGlobal = document.getElementById('labelPPNGlobal');
+        if (elPPNGlobal) {
+            if (ppnPercent !== null && ppnPercent > 0) {
+                elPPNGlobal.innerHTML = `PPN (${ppnPercent}%): ${formatRupiah(ppnNominal)}`;
+                elPPNGlobal.classList.remove('hidden');
+            } else {
+                elPPNGlobal.classList.add('hidden');
+            }
+        }
+
         const elGrandTotal = document.getElementById('labelGrandTotal');
         if (elGrandTotal) elGrandTotal.innerText = formatRupiah(grandTotal);
 
@@ -1256,6 +1302,24 @@
         if (elMetode) elMetode.innerText = activePaymentMethod;
 
         updateTombolMetode();
+    }
+
+    // Handler input PPN langsung dari UI
+    function handlePpnInput(el) {
+        let val = el.value.trim();
+        if (val !== '') {
+            let num = parseInt(val);
+            if (isNaN(num) || num < 0) num = 0;
+            if (num > 100) num = 100;
+            if (el.value !== '' && parseInt(el.value) !== num) {
+                el.value = num;
+            }
+            ppnPercent = num;
+        } else {
+            ppnPercent = null;
+        }
+        hitungRingkasan();
+        simpanKeSession();
     }
 
     // -------------------------------------------------------------------------
@@ -1275,6 +1339,9 @@
             cartData = {};
             voucherAmount = 0;
             discountPercent = 0;
+            ppnPercent = null;
+            const inputPpnEl = document.getElementById('ppnInput');
+            if (inputPpnEl) inputPpnEl.value = '';
             activePaymentMethod = 'Cash';
             selectedBankName = '';
             hasPickedPaymentMethod = false;
@@ -1302,7 +1369,8 @@
                 body: JSON.stringify({
                     cart: cartData,
                     voucher: voucherAmount,
-                    discount_percent: discountPercent
+                    discount_percent: discountPercent,
+                    ppn: (ppnPercent !== null && ppnPercent !== '') ? ppnPercent : null
                 })
             }).catch(err => console.error('Gagal sinkronisasi session cart:', err));
     }
@@ -1739,6 +1807,7 @@
                         cart: cartData,
                         voucher: voucherAmount,
                         discount_percent: discountPercent,
+                        ppn: (ppnPercent !== null && ppnPercent !== '') ? ppnPercent : null,
                         payment_method: activePaymentMethod,
                         bank_name: selectedBankName,
                         nominal_bayar: nominalBayarClean,
@@ -1781,6 +1850,8 @@
                         discount_percent: discountPercent,
                         discount_global: data.discount_global,
                         voucher: voucherAmount,
+                        ppn_percent: data.ppn_percent !== undefined ? data.ppn_percent : ppnPercent,
+                        ppn_nominal: data.ppn_nominal !== undefined ? data.ppn_nominal : 0,
                         total: data.grand_total || currentGrandTotal,
                         dibayar: nominalBayarClean,
                         kembalian: data.kembalian || 0
@@ -1937,6 +2008,24 @@
             }
         }
 
+        // PPN
+        const finalPpnPct = transaksiData.ppn_percent !== undefined ? parseFloat(transaksiData.ppn_percent) : (ppnPercent || 0);
+        const finalPpnNominal = transaksiData.ppn_nominal !== undefined ? parseFloat(transaksiData.ppn_nominal) : 0;
+        const wrapperPpn = document.getElementById('wrapperStrukPPN');
+        const labelPpn = document.getElementById('labelStrukPPN');
+        const elPpn = document.getElementById('strukPPN');
+        if (wrapperPpn && elPpn) {
+            if (finalPpnNominal > 0) {
+                if (labelPpn) labelPpn.innerText = finalPpnPct > 0 ? `PPN (${finalPpnPct}%)` : 'PPN';
+                elPpn.innerText = `+ ${formatRupiah(finalPpnNominal)}`;
+                wrapperPpn.classList.remove('hidden');
+                wrapperPpn.classList.add('flex');
+            } else {
+                wrapperPpn.classList.add('hidden');
+                wrapperPpn.classList.remove('flex');
+            }
+        }
+
         // Grand Total
         const finalGrandTotal = transaksiData.total !== undefined ?
             parseFloat(transaksiData.total) :
@@ -2052,6 +2141,8 @@
         document.getElementById('printDiscountItem').value = finalItemDisc;
         document.getElementById('printDiscountGlobal').value = finalGlobalDisc;
         document.getElementById('printVoucher').value = finalVoucher;
+        document.getElementById('printPpn').value = strukTerakhir.ppn_percent || '';
+        document.getElementById('printPpnNominal').value = strukTerakhir.ppn_nominal || 0;
         document.getElementById('printTotal').value = strukTerakhir.total || 0;
         document.getElementById('printDibayar').value = isTunai ? (strukTerakhir.dibayar || 0) : '';
         document.getElementById('printKembalian').value = isTunai ? (strukTerakhir.kembalian || 0) : '';
@@ -2114,6 +2205,7 @@
             cart: JSON.parse(JSON.stringify(cartData)),
             voucher: voucherAmount,
             discount_percent: discountPercent,
+            ppn: ppnPercent,
             time: new Date().toLocaleTimeString('id-ID', {
                 hour: '2-digit',
                 minute: '2-digit'
@@ -2256,6 +2348,9 @@
             cartData = draft.cart || {};
             voucherAmount = draft.voucher || 0;
             discountPercent = draft.discount_percent || 0;
+            ppnPercent = draft.ppn !== undefined ? draft.ppn : null;
+            const inputPpnEl = document.getElementById('ppnInput');
+            if (inputPpnEl) inputPpnEl.value = (ppnPercent !== null && ppnPercent !== '') ? ppnPercent : '';
 
             // Simpan pelanggan dan sales dari draft ke variabel global
             isLoadedFromDraft = true;
