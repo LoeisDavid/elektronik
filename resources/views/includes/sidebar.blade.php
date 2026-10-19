@@ -51,6 +51,7 @@
                         ['name' => 'Sales', 'route' => 'POS.sales'],
                         ['name' => 'Customer', 'route' => 'POS.customer'],
                         ['name' => 'Laporan', 'route' => 'POS.laporan'],
+                        ['name' => 'Desa', 'route' => 'POS.desa']
                     ];
                 @endphp
 
