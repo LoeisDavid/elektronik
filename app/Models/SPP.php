@@ -15,6 +15,11 @@ class SPP extends Model
     {
         return ITM::where('SPP', $this->SPP)->get();
     }
+
+    function itmdt()
+    {
+        return ITMDT::where('SPP', $this->SPP)->get();
+    }
     
     use HasFactory;
 }

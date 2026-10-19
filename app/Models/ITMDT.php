@@ -8,12 +8,17 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 #[Table('itmdt', key: 'BC_OUT', keyType: 'string', incrementing: false)]
-#[Fillable(['BC_OUT', 'ITM', 'BC_IN', 'TM', 'HRB', 'GD'])]
+#[Fillable(['BC_OUT', 'ITM', 'BC_IN', 'TM', 'HRB', 'GD', 'SPP'])]
 class ITMDT extends Model
 {
     function itm()
     {
         return ITM::where('ITM', $this->ITM)->first();
+    }
+
+    function spp()
+    {
+        return SPP::where('SPP', $this->SPP)->first();
     }
 
     function gd()

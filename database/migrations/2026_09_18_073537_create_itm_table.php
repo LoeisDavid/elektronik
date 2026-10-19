@@ -18,7 +18,6 @@ return new class extends Migration
             $table->decimal('HRG', 10, 2);
             $table->string('KTG', 10);
             $table->string('MRK', 10);
-            $table->string('SPP', 10);
             $table->unique(['DES', 'MRK', 'KTG']);
             $table->timestamps();
         });

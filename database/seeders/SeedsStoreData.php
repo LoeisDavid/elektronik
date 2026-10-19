@@ -168,7 +168,6 @@ trait SeedsStoreData
                 'STOK' => $finalStok,
                 'KTG'  => $ktgCode,
                 'MRK'  => $mrkCode,
-                'SPP'  => $sppCode,
             ])->getAttributes();
             $itmData[] = $itmObj;
 
@@ -181,6 +180,7 @@ trait SeedsStoreData
                     'BC_IN'  => sprintf('BCI%017d', $itmdtSequence),
                     'BC_OUT' => $bcOut,
                     'GD'     => $gdCode,
+                    'SPP'    => $sppCode,
                 ])->getAttributes();
 
                 $itmdtData[] = $itmdtObj;

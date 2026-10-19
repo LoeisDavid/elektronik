@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\ITM;
 use App\Models\KTG;
 use App\Models\MRK;
-use App\Models\SPP;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -95,7 +94,6 @@ class ITMFactory extends Factory
             'HRG' => fake()->numberBetween(150, 15000) * 1000,
             'KTG' => fn () => KTG::factory(),
             'MRK' => fn () => MRK::factory(),
-            'SPP' => fn () => SPP::factory(),
             'created_at' => now(),
             'updated_at' => now(),
         ];
