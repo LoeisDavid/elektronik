@@ -60,7 +60,7 @@
 @if (!isset($items))
 
 {{-- ================= LAYAR PEMBUKAAN (belum ada data) ================= --}}
-<div class="font-mont flex-1 flex flex-col items-center justify-center h-full min-h-0 bg-[#F7F8FD]">
+<div class="font-mont flex-1 flex flex-col items-center justify-center h-full min-h-0 bg-[#F7F8FD] p-4">
 
     @if (session('error'))
         <div class="mb-4 px-4 py-2 rounded-md border border-[#D02231] bg-[#D02231]/10 text-[#D02231] text-sm font-medium">
@@ -69,20 +69,35 @@
     @endif
 
     {{-- Judul --}}
-        <h1 class="text-2xl font-bold text-black tracking-tight mb-2">
-            Cek Stok (Opname Stok)
-        </h1>
+    <h1 class="text-2xl font-bold text-black tracking-tight mb-1 text-center">
+        Cek Stok (Opname Stok)
+    </h1>
 
-        {{-- Sub Judul --}}
-        <p class="text-sm text-[#6B7280] mb-3 max-w-xs text-center">
-            Silahkan klik tombol "Mulai"untuk melakukan opname stok
-        </p>
+    {{-- Sub Judul --}}
+    <p class="text-sm text-[#6B7280] mb-6 max-w-sm text-center">
+        Pilih barang yang ingin dicek stoknya, lalu klik tombol "Mulai".
+    </p>
 
-    <a id="btnMulai"
-       href="{{ route('inventory.opname.pull') }}"
-       class="px-12 py-2.5 rounded-md text-base font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] transition shadow-sm">
-        Mulai
-    </a>
+    <form id="formMulaiOpname" action="{{ route('inventory.opname.pull') }}" method="GET" class="w-full max-w-md bg-white border border-gray-300 rounded-2xl p-6 shadow-sm flex flex-col space-y-5">
+        <div class="w-full text-left">
+            <label for="selectItm" class="block text-xs font-semibold text-black mb-1.5">Pilih Barang yang Mau Dicek</label>
+            <select name="itm" id="selectItm" class="searchable-select w-full" required data-placeholder="Cari & pilih barang...">
+                <option value="" disabled selected>Pilih Barang...</option>
+                @if(isset($daftarItem))
+                    @foreach ($daftarItem as $it)
+                        <option value="{{ $it->ITM }}" @selected(request('itm') == $it->ITM)>
+                            {{ $it->DES }} ({{ $it->ITM }})
+                        </option>
+                    @endforeach
+                @endif
+            </select>
+        </div>
+
+        <button type="submit" id="btnMulai"
+           class="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] active:bg-dark-navy transition shadow-sm cursor-pointer">
+            Mulai
+        </button>
+    </form>
 </div>
 
 @else
@@ -98,6 +113,20 @@
 @endphp
 
 <div class="font-mont flex-1 flex flex-col h-full min-h-0 bg-[#F7F8FD]">
+
+    @if(isset($selectedItem))
+    <div class="px-6 pt-3 pb-2 shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-gray-500">Barang yang dicek:</span>
+            <span class="text-sm font-bold text-[#0D1C43]">{{ $selectedItem->DES }}</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono font-medium border border-gray-300">{{ $selectedItem->ITM }}</span>
+        </div>
+        <a href="{{ route('inventory.opname') }}" class="text-xs font-semibold text-[#0D1C43] hover:text-[#22396F] hover:underline flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Ganti Barang
+        </a>
+    </div>
+    @endif
 
     {{-- ================= TOP BAR: CHIP STATISTIK + TOMBOL ================= --}}
     <div class="flex flex-wrap items-center justify-between gap-3 px-6 pt-4 shrink-0">
@@ -293,23 +322,53 @@
             </div>
         </div>
 
-        <button id="btnTutupSummary" class="w-full mt-5 py-2.5 rounded-md text-xs font-semibold bg-[#0D1C43] text-white hover:bg-[#22396F]">
-            Tutup
-        </button>
+        <div class="mt-5 flex items-center gap-3">
+            <button id="btnPrintSummary" type="button" class="flex-1 py-2.5 rounded-md text-xs font-semibold bg-[#0D1C43] text-white hover:bg-[#22396F] flex items-center justify-center gap-1.5 cursor-pointer transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print
+            </button>
+            <button id="btnTutupSummary" type="button" class="flex-1 py-2.5 rounded-md text-xs font-semibold border border-gray-300 text-[#0D1C43] bg-white hover:bg-gray-100 cursor-pointer transition">
+                Tutup
+            </button>
+        </div>
     </div>
 </div>
+
+<form id="formPrintOpname" action="{{ route('inventory.opname.cetak') }}" method="POST" target="_blank" class="hidden">
+    @csrf
+    <input type="hidden" name="payload" id="printPayload">
+</form>
 @endif
 @endsection
 
 @push('scripts')
 @if (!isset($items))
 <script>
-document.getElementById('btnMulai').addEventListener('click', function (e) {
-    // cegah klik ganda selagi data sedang di-pull
-    if (this.dataset.loading) { e.preventDefault(); return; }
-    this.dataset.loading = '1';
-    this.textContent = 'Memuat data...';
-    this.classList.add('opacity-70', 'cursor-wait');
+$(document).ready(function () {
+    if (typeof $.fn.select2 !== 'undefined') {
+        $('#selectItm').select2({
+            width: '100%',
+            placeholder: 'Cari & pilih barang...'
+        });
+    }
+
+    $('#formMulaiOpname').on('submit', function (e) {
+        const val = $('#selectItm').val();
+        if (!val) {
+            e.preventDefault();
+            alert('Silakan pilih barang terlebih dahulu!');
+            return false;
+        }
+
+        const btn = document.getElementById('btnMulai');
+        if (btn.dataset.loading) {
+            e.preventDefault();
+            return false;
+        }
+        btn.dataset.loading = '1';
+        btn.textContent = 'Memuat data...';
+        btn.classList.add('opacity-70', 'cursor-wait');
+    });
 });
 </script>
 @else
@@ -664,6 +723,31 @@ document.addEventListener('DOMContentLoaded', function () {
         closeConfirmModal();
     });
     document.getElementById('btnYaSelesai').addEventListener('click', selesaikanSesi);
+
+    const btnPrintSummary = document.getElementById('btnPrintSummary');
+    if (btnPrintSummary) {
+        btnPrintSummary.addEventListener('click', () => {
+            const h = hitungStatus();
+            const sortedItems = [...stokData].sort((a, b) => a.idx - b.idx);
+            const payload = {
+                petugas: @json(auth()->user()->USERNAME ?? 'admin'),
+                lokasi: 'Sumenep',
+                summary: {
+                    total: stokData.length,
+                    sudah_terjual: h.sudah_terjual,
+                    belum_terjual: h.belum_terjual,
+                    tidak_terscan: h.checking,
+                },
+                items: sortedItems.map(item => ({
+                    kode_barcode: item.kode_barcode,
+                    nama_barang: item.nama_barang,
+                    status: item.status,
+                })),
+            };
+            document.getElementById('printPayload').value = JSON.stringify(payload);
+            document.getElementById('formPrintOpname').submit();
+        });
+    }
 
     document.getElementById('btnTutupSummary').addEventListener('click', () => {
         modalSummary.classList.add('hidden');

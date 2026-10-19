@@ -51,7 +51,13 @@
     {{-- ========================================================= --}}
     {{-- STAT CARDS --}}
     {{-- ========================================================= --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div class="border border-gray-300 rounded-xl p-4 bg-white">
+            <p class="text-xs font-semibold text-black">Total Aset Keseluruhan</p>
+            <div class="text-2xl font-bold text-black mt-1 truncate" title="<?= e($rp($stat['total_aset'])) ?>"><?= e($rp($stat['total_aset'])) ?></div>
+            <p class="text-[11px] text-gray-500 mt-1">Dari Total <?= (int) $stat['total'] ?> Produk</p>
+        </div>
 
         <div class="border border-gray-300 rounded-xl p-4 bg-white">
             <p class="text-xs font-semibold text-black">Total Produk</p>
@@ -162,13 +168,12 @@
 
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 rounded-tl-lg">Kode Item</th>
-                        <th class="py-2.5 px-4">Nama item</th>
+                        <th class="py-2.5 px-4 rounded-tl-lg">Nama item</th>
                         <th class="py-2.5 px-4">Kategori</th>
                         <th class="py-2.5 px-4">Merk</th>
-                        <th class="py-2.5 px-4">Supplier</th>
                         <th class="py-2.5 px-4">Stok</th>
                         <th class="py-2.5 px-4">Harga</th>
+                        <th class="py-2.5 px-4">Total aset</th>
                         <th class="py-2.5 px-4 w-32 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
@@ -177,13 +182,12 @@
                     <?php if (count($produk) > 0): ?>
                         <?php foreach ($produk as $r): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4"><?= e($r->itm) ?></td>
                                 <td class="py-3.5 px-4"><?= e($r->des) ?></td>
                                 <td class="py-3.5 px-4"><?= e($r->ktg_nama) ?></td>
                                 <td class="py-3.5 px-4"><?= e($r->mrk_nama) ?></td>
-                                <td class="py-3.5 px-4"><?= e($r->spp_nama) ?></td>
                                 <td class="py-3.5 px-4"><?= (int) $r->stok ?> Unit</td>
                                 <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
+                                <td class="py-3.5 px-4 font-medium text-black"><?= e($rp($r->total_aset)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
                                     {{-- DROPDOWN AKSI --}}
@@ -224,7 +228,6 @@
                                                 data-hrg="<?= e($r->hrg) ?>"
                                                 data-ktg="<?= e($r->ktg) ?>"
                                                 data-mrk="<?= e($r->mrk) ?>"
-                                                data-spp="<?= e($r->spp) ?>"
                                                 data-action="<?= e(route('inventory.item.update', ['id' => $r->itm])) ?>"
                                                 onclick="openEditModal(this)"
                                                 class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
@@ -260,7 +263,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-gray-500 text-sm">Tidak ada produk.</td>
+                            <td colspan="7" class="py-8 text-center text-gray-500 text-sm">Tidak ada produk.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -359,8 +362,21 @@
                     </select>
                 </div>
 
-                {{-- GUDANG & HARGA BELI --}}
+                {{-- SUPPLIER & GUDANG --}}
                 <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="<?= $labelCls ?>">Supplier</label>
+                        <select name="stok_spp" required class="searchable-select <?= $inputCls ?>">
+                            <option value="" disabled <?= old('stok_spp') ? '' : 'selected' ?>>Pilih supplier</option>
+                            <?php foreach ($SPP as $s): ?>
+                                <option value="<?= e($s->SPP) ?>" <?= old('stok_spp') == $s->SPP ? 'selected' : '' ?>>
+                                    <?= e($s->DES) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?= $galat('stok', 'stok_spp') ?>
+                    </div>
+
                     <div>
                         <label class="<?= $labelCls ?>">Gudang</label>
                         <select name="stok_gd" required class="searchable-select <?= $inputCls ?>">
@@ -373,21 +389,22 @@
                         </select>
                         <?= $galat('stok', 'stok_gd') ?>
                     </div>
+                </div>
 
-                    <div>
-                        <label class="<?= $labelCls ?>">Harga Beli</label>
-                        <input
-                            type="text"
-                            inputmode="numeric"
-                            name="stok_hrb"
-                            required
-                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
-                            placeholder="Rp 0"
-                            oninput="formatInputRupiah(this)"
-                            class="input-rupiah <?= $inputCls ?>"
-                        >
-                        <?= $galat('stok', 'stok_hrb') ?>
-                    </div>
+                {{-- HARGA BELI --}}
+                <div>
+                    <label class="<?= $labelCls ?>">Harga Beli</label>
+                    <input
+                        type="text"
+                        inputmode="numeric"
+                        name="stok_hrb"
+                        required
+                        value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
+                        placeholder="Rp 0"
+                        oninput="formatInputRupiah(this)"
+                        class="input-rupiah <?= $inputCls ?>"
+                    >
+                    <?= $galat('stok', 'stok_hrb') ?>
                 </div>
 
                 {{-- SCAN KAMERA (live bila HTTPS/localhost, foto bila HTTP) --}}
@@ -423,7 +440,7 @@
                         <div class="mt-2 border border-gray-300 bg-white rounded-lg max-h-32 overflow-y-auto divide-y divide-gray-100">
                             <?php foreach ($stokList as $s): ?>
                                 <div class="px-3 py-1.5 text-xs flex items-center justify-between gap-2">
-                                    <span class="truncate"><?= e($s['des']) ?> · <?= e($s['gd']) ?></span>
+                                    <span class="truncate"><?= e($s['des']) ?> · <?= e($s['gd']) ?><?= !empty($s['spp']) ? (' · ' . e($s['spp'])) : '' ?></span>
                                     <span class="font-mono text-green-600"><?= e($s['bc_out']) ?></span>
                                 </div>
                             <?php endforeach; ?>
@@ -509,19 +526,6 @@
                             <?php endforeach; ?>
                         </select>
                         @error('KTG')
-                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="<?= $labelCls ?>">Supplier</label>
-                        <select name="SPP" required class="searchable-select <?= $inputCls ?>">
-                            <option value="" disabled <?= old('SPP') ? '' : 'selected' ?>>Pilih Supplier</option>
-                            <?php foreach ($SPP as $s): ?>
-                                <option value="<?= e($s->SPP) ?>" <?= old('SPP') == $s->SPP ? 'selected' : '' ?>><?= e($s->DES) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        @error('SPP')
                             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
@@ -617,18 +621,6 @@
                             <?php endforeach; ?>
                         </select>
                         @error('KTG', 'editItem')
-                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="<?= $labelCls ?>">Supplier</label>
-                        <select id="editSPP" name="SPP" required class="searchable-select <?= $inputCls ?>">
-                            <?php foreach ($SPP as $s): ?>
-                                <option value="<?= e($s->SPP) ?>" <?= ($errors->editItem->any() && old('SPP') == $s->SPP) ? 'selected' : '' ?>><?= e($s->DES) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        @error('SPP', 'editItem')
                             <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
@@ -732,11 +724,9 @@
         if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
             $('#editMRK').val(d.mrk).trigger('change');
             $('#editKTG').val(d.ktg).trigger('change');
-            $('#editSPP').val(d.spp).trigger('change');
         } else {
             document.getElementById('editKTG').value = d.ktg;
             document.getElementById('editMRK').value = d.mrk;
-            document.getElementById('editSPP').value = d.spp;
         }
     }
 

@@ -51,7 +51,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                     </svg>
                 </div>
-                <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama gudang / kode stok"
+                <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama gudang / kode stok / supplier"
                        class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db">
             </div>
 
@@ -97,6 +97,8 @@
                     <thead>
                         <tr class="bg-primary-db text-white text-xs font-semibold">
                             <th class="py-3 px-4 text-center">Kode Stok</th>
+                            <th class="py-3 px-4 text-center">Harga Beli</th>
+                            <th class="py-3 px-4 text-center">Supplier</th>
                             <th class="py-3 px-4 text-center">Tanggal Masuk</th>
                             <th class="py-3 px-4 text-center">Tanggal Keluar</th>
                             <th class="py-3 px-4 text-center">Gudang</th>
@@ -108,6 +110,8 @@
                         @forelse($items as $row)
                             <tr class="hover:bg-gray-50/80 transition-colors">
                                 <td class="py-3 px-4 font-mono text-center">{{ $row->kode_stok }}</td>
+                                <td class="py-3 px-4 text-center">Rp {{ number_format($row->HRB, 0, ',', '.') }}</td>
+                                <td class="py-3 px-4 text-center">{{ $row->supplier }}</td>
                                 <td class="py-3 px-4 text-center">{{ $row->tgl_masuk?->translatedFormat('d M Y') ?? '-' }}</td>
                                 <td class="py-3 px-4 text-center">{{ $row->tgl_keluar?->translatedFormat('d M Y') ?? '-' }}</td>
                                 <td class="py-3 px-4 text-center">{{ $row->nama_gudang }}</td>
@@ -147,7 +151,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-6 text-center text-gray-500">Data tidak ditemukan</td>
+                                <td colspan="8" class="py-6 text-center text-gray-500">Data tidak ditemukan</td>
                             </tr>
                         @endforelse
                     </tbody>

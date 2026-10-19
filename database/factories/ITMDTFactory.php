@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\GD;
 use App\Models\ITM;
 use App\Models\ITMDT;
+use App\Models\SPP;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -35,6 +36,7 @@ class ITMDTFactory extends Factory
             'TM' => fake()->date(),
             'HRB' => fake()->numberBetween(100, 12000) * 1000,
             'GD' => fn () => GD::factory(),
+            'SPP' => fn () => SPP::factory(),
             'created_at' => now(),
             'updated_at' => now(),
         ];

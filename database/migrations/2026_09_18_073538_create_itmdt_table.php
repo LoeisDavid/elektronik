@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('TM');
             $table->decimal('HRB', 10, 2);
             $table->string('GD', 10);
+            $table->string('SPP', 10);
             $table->timestamps();
         });
     }

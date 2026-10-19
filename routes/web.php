@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
         // Cek Stok
         Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
         Route::get('/cek-stok/mulai', [OpnameStokController::class, 'pull'])->name('opname.pull');
+        Route::match(['get', 'post'], '/cek-stok/cetak', [OpnameStokController::class, 'cetak'])->name('opname.cetak');
     });
 });
 // User Management View
