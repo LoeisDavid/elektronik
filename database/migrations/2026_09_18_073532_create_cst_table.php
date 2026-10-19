@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('cst', function (Blueprint $table) {
             $table->string('CST', 10)->primary();
             $table->string('DES', 150)->collation('utf8mb4_unicode_ci')->unique();
+            $table->string('AL', 100);
             $table->string('TLP', 20)->unique();
+            $table->string('DS', 15);
             $table->timestamps();
         });
     }

@@ -136,6 +136,14 @@
                             Nomor Telepon
                         </th>
 
+                        <th class="py-2.5 px-4 ">
+                            Alamat
+                        </th>
+
+                        <th class="py-2.5 px-4 ">
+                            Desa
+                        </th>
+
                         <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
@@ -167,6 +175,14 @@
                             {{-- TLP --}}
                             <td class="py-3.5 px-4">
                                 {{ $customer->TLP }}
+                            </td>
+
+                            <td class="py-3.5 px-4">
+                                {{ $customer->AL }}
+                            </td>
+
+                            <td class="py-3.5 px-4">
+                                {{ $customer->ds()->first()->DES }}
                             </td>
 
 

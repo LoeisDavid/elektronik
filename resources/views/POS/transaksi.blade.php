@@ -265,43 +265,66 @@
                             {{-- AKSI --}}
                             <td class="py-3.5 px-4 text-center">
 
-                                <button
-                                    type="button"
-                                    onclick="openStrukModal(this)"
-                                    data-ref="{{ $item->REF_NO }}"
-                                    data-tanggal="{{ $tglDisplay }}"
-                                    data-waktu="{{ $waktuDisplay }}"
-                                    data-kasir="{{ $item->USER ?? 'Kasir' }}"
-                                    data-metode="{{ $metodeDisplay }}"
-                                    data-subtotal="{{ $item->subtotal_calc ?? $item->BRT ?? 0 }}"
-                                    data-diskon-item="{{ $item->item_discount_calc ?? 0 }}"
-                                    data-diskon-global-pct="{{ (float) ($item->POT_1 ?? 0) }}"
-                                    data-diskon-global="{{ $item->global_discount_calc ?? 0 }}"
-                                    data-voucher="{{ $item->voucher_calc ?? 0 }}"
-                                    data-total="{{ $item->BRT ?? 0 }}"
-                                    data-dibayar="{{ $dibayar }}"
-                                    data-kembalian="{{ $kembalian }}"
-                                    data-detail="{{ json_encode($detailArr) }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-lg text-xs font-semibold text-black cursor-pointer transition-all duration-200"
-                                >
-
-                                    <svg
-                                        class="w-3.5 h-3.5 text-current"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        stroke-width="2"
+                                <div class="inline-flex items-center justify-center gap-2">
+                                    {{-- TOMBOL EDIT TRANSAKSI --}}
+                                    <a
+                                        href="{{ route('POS.transaksi.edit', ['id' => $item->REF_NO]) }}"
+                                        title="Edit Transaksi {{ $item->REF_NO }}"
+                                        class="h-8 w-8 border border-gray-400 bg-white hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer text-primary-db"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75V12zm0 5.25h.007v.008H3.75V12.75z"
-                                        />
-                                    </svg>
+                                        <svg
+                                            class="w-4 h-4 text-primary-db"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="2"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                            />
+                                        </svg>
+                                    </a>
 
-                                    <span>Struk</span>
-
-                                </button>
+                                    {{-- TOMBOL LIHAT STRUK --}}
+                                    <button
+                                        type="button"
+                                        onclick="openStrukModal(this)"
+                                        data-ref="{{ $item->REF_NO }}"
+                                        data-tanggal="{{ $tglDisplay }}"
+                                        data-waktu="{{ $waktuDisplay }}"
+                                        data-kasir="{{ $item->USER ?? 'Kasir' }}"
+                                        data-metode="{{ $metodeDisplay }}"
+                                        data-subtotal="{{ $item->subtotal_calc ?? $item->BRT ?? 0 }}"
+                                        data-diskon-item="{{ $item->item_discount_calc ?? 0 }}"
+                                        data-diskon-global-pct="{{ (float) ($item->POT_1 ?? 0) }}"
+                                        data-diskon-global="{{ $item->global_discount_calc ?? 0 }}"
+                                        data-voucher="{{ $item->voucher_calc ?? 0 }}"
+                                        data-ppn="{{ $item->ppn ?? '' }}"
+                                        data-ppn-nominal="{{ $item->ppn_nominal ?? 0 }}"
+                                        data-total="{{ $item->BRT ?? 0 }}"
+                                        data-dibayar="{{ $dibayar }}"
+                                        data-kembalian="{{ $kembalian }}"
+                                        data-detail="{{ json_encode($detailArr) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-800 hover:bg-gray-300 hover:border-gray-900 hover:shadow-xs active:bg-gray-200 rounded-lg text-xs font-semibold text-black cursor-pointer transition-all duration-200"
+                                    >
+                                        <svg
+                                            class="w-3.5 h-3.5 text-current"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="2"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75V12zm0 5.25h.007v.008H3.75V12.75z"
+                                            />
+                                        </svg>
+                                        <span>Struk</span>
+                                    </button>
+                                </div>
 
                             </td>
 
@@ -627,6 +650,12 @@
                         <span id="strukVoucher" class="font-semibold text-red-600">- Rp 0</span>
                     </div>
 
+                    <!-- PPN (Tampil jika ada) -->
+                    <div id="wrapperStrukPPN" class="hidden justify-between text-gray-600">
+                        <span id="labelStrukPPN">PPN</span>
+                        <span id="strukPPN" class="font-semibold text-gray-900">+ Rp 0</span>
+                    </div>
+
                     <!-- Total -->
                     <div class="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
                         <span>Total</span>
@@ -696,6 +725,8 @@
         <input type="hidden" name="discount_item"   id="printDiscountItem">
         <input type="hidden" name="discount_global" id="printDiscountGlobal">
         <input type="hidden" name="voucher"         id="printVoucher">
+        <input type="hidden" name="ppn"             id="printPpn">
+        <input type="hidden" name="ppn_nominal"     id="printPpnNominal">
         <input type="hidden" name="total"           id="printTotal">
         <input type="hidden" name="dibayar"         id="printDibayar">
         <input type="hidden" name="kembalian"       id="printKembalian">
@@ -866,6 +897,8 @@
         const diskonGlobalPct = parseFloat(btn.dataset.diskonGlobalPct) || 0;
         const diskonGlobal = parseFloat(btn.dataset.diskonGlobal) || 0;
         const voucher = parseFloat(btn.dataset.voucher) || 0;
+        const ppn = parseFloat(btn.dataset.ppn) || 0;
+        const ppnNominal = parseFloat(btn.dataset.ppnNominal) || 0;
         const total = parseFloat(btn.dataset.total) || 0;
         const dibayar = parseFloat(btn.dataset.dibayar) || 0;
         const kembalian = parseFloat(btn.dataset.kembalian) || 0;
@@ -881,6 +914,8 @@
             diskonGlobalPct: diskonGlobalPct,
             diskonGlobal: diskonGlobal,
             voucher: voucher,
+            ppn: ppn,
+            ppnNominal: ppnNominal,
             total: total,
             dibayar: dibayar,
             kembalian: kembalian,
@@ -962,6 +997,24 @@
         } else {
             elWrapVoucher.classList.remove('flex');
             elWrapVoucher.classList.add('hidden');
+        }
+
+        // PPN
+        const elWrapPpn = document.getElementById('wrapperStrukPPN');
+        const elPpn = document.getElementById('strukPPN');
+        const elLabelPpn = document.getElementById('labelStrukPPN');
+        if (ppnNominal > 0) {
+            if (elLabelPpn) elLabelPpn.textContent = ppn > 0 ? 'PPN (' + ppn + '%)' : 'PPN';
+            if (elPpn) elPpn.textContent = '+ ' + formatRupiah(ppnNominal);
+            if (elWrapPpn) {
+                elWrapPpn.classList.remove('hidden');
+                elWrapPpn.classList.add('flex');
+            }
+        } else {
+            if (elWrapPpn) {
+                elWrapPpn.classList.remove('flex');
+                elWrapPpn.classList.add('hidden');
+            }
         }
 
         // Total
@@ -1114,6 +1167,12 @@
 
         document.getElementById('printVoucher').value =
             strukAktif.voucher;
+
+        document.getElementById('printPpn').value =
+            strukAktif.ppn || '';
+
+        document.getElementById('printPpnNominal').value =
+            strukAktif.ppnNominal || 0;
 
         document.getElementById('printTotal').value =
             strukAktif.total;

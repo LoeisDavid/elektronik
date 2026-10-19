@@ -30,10 +30,11 @@ class kasirController extends Controller
      */
     public function index()
     {
-        // Ambil data keranjang, voucher, dan diskon dari session
+        // Ambil data keranjang, voucher, diskon, dan PPN dari session
         $cart = session()->get('cart', []);
         $voucher = session()->get('voucher', 0);
         $discountPercent = session()->get('discount_percent', 0);
+        $ppn = session()->get('ppn', null);
 
         // Status kasir ditentukan dari database (shift aktif)
         $activeKas = $this->kasAktif();
@@ -51,7 +52,7 @@ class kasirController extends Controller
         $customers = CST::select('CST', 'DES', 'TLP')->get();
         $salesList = SLS::select('SLS', 'DES', 'HP')->get();
 
-        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'isKasirOpen', 'activeKas', 'customers', 'salesList'));
+        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'ppn', 'isKasirOpen', 'activeKas', 'customers', 'salesList'));
     }
 
     /**
@@ -299,6 +300,8 @@ class kasirController extends Controller
         $cart = $request->input('cart', session()->get('cart', []));
         $voucherAmount = max(0, (float) ($request->input('voucher', session()->get('voucher', 0))));
         $discountPercent = min(100, max(0, (float) ($request->input('discount_percent', session()->get('discount_percent', 0)))));
+        $ppnInput = $request->input('ppn', session()->get('ppn', null));
+        $ppnPercent = ($ppnInput !== null && $ppnInput !== '') ? min(100, max(0, (int) $ppnInput)) : null;
         $paymentMethod = $request->input('payment_method', 'tunai');
         $bankName = $request->input('bank_name', null);
         $nominalBayar = (float) ($request->input('nominal_bayar', 0));
@@ -329,7 +332,9 @@ class kasirController extends Controller
         }
 
         $diskonTransaksiNominal = $subtotal * ($discountPercent / 100);
-        $grandTotal = max(0, $subtotal - $voucherAmount - $diskonTransaksiNominal);
+        $totalSetelahDiskon = max(0, $subtotal - $voucherAmount - $diskonTransaksiNominal);
+        $ppnNominal = ($ppnPercent !== null && $ppnPercent > 0) ? ($totalSetelahDiskon * ($ppnPercent / 100)) : 0;
+        $grandTotal = $totalSetelahDiskon + $ppnNominal;
 
         try {
             DB::beginTransaction();
@@ -421,7 +426,7 @@ class kasirController extends Controller
                     'POT_1'  => $pot1 > 0 ? $pot1 : null,
                     'POT_2'  => null,
                     'POT_R'  => $potR > 0 ? $potR : null,
-                    'PPN'    => null,
+                    'PPN'    => ($ppnPercent !== null && $ppnPercent > 0) ? $ppnPercent : null,
                     'BRT'    => $brtItem,
                 ]);
 
@@ -440,7 +445,7 @@ class kasirController extends Controller
             $kas->save();
 
             // Kosongkan keranjang setelah berhasil dibayar
-            session()->forget(['cart', 'voucher', 'discount_percent']);
+            session()->forget(['cart', 'voucher', 'discount_percent', 'ppn']);
 
             DB::commit();
 
@@ -455,6 +460,8 @@ class kasirController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_global'  => $diskonTransaksiNominal,
                 'voucher'          => $voucherAmount,
+                'ppn_percent'      => $ppnPercent,
+                'ppn_nominal'      => $ppnNominal,
                 'grand_total'      => $grandTotal,
                 'dibayar'          => $nominalBayar,
                 'kembalian'        => $kembalian,
@@ -479,6 +486,8 @@ class kasirController extends Controller
         $cart = $request->input('cart', []);
         $voucher = max(0, (float) $request->input('voucher', 0));
         $discountPercent = min(100, max(0, (float) $request->input('discount_percent', 0)));
+        $ppn = $request->input('ppn');
+        $ppnValue = ($ppn !== null && $ppn !== '') ? min(100, max(0, (int) $ppn)) : null;
 
         if (is_array($cart)) {
             foreach ($cart as $k => $item) {
@@ -494,6 +503,11 @@ class kasirController extends Controller
         session()->put('cart', $cart);
         session()->put('voucher', $voucher);
         session()->put('discount_percent', $discountPercent);
+        if ($ppnValue !== null) {
+            session()->put('ppn', $ppnValue);
+        } else {
+            session()->forget('ppn');
+        }
 
         return response()->json([
             'success' => true,
@@ -506,7 +520,7 @@ class kasirController extends Controller
      */
     public function clearCart()
     {
-        session()->forget(['cart', 'voucher', 'discount_percent']);
+        session()->forget(['cart', 'voucher', 'discount_percent', 'ppn']);
         return redirect()->route('POS.kasir')->with('info', 'Keranjang berhasil dikosongkan.');
     }
 }

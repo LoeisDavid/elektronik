@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ACR;
+use App\Models\STS;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ACRController extends Controller
@@ -109,6 +111,12 @@ class ACRController extends Controller
                 $totPot = (float) ($acr->TOT_POT ?? ($acr->POT_R ?? 0));
                 $voucherCalc = max(0, $totPot - $totalItemDiscount - $globalDiscNominal);
                 $acr->voucher_calc = $voucherCalc;
+
+                $totalSetelahDiskon = max(0, $rawSubtotal - $totalItemDiscount - $globalDiscNominal - $voucherCalc);
+                $firstStsWithPpn = $acr->sts()->firstWhere(fn ($s) => $s->PPN !== null);
+                $ppnVal = $firstStsWithPpn ? (int) $firstStsWithPpn->PPN : null;
+                $acr->ppn = $ppnVal;
+                $acr->ppn_nominal = ($ppnVal !== null && $ppnVal > 0) ? ($totalSetelahDiskon * ($ppnVal / 100)) : 0;
             }
 
             return view('POS.transaksi', compact('data'));
@@ -135,6 +143,8 @@ class ACRController extends Controller
                 'discount_item'   => 'nullable|numeric',
                 'discount_global' => 'nullable|numeric',
                 'voucher'         => 'nullable|numeric',
+                'ppn'             => 'nullable|numeric',
+                'ppn_nominal'     => 'nullable|numeric',
                 'total'           => 'required|numeric',
                 'dibayar'         => 'nullable|numeric',
                 'kembalian'       => 'nullable|numeric',
@@ -174,6 +184,8 @@ class ACRController extends Controller
                 'discount_item'   => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
                 'discount_global' => $request->filled('discount_global') ? (float) $request->input('discount_global') : 0,
                 'voucher'         => $request->filled('voucher') ? (float) $request->input('voucher') : 0,
+                'ppn'             => $request->filled('ppn') ? (float) $request->input('ppn') : null,
+                'ppn_nominal'     => $request->filled('ppn_nominal') ? (float) $request->input('ppn_nominal') : 0,
                 'total'           => (float) $request->input('total'),
                 'dibayar'         => $request->filled('dibayar') ? (float) $request->input('dibayar') : null,
                 'kembalian'       => $request->filled('kembalian') ? (float) $request->input('kembalian') : null,
@@ -191,6 +203,159 @@ class ACRController extends Controller
             return $pdf->stream($namaFile);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan struk');
+        }
+    }
+
+    /**
+     * Halaman edit untuk transaksi: mengubah harga jual, diskon, dan PPN setiap item
+     */
+    public function edit(string $id)
+    {
+        try {
+            $refNo = urldecode($id);
+            $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
+            $items = $acr->sts();
+
+            $customer = $acr->cst();
+            $sales = $acr->sls();
+
+            // Hitung breakdown saat ini
+            $rawSubtotal = 0;
+            $totalItemDiscount = 0;
+            $ppnPercent = null;
+
+            foreach ($items as $item) {
+                $hgj = (float) ($item->HGJ ?? 0);
+                $pot1 = (float) ($item->POT_1 ?? 0);
+                $potR = (float) ($item->POT_R ?? 0);
+                $rawSubtotal += $hgj;
+                $discPctNominal = $hgj * ($pot1 / 100);
+                $totalItemDiscount += ($discPctNominal + $potR);
+                if ($item->PPN !== null && $ppnPercent === null) {
+                    $ppnPercent = (int) $item->PPN;
+                }
+            }
+
+            $globalPct = (float) ($acr->POT_1 ?? 0);
+            $afterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
+            $globalDiscNominal = $afterItemDisc * ($globalPct / 100);
+
+            $totPot = (float) ($acr->TOT_POT ?? ($acr->POT_R ?? 0));
+            $voucherCalc = max(0, $totPot - $totalItemDiscount - $globalDiscNominal);
+            $totalSetelahDiskon = max(0, $afterItemDisc - $voucherCalc - $globalDiscNominal);
+
+            $ppnNominal = ($ppnPercent !== null && $ppnPercent > 0) ? ($totalSetelahDiskon * ($ppnPercent / 100)) : 0;
+
+            return view('POS.transaksi-edit', compact(
+                'acr',
+                'items',
+                'customer',
+                'sales',
+                'rawSubtotal',
+                'totalItemDiscount',
+                'globalPct',
+                'globalDiscNominal',
+                'voucherCalc',
+                'ppnPercent',
+                'ppnNominal'
+            ));
+        } catch (\Exception $e) {
+            return redirect()->route('POS.transaksi')->with('error', 'Transaksi tidak ditemukan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Memperbarui rincian transaksi (harga jual, diskon item, diskon global, dan PPN)
+     */
+    public function update(Request $request, string $id)
+    {
+        $refNo = urldecode($id);
+        $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
+
+        $request->validate([
+            'items'            => 'required|array|min:1',
+            'items.*.rec'      => 'required|string',
+            'items.*.hgj'      => 'required|numeric|min:0',
+            'items.*.pot_1'    => 'nullable|numeric|min:0|max:100',
+            'items.*.pot_r'    => 'nullable|numeric|min:0',
+            'ppn'              => 'nullable|numeric|min:0|max:100',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'voucher'          => 'nullable|numeric|min:0',
+        ], [
+            'items.*.hgj.required' => 'Harga jual wajib diisi.',
+            'items.*.hgj.min'      => 'Harga jual tidak boleh kurang dari 0.',
+            'items.*.pot_1.max'    => 'Diskon persen item maksimal 100%.',
+            'ppn.max'              => 'PPN maksimal 100%.',
+            'discount_percent.max' => 'Diskon global maksimal 100%.',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // PPN Global: cukup 1 input, semua item STS mengikuti PPN ini
+            $globalPpn = $request->filled('ppn') ? min(100, max(0, (int) $request->input('ppn'))) : null;
+
+            $rawSubtotal = 0;
+            $totalItemDiscount = 0;
+            $itemsData = $request->input('items', []);
+
+            foreach ($itemsData as $data) {
+                $rec = $data['rec'];
+                $sts = STS::where('REF_NO', $acr->REF_NO)->where('REC', $rec)->firstOrFail();
+
+                $hgj = max(0, (float) ($data['hgj'] ?? 0));
+                $pot1 = isset($data['pot_1']) && $data['pot_1'] !== '' ? min(100, max(0, (float) $data['pot_1'])) : null;
+                $potR = isset($data['pot_r']) && $data['pot_r'] !== '' ? max(0, (float) $data['pot_r']) : null;
+
+                $discPctNominal = $pot1 ? ($hgj * ($pot1 / 100)) : 0;
+                $discNominal = $potR ?? 0;
+                $brtItem = max(0, $hgj - $discPctNominal - $discNominal);
+
+                // Update STS dengan harga jual, diskon item, dan PPN global
+                $sts->update([
+                    'HGJ'   => $hgj,
+                    'POT_1' => ($pot1 !== null && $pot1 > 0) ? (int) $pot1 : null,
+                    'POT_R' => ($potR !== null && $potR > 0) ? $potR : null,
+                    'PPN'   => ($globalPpn !== null && $globalPpn > 0) ? $globalPpn : null,
+                    'BRT'   => $brtItem,
+                ]);
+
+                $rawSubtotal += $hgj;
+                $totalItemDiscount += ($discPctNominal + $discNominal);
+            }
+
+            // Diskon transaksi global & Voucher transaksi
+            $globalPct = $request->filled('discount_percent') ? min(100, max(0, (float) $request->input('discount_percent'))) : 0;
+            $voucherGlobal = $request->filled('voucher') ? max(0, (float) $request->input('voucher')) : 0;
+
+            $subtotalAfterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
+            $globalDiscNominal = $subtotalAfterItemDisc * ($globalPct / 100);
+            $totalSetelahDiskon = max(0, $subtotalAfterItemDisc - $voucherGlobal - $globalDiscNominal);
+
+            // PPN dihitung setelah menjumlahkan total semua barang dan setelah mengurangi total barang dari diskon
+            $ppnRate = ($globalPpn !== null && $globalPpn > 0) ? $globalPpn : 0;
+            $ppnNominal = $ppnRate > 0 ? ($totalSetelahDiskon * ($ppnRate / 100)) : 0;
+
+            $newGrandTotal = $totalSetelahDiskon + $ppnNominal;
+            $oldGrandTotal = (float) $acr->BRT;
+            $selisih = $newGrandTotal - $oldGrandTotal;
+
+            $totalAllPotongan = $totalItemDiscount + $voucherGlobal + $globalDiscNominal;
+
+            $acr->update([
+                'BRT'     => $newGrandTotal,
+                'PAY'     => max($newGrandTotal, (float) $acr->PAY + $selisih),
+                'TOT_POT' => $totalAllPotongan,
+                'POT_1'   => $globalPct > 0 ? (int) $globalPct : null,
+                'POT_R'   => ($voucherGlobal + $totalItemDiscount) > 0 ? ($voucherGlobal + $totalItemDiscount) : null,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('POS.transaksi')->with('success', "Transaksi {$acr->REF_NO} berhasil diperbarui.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui transaksi: ' . $e->getMessage())->withInput();
         }
     }
 }
