@@ -287,6 +287,13 @@
                                         </svg>
                                     </a>
 
+                                    @php
+                                        $cstModel = $item->cst();
+                                        $dsModel = $cstModel ? \App\Models\DS::where('DS', $cstModel->DS)->first() : null;
+                                        $cstNama = $cstModel?->DES ?? '';
+                                        $cstAlamat = $cstModel?->AL ?? '';
+                                        $cstDesa = $dsModel?->DES ?? '';
+                                    @endphp
                                     {{-- TOMBOL LIHAT STRUK --}}
                                     <button
                                         type="button"
@@ -295,6 +302,9 @@
                                         data-tanggal="{{ $tglDisplay }}"
                                         data-waktu="{{ $waktuDisplay }}"
                                         data-kasir="{{ $item->USER ?? 'Kasir' }}"
+                                        data-customer-nama="{{ $cstNama }}"
+                                        data-customer-desa="{{ $cstDesa }}"
+                                        data-customer-alamat="{{ $cstAlamat }}"
                                         data-metode="{{ $metodeDisplay }}"
                                         data-subtotal="{{ $item->subtotal_calc ?? $item->BRT ?? 0 }}"
                                         data-diskon-item="{{ $item->item_discount_calc ?? 0 }}"
@@ -613,6 +623,13 @@
                     <p id="strukTanggal">-</p>
                     <p id="strukWaktu">-</p>
                     <p>Dilayani oleh: <span id="strukKasir" class="text-gray-800 font-semibold">Kasir</span></p>
+
+                    {{-- Info Pelanggan, Desa & Alamat --}}
+                    <div id="wrapperStrukPelanggan" class="hidden pt-1 mt-1 border-t border-dashed border-gray-200 space-y-0.5 text-xs text-gray-500 font-medium">
+                        <p id="rowStrukCustomerNama" class="hidden">Pelanggan: <span id="strukCustomerNama" class="text-gray-800 font-semibold">-</span></p>
+                        <p id="rowStrukCustomerDesa" class="hidden">Desa: <span id="strukCustomerDesa" class="text-gray-800 font-semibold">-</span></p>
+                        <p id="rowStrukCustomerAlamat" class="hidden">Alamat: <span id="strukCustomerAlamat" class="text-gray-800 font-semibold">-</span></p>
+                    </div>
                 </div>
 
                 <div class="border-b border-dashed border-gray-300 my-2"></div>
@@ -727,9 +744,9 @@
         <input type="hidden" name="voucher"         id="printVoucher">
         <input type="hidden" name="ppn"             id="printPpn">
         <input type="hidden" name="ppn_nominal"     id="printPpnNominal">
-        <input type="hidden" name="total"           id="printTotal">
-        <input type="hidden" name="dibayar"         id="printDibayar">
-        <input type="hidden" name="kembalian"       id="printKembalian">
+        <input type="hidden" name="customer_nama"   id="printCustomerNama">
+        <input type="hidden" name="customer_desa"   id="printCustomerDesa">
+        <input type="hidden" name="customer_alamat" id="printCustomerAlamat">
         <input type="hidden" name="items"           id="printItems">
     </form>
 
@@ -902,12 +919,18 @@
         const total = parseFloat(btn.dataset.total) || 0;
         const dibayar = parseFloat(btn.dataset.dibayar) || 0;
         const kembalian = parseFloat(btn.dataset.kembalian) || 0;
+        const customerNama = btn.dataset.customerNama || '';
+        const customerDesa = btn.dataset.customerDesa || '';
+        const customerAlamat = btn.dataset.customerAlamat || '';
 
         strukAktif = {
             ref: refNo,
             tanggal: tanggal,
             waktu: waktu,
             kasir: kasir,
+            customer_nama: customerNama,
+            customer_desa: customerDesa,
+            customer_alamat: customerAlamat,
             metode: metode,
             subtotal: subtotal,
             diskonItem: diskonItem,
@@ -927,6 +950,73 @@
         document.getElementById('strukWaktu').textContent = waktu;
         document.getElementById('strukKasir').textContent = kasir;
         document.getElementById('strukMetode').textContent = metode;
+
+        // Render Info Pelanggan, Desa & Alamat
+        const wrapPelanggan = document.getElementById('wrapperStrukPelanggan');
+        const rowCstNama = document.getElementById('rowStrukCustomerNama');
+        const elCstNama = document.getElementById('strukCustomerNama');
+        const rowCstDesa = document.getElementById('rowStrukCustomerDesa');
+        const elCstDesa = document.getElementById('strukCustomerDesa');
+        const rowCstAlamat = document.getElementById('rowStrukCustomerAlamat');
+        const elCstAlamat = document.getElementById('strukCustomerAlamat');
+
+        if (wrapPelanggan) {
+            const rawNama = customerNama.trim();
+            const rawDesa = customerDesa.trim();
+            const rawAlamat = customerAlamat.trim();
+
+            const norm = (s) => (s || '')
+                .toLowerCase()
+                .replace(/^(ds\.|desa\s+|dusun\s+)/i, '')
+                .replace(/[^a-z0-9]/g, '');
+
+            const normDesa = norm(rawDesa);
+            const normNama = norm(rawNama);
+            const normAlamat = norm(rawAlamat);
+
+            const isNamaLikeDesa = !normNama || normNama === '-' || (normDesa && (normNama === normDesa || normNama.includes(normDesa)));
+            const isAlamatLikeDesa = !normAlamat || normAlamat === '-' || (normDesa && (normAlamat === normDesa || normAlamat.includes(normDesa)));
+
+            let showNama = false;
+            let showDesa = false;
+            let showAlamat = false;
+
+            if (isNamaLikeDesa && isAlamatLikeDesa) {
+                // Jika nama pelanggan dan alamat memiliki nama seperti nama desa maka tidak usah ditampilkan cukup nama desanya saja
+                showDesa = !!rawDesa && rawDesa !== '-';
+            } else {
+                showNama = !isNamaLikeDesa && !!rawNama && rawNama !== '-';
+                showDesa = !!rawDesa && rawDesa !== '-';
+                showAlamat = !isAlamatLikeDesa && !!rawAlamat && rawAlamat !== '-';
+            }
+
+            if (showNama && elCstNama && rowCstNama) {
+                elCstNama.textContent = rawNama;
+                rowCstNama.classList.remove('hidden');
+            } else if (rowCstNama) {
+                rowCstNama.classList.add('hidden');
+            }
+
+            if (showDesa && elCstDesa && rowCstDesa) {
+                elCstDesa.textContent = rawDesa;
+                rowCstDesa.classList.remove('hidden');
+            } else if (rowCstDesa) {
+                rowCstDesa.classList.add('hidden');
+            }
+
+            if (showAlamat && elCstAlamat && rowCstAlamat) {
+                elCstAlamat.textContent = rawAlamat;
+                rowCstAlamat.classList.remove('hidden');
+            } else if (rowCstAlamat) {
+                rowCstAlamat.classList.add('hidden');
+            }
+
+            if (showNama || showDesa || showAlamat) {
+                wrapPelanggan.classList.remove('hidden');
+            } else {
+                wrapPelanggan.classList.add('hidden');
+            }
+        }
 
         // Render List Produk
         const list = document.getElementById('strukListProduk');
@@ -1182,6 +1272,15 @@
 
         document.getElementById('printKembalian').value =
             isTunai ? strukAktif.kembalian : '';
+
+        document.getElementById('printCustomerNama').value =
+            strukAktif.customer_nama || '';
+
+        document.getElementById('printCustomerDesa').value =
+            strukAktif.customer_desa || '';
+
+        document.getElementById('printCustomerAlamat').value =
+            strukAktif.customer_alamat || '';
 
         document.getElementById('printItems').value =
             JSON.stringify(items);

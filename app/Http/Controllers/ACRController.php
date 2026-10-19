@@ -138,6 +138,9 @@ class ACRController extends Controller
                 'tanggal'         => 'nullable|string|max:50',
                 'waktu'           => 'nullable|string|max:20',
                 'kasir'           => 'nullable|string|max:50',
+                'customer_nama'   => 'nullable|string|max:100',
+                'customer_desa'   => 'nullable|string|max:100',
+                'customer_alamat' => 'nullable|string|max:255',
                 'metode'          => 'nullable|string|max:30',
                 'subtotal'        => 'nullable|numeric',
                 'discount_item'   => 'nullable|numeric',
@@ -174,11 +177,29 @@ class ACRController extends Controller
                 ];
             }
 
+            // Fallback cari data customer dari database jika tidak dikirim dari form
+            $customerNama = $request->input('customer_nama');
+            $customerDesa = $request->input('customer_desa');
+            $customerAlamat = $request->input('customer_alamat');
+
+            if (empty($customerNama) && empty($customerDesa)) {
+                $acrObj = ACR::where('REF_NO', $request->input('ref_no'))->first();
+                $cstObj = $acrObj?->cst();
+                $dsObj = $cstObj ? \App\Models\DS::where('DS', $cstObj->DS)->first() : null;
+
+                $customerNama = $cstObj?->DES ?? '';
+                $customerAlamat = $cstObj?->AL ?? '';
+                $customerDesa = $dsObj?->DES ?? '';
+            }
+
             $struk = [
                 'ref_no'          => $request->input('ref_no'),
                 'tanggal'         => $request->input('tanggal'),
                 'waktu'           => $request->input('waktu'),
                 'kasir'           => $request->input('kasir'),
+                'customer_nama'   => $customerNama,
+                'customer_desa'   => $customerDesa,
+                'customer_alamat' => $customerAlamat,
                 'metode'          => $request->input('metode'),
                 'subtotal'        => $request->filled('subtotal') ? (float) $request->input('subtotal') : null,
                 'discount_item'   => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
@@ -192,8 +213,8 @@ class ACRController extends Controller
                 'items'           => $items,
             ];
 
-            // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item
-            $tinggi = 420 + (count($items) * 36);
+            // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item + info customer
+            $tinggi = 460 + (count($items) * 36);
 
             $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
                 ->setPaper([0, 0, 226.77, $tinggi], 'portrait');

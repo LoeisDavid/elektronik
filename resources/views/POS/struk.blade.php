@@ -29,6 +29,13 @@
                 <p id="strukTanggal">21 Sep 2026</p>
                 <p id="strukWaktu">22.31</p>
                 <p>Dilayani oleh: <span id="strukKasir" class="text-gray-800 font-semibold">Kasir</span></p>
+                
+                {{-- Info Pelanggan, Desa & Alamat --}}
+                <div id="wrapperStrukPelanggan" class="hidden pt-1 mt-1 border-t border-dashed border-gray-200 space-y-0.5 text-xs text-gray-500 font-medium">
+                    <p id="rowStrukCustomerNama" class="hidden">Pelanggan: <span id="strukCustomerNama" class="text-gray-800 font-semibold">-</span></p>
+                    <p id="rowStrukCustomerDesa" class="hidden">Desa: <span id="strukCustomerDesa" class="text-gray-800 font-semibold">-</span></p>
+                    <p id="rowStrukCustomerAlamat" class="hidden">Alamat: <span id="strukCustomerAlamat" class="text-gray-800 font-semibold">-</span></p>
+                </div>
             </div>
 
             <div class="border-b border-dashed border-gray-300 my-2"></div>
