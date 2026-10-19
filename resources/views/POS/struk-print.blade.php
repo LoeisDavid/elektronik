@@ -96,6 +96,45 @@
             <div>{{ $struk['waktu'] }}</div>
         @endif
         <div>Dilayani oleh: <span class="bold value">{{ $struk['kasir'] ?: 'Kasir' }}</span></div>
+
+        @php
+            $cstNama = trim($struk['customer_nama'] ?? '');
+            $cstDesa = trim($struk['customer_desa'] ?? '');
+            $cstAlamat = trim($struk['customer_alamat'] ?? '');
+
+            $norm = fn($s) => preg_replace('/[^a-z0-9]/', '', preg_replace('/^(ds\.|desa\s+|dusun\s+)/i', '', strtolower($s ?? '')));
+            $normDesa = $norm($cstDesa);
+            $normNama = $norm($cstNama);
+            $normAlamat = $norm($cstAlamat);
+
+            $isNamaLikeDesa = empty($normNama) || $normNama === '-' || (!empty($normDesa) && ($normNama === $normDesa || str_contains($normNama, $normDesa)));
+            $isAlamatLikeDesa = empty($normAlamat) || $normAlamat === '-' || (!empty($normDesa) && ($normAlamat === $normDesa || str_contains($normAlamat, $normDesa)));
+
+            if ($isNamaLikeDesa && $isAlamatLikeDesa) {
+                // Jika nama pelanggan dan alamat memiliki nama seperti nama desa maka tidak usah ditampilkan cukup nama desanya saja
+                $showNama = false;
+                $showAlamat = false;
+                $showDesa = !empty($cstDesa) && $cstDesa !== '-';
+            } else {
+                $showNama = !$isNamaLikeDesa && !empty($cstNama) && $cstNama !== '-';
+                $showDesa = !empty($cstDesa) && $cstDesa !== '-';
+                $showAlamat = !$isAlamatLikeDesa && !empty($cstAlamat) && $cstAlamat !== '-';
+            }
+        @endphp
+
+        @if ($showNama || $showDesa || $showAlamat)
+            <div style="margin-top: 3px; padding-top: 3px; border-top: 1px dashed #d1d5db;">
+                @if ($showNama)
+                    <div>Pelanggan: <span class="bold value">{{ $cstNama }}</span></div>
+                @endif
+                @if ($showDesa)
+                    <div>Desa: <span class="bold value">{{ $cstDesa }}</span></div>
+                @endif
+                @if ($showAlamat)
+                    <div>Alamat: <span class="bold value">{{ $cstAlamat }}</span></div>
+                @endif
+            </div>
+        @endif
     </div>
 
     <div class="garis"></div>

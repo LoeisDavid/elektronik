@@ -8,6 +8,7 @@ use App\Models\ITMDT;
 use App\Models\ACR;
 use App\Models\STS;
 use App\Models\CST;
+use App\Models\DS;
 use App\Models\SLS;
 use App\Models\KAS;
 use Illuminate\Support\Facades\DB;
@@ -360,13 +361,16 @@ class kasirController extends Controller
 
             // Dapatkan Customer CST
             $cst = 'CST0000001';
+            $cstObj = null;
             if ($pelangganInput) {
                 $foundCst = CST::where('DES', $pelangganInput)->orWhere('CST', $pelangganInput)->first();
                 if ($foundCst) {
                     $cst = $foundCst->CST;
+                    $cstObj = $foundCst;
                 }
             } else {
-                $cst = CST::first()?->CST ?? 'CST0000001';
+                $cstObj = CST::first();
+                $cst = $cstObj?->CST ?? 'CST0000001';
             }
 
             // Dapatkan Sales SLS
@@ -451,6 +455,11 @@ class kasirController extends Controller
 
             $kembalian = max(0, $nominalBayar - $grandTotal);
 
+            $dsObj = $cstObj ? DS::where('DS', $cstObj->DS)->first() : null;
+            $customerNama = $cstObj?->DES ?? '-';
+            $customerAlamat = $cstObj?->AL ?? '-';
+            $customerDesa = $dsObj?->DES ?? '-';
+
             return response()->json([
                 'success'          => true,
                 'message'          => 'Pembayaran berhasil disimpan.',
@@ -466,6 +475,9 @@ class kasirController extends Controller
                 'dibayar'          => $nominalBayar,
                 'kembalian'        => $kembalian,
                 'kasir'            => $user,
+                'customer_nama'    => $customerNama,
+                'customer_alamat'  => $customerAlamat,
+                'customer_desa'    => $customerDesa,
                 'tanggal'          => now()->translatedFormat('d M Y'),
                 'waktu'            => now()->format('H.i'),
             ]);

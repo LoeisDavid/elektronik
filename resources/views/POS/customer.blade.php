@@ -182,7 +182,7 @@
                             </td>
 
                             <td class="py-3.5 px-4">
-                                {{ $customer->ds()->first()->DES }}
+                                {{ $customer->ds()->first()?->DES ?? '-' }}
                             </td>
 
 
@@ -227,6 +227,8 @@
                                             data-cst="{{ $customer->CST }}"
                                             data-des="{{ $customer->DES }}"
                                             data-tlp="{{ $customer->TLP }}"
+                                            data-al="{{ $customer->AL }}"
+                                            data-ds="{{ $customer->DS }}"
                                             data-action="{{ route('POS.customer.update', ['id' => $customer->CST]) }}"
                                             onclick="openEditModal(this)"
                                             class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
@@ -299,7 +301,7 @@
                         <tr>
 
                             <td
-                                colspan="4"
+                                colspan="6"
                                 class="py-8 text-center text-gray-500 text-sm"
                             >
                                 Tidak ada customer.
@@ -561,7 +563,7 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
+            class="relative w-full max-w-md bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
         >
 
             <h2 class="text-2xl font-bold mb-5">
@@ -618,6 +620,46 @@
 
                 </div>
 
+                {{-- DS (Desa) --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Desa
+                    </label>
+                    <select
+                        id="selectDesaTambah"
+                        name="DS"
+                        required
+                        class="searchable-select w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                        <option value="" disabled {{ old('DS') ? '' : 'selected' }}>Pilih Desa</option>
+                        @foreach ($desaList as $d)
+                            <option value="{{ $d->DS }}" {{ old('DS') == $d->DS ? 'selected' : '' }}>
+                                {{ $d->DES }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('DS')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- AL (Alamat) --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Alamat
+                    </label>
+                    <textarea
+                        name="AL"
+                        rows="2"
+                        required
+                        placeholder="Masukkan alamat customer"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none"
+                    >{{ old('AL') }}</textarea>
+                    @error('AL')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
 
                 <div class="pt-4 flex items-center gap-3">
 
@@ -662,7 +704,7 @@
 
 
         <div
-            class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black"
+            class="relative w-full max-w-md bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
         >
 
             <h2 class="text-2xl font-bold mb-5">
@@ -733,6 +775,47 @@
                 @enderror
             </div>
 
+            {{-- DS (Desa) --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-black">
+                    Desa
+                </label>
+                <select
+                    id="editDS"
+                    name="DS"
+                    required
+                    class="searchable-select w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                >
+                    <option value="" disabled {{ $errors->editCustomer->any() && old('DS') ? '' : 'selected' }}>Pilih Desa</option>
+                    @foreach ($desaList as $d)
+                        <option value="{{ $d->DS }}" {{ $errors->editCustomer->any() && old('DS') == $d->DS ? 'selected' : '' }}>
+                            {{ $d->DES }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('DS', 'editCustomer')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- AL (Alamat) --}}
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-black">
+                    Alamat
+                </label>
+                <textarea
+                    id="editAL"
+                    name="AL"
+                    rows="2"
+                    required
+                    placeholder="Masukkan alamat customer"
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none"
+                >{{ $errors->editCustomer->any() ? old('AL') : '' }}</textarea>
+                @error('AL', 'editCustomer')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             {{-- Action Buttons --}}
             <div class="pt-4 flex items-center gap-3">
                 <button
@@ -798,11 +881,24 @@
         }
     });
 
+    // ---------- Select2 Helper ----------
+    function initSelect2(modalId) {
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            $('#' + modalId).find('select.searchable-select').each(function () {
+                $(this).select2({
+                    width: '100%',
+                    dropdownParent: $('#' + modalId)
+                });
+            });
+        }
+    }
+
     // ---------- Modal tambah ----------
     function openTambahModal() {
         const modal = document.getElementById('tambahCustomerModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        initSelect2('tambahCustomerModal');
     }
 
     function closeTambahModal() {
@@ -832,6 +928,7 @@
         document.getElementById('editCST').value = button.dataset.cst;
         document.getElementById('editDES').value = button.dataset.des;
         document.getElementById('editTLP').value = button.dataset.tlp;
+        document.getElementById('editAL').value = button.dataset.al || '';
         document.getElementById('editCustomerForm').action = button.dataset.action;
 
         document.querySelectorAll('.action-menu').forEach(function (menu) {
@@ -841,6 +938,13 @@
         const modal = document.getElementById('editCustomerModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        initSelect2('editCustomerModal');
+
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            $('#editDS').val(button.dataset.ds || '').trigger('change');
+        } else {
+            document.getElementById('editDS').value = button.dataset.ds || '';
+        }
     }
 
     function closeEditModal() {
@@ -848,6 +952,15 @@
         modal.classList.remove('flex');
         modal.classList.add('hidden');
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!document.getElementById('tambahCustomerModal').classList.contains('hidden')) {
+            initSelect2('tambahCustomerModal');
+        }
+        if (!document.getElementById('editCustomerModal').classList.contains('hidden')) {
+            initSelect2('editCustomerModal');
+        }
+    });
 
 </script>
 

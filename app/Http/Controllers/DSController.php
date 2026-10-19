@@ -4,38 +4,74 @@ namespace App\Http\Controllers;
 
 use App\Models\DS;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 
 class DSController extends Controller
 {
     /**
-     * Halaman index untuk menampilkan data desa.
+     * Halaman index untuk menampilkan data desa beserta total transaksi dan total pembelian.
+     * Relasi: ds -> cst -> acr -> sts.
      */
     public function index(Request $request)
     {
         try {
-            $query = DS::query();
+            // Mengambil data desa dengan akumulasi transaksi via cst -> acr -> sts
+            $baseQuery = DB::table('ds')
+                ->leftJoin('cst', 'cst.DS', '=', 'ds.DS')
+                ->leftJoin('acr', 'acr.CST', '=', 'cst.CST')
+                ->leftJoin('sts', 'sts.REF_NO', '=', 'acr.REF_NO')
+                ->select(
+                    'ds.DS',
+                    'ds.DES',
+                    'ds.created_at',
+                    DB::raw('COUNT(DISTINCT acr.REF_NO) as total_transaksi'),
+                    DB::raw('COALESCE(SUM(sts.BRT), 0) as total_nominal')
+                )
+                ->groupBy('ds.DS', 'ds.DES', 'ds.created_at');
 
+            $query = DS::fromSub($baseQuery, 'ds');
+
+            // -------------------------------------------------------------
+            // SEARCH: Nama desa, banyaknya transaksi, dan nominalnya
+            // -------------------------------------------------------------
             if ($request->filled('keyword')) {
-                $keyword = trim((string) $request->keyword);
-                $query->where(function ($q) use ($keyword) {
-                    $q->where('DES', 'LIKE', "%{$keyword}%")
-                      ->orWhere('DS', 'LIKE', "%{$keyword}%");
+                $rawKeyword = trim((string) $request->keyword);
+                $cleanDigits = preg_replace('/[^0-9]/', '', $rawKeyword);
+
+                $query->where(function ($q) use ($rawKeyword, $cleanDigits) {
+                    $q->where('DES', 'LIKE', "%{$rawKeyword}%")
+                      ->orWhere('DS', 'LIKE', "%{$rawKeyword}%");
+
+                    // Pencarian banyaknya transaksi (jika keyword numerik murni)
+                    if (is_numeric($rawKeyword)) {
+                        $q->orWhere('total_transaksi', (int) $rawKeyword);
+                    }
+
+                    // Pencarian nominal
+                    if ($cleanDigits !== '') {
+                        $q->orWhere('total_nominal', 'LIKE', "%{$cleanDigits}%");
+                    }
                 });
             }
 
+            // -------------------------------------------------------------
+            // FILTER / SORT: Nama desa, banyaknya transaksi, dan nominalnya
+            // -------------------------------------------------------------
             $sort = $request->query('sort', 'a-z');
 
             if ($sort === 'a-z') {
                 $query->orderBy('DES', 'asc');
             } elseif ($sort === 'z-a') {
                 $query->orderBy('DES', 'desc');
-            } elseif ($sort === 'terbanyak') {
-                // Placeholder sort untuk terbanyak (dapat disesuaikan jika relasi transaksi sudah tersedia)
-                $query->orderBy('created_at', 'desc');
-            } elseif ($sort === 'terdikit') {
-                // Placeholder sort untuk terdikit
-                $query->orderBy('created_at', 'asc');
+            } elseif ($sort === 'terbanyak' || $sort === 'transaksi-banyak') {
+                $query->orderBy('total_transaksi', 'desc')->orderBy('total_nominal', 'desc');
+            } elseif ($sort === 'terdikit' || $sort === 'transaksi-sedikit') {
+                $query->orderBy('total_transaksi', 'asc')->orderBy('total_nominal', 'asc');
+            } elseif ($sort === 'nominal-banyak' || $sort === 'termahal') {
+                $query->orderBy('total_nominal', 'desc')->orderBy('total_transaksi', 'desc');
+            } elseif ($sort === 'nominal-sedikit' || $sort === 'termurah') {
+                $query->orderBy('total_nominal', 'asc')->orderBy('total_transaksi', 'asc');
             } else {
                 $query->orderBy('DES', 'asc');
             }
@@ -44,6 +80,7 @@ class DSController extends Controller
 
             return view('POS.desa', compact('data', 'sort'));
         } catch (\Exception $e) {
+            report($e);
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data desa.');
         }
     }

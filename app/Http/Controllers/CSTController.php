@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CST;
+use App\Models\DS;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CSTController extends Controller
 {
@@ -13,10 +15,19 @@ class CSTController extends Controller
             $query = CST::query();
 
             if ($request->filled('keyword')) {
-                $keyword = $request->keyword;
-                $query->where('DES', 'LIKE', "%{$keyword}%")
-                    ->orWhere('CST', 'LIKE', "%{$keyword}%")
-                    ->orWhere('TLP', 'LIKE', "%{$keyword}%");
+                $keyword = trim((string) $request->keyword);
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('DES', 'LIKE', "%{$keyword}%")
+                        ->orWhere('CST', 'LIKE', "%{$keyword}%")
+                        ->orWhere('TLP', 'LIKE', "%{$keyword}%")
+                        ->orWhere('AL', 'LIKE', "%{$keyword}%")
+                        ->orWhereExists(function ($sub) use ($keyword) {
+                            $sub->select(DB::raw(1))
+                                ->from('ds')
+                                ->whereColumn('ds.DS', 'cst.DS')
+                                ->where('ds.DES', 'LIKE', "%{$keyword}%");
+                        });
+                });
             }
 
             $sort = $request->sort;
@@ -34,8 +45,9 @@ class CSTController extends Controller
             }
 
             $data = $query->paginate(10)->withQueryString();
+            $desaList = DS::orderBy('DES', 'asc')->get(['DS', 'DES']);
 
-            return view('POS.customer', compact('data'));
+            return view('POS.customer', compact('data', 'desaList'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data customer');
         }
@@ -46,6 +58,8 @@ class CSTController extends Controller
         $validated = $request->validate([
             'DES' => 'required|string|max:150|unique:cst,DES',
             'TLP' => 'required|numeric|max_digits:20|unique:cst,TLP',
+            'AL'  => 'required|string|max:100',
+            'DS'  => 'required|string|max:15|exists:ds,DS',
         ], [
             'DES.required'   => 'Nama Customer wajib diisi.',
             'DES.string'     => 'Nama Customer harus berupa teks.',
@@ -55,6 +69,11 @@ class CSTController extends Controller
             'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
             'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
             'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+            'AL.required'    => 'Alamat wajib diisi.',
+            'AL.string'      => 'Alamat harus berupa teks.',
+            'AL.max'         => 'Alamat maksimal 100 karakter.',
+            'DS.required'    => 'Desa wajib dipilih.',
+            'DS.exists'      => 'Desa yang dipilih tidak valid.',
         ]);
 
         try {
@@ -78,6 +97,8 @@ class CSTController extends Controller
             'CST' => 'required|string|max:10|unique:cst,CST,' . $customer->CST . ',CST',
             'DES' => 'required|string|max:150|unique:cst,DES,' . $customer->CST . ',CST',
             'TLP' => 'required|numeric|max_digits:20|unique:cst,TLP,' . $customer->CST . ',CST',
+            'AL'  => 'required|string|max:100',
+            'DS'  => 'required|string|max:15|exists:ds,DS',
         ], [
             'DES.required'   => 'Nama Customer wajib diisi.',
             'DES.string'     => 'Nama Customer harus berupa teks.',
@@ -87,6 +108,11 @@ class CSTController extends Controller
             'TLP.numeric'    => 'Nomor Telepon harus berupa angka.',
             'TLP.max_digits' => 'Nomor Telepon maksimal 20 digit.',
             'TLP.unique'     => 'Nomor Telepon sudah digunakan.',
+            'AL.required'    => 'Alamat wajib diisi.',
+            'AL.string'      => 'Alamat harus berupa teks.',
+            'AL.max'         => 'Alamat maksimal 100 karakter.',
+            'DS.required'    => 'Desa wajib dipilih.',
+            'DS.exists'      => 'Desa yang dipilih tidak valid.',
         ]);
 
         try {

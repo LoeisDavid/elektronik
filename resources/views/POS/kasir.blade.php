@@ -786,7 +786,9 @@
         <input type="hidden" name="ppn_nominal" id="printPpnNominal">
         <input type="hidden" name="total" id="printTotal">
         <input type="hidden" name="dibayar" id="printDibayar">
-        <input type="hidden" name="kembalian" id="printKembalian">
+        <input type="hidden" name="customer_nama" id="printCustomerNama">
+        <input type="hidden" name="customer_desa" id="printCustomerDesa">
+        <input type="hidden" name="customer_alamat" id="printCustomerAlamat">
         <input type="hidden" name="items" id="printItems">
     </form>
 
@@ -1904,6 +1906,73 @@
         if (elKasir) elKasir.innerText = transaksiData.kasir || 'Kasir';
         if (elMetode) elMetode.innerText = (transaksiData.metode || 'Tunai').toUpperCase();
 
+        // Render Info Pelanggan, Desa & Alamat
+        const wrapPelanggan = document.getElementById('wrapperStrukPelanggan');
+        const rowCstNama = document.getElementById('rowStrukCustomerNama');
+        const elCstNama = document.getElementById('strukCustomerNama');
+        const rowCstDesa = document.getElementById('rowStrukCustomerDesa');
+        const elCstDesa = document.getElementById('strukCustomerDesa');
+        const rowCstAlamat = document.getElementById('rowStrukCustomerAlamat');
+        const elCstAlamat = document.getElementById('strukCustomerAlamat');
+
+        if (wrapPelanggan) {
+            const rawNama = (transaksiData.customer_nama || '').trim();
+            const rawDesa = (transaksiData.customer_desa || '').trim();
+            const rawAlamat = (transaksiData.customer_alamat || '').trim();
+
+            const norm = (s) => (s || '')
+                .toLowerCase()
+                .replace(/^(ds\.|desa\s+|dusun\s+)/i, '')
+                .replace(/[^a-z0-9]/g, '');
+
+            const normDesa = norm(rawDesa);
+            const normNama = norm(rawNama);
+            const normAlamat = norm(rawAlamat);
+
+            const isNamaLikeDesa = !normNama || normNama === '-' || (normDesa && (normNama === normDesa || normNama.includes(normDesa)));
+            const isAlamatLikeDesa = !normAlamat || normAlamat === '-' || (normDesa && (normAlamat === normDesa || normAlamat.includes(normDesa)));
+
+            let showNama = false;
+            let showDesa = false;
+            let showAlamat = false;
+
+            if (isNamaLikeDesa && isAlamatLikeDesa) {
+                // Jika nama pelanggan dan alamat memiliki nama seperti nama desa maka tidak usah ditampilkan cukup nama desanya saja
+                showDesa = !!rawDesa && rawDesa !== '-';
+            } else {
+                showNama = !isNamaLikeDesa && !!rawNama && rawNama !== '-';
+                showDesa = !!rawDesa && rawDesa !== '-';
+                showAlamat = !isAlamatLikeDesa && !!rawAlamat && rawAlamat !== '-';
+            }
+
+            if (showNama && elCstNama && rowCstNama) {
+                elCstNama.textContent = rawNama;
+                rowCstNama.classList.remove('hidden');
+            } else if (rowCstNama) {
+                rowCstNama.classList.add('hidden');
+            }
+
+            if (showDesa && elCstDesa && rowCstDesa) {
+                elCstDesa.textContent = rawDesa;
+                rowCstDesa.classList.remove('hidden');
+            } else if (rowCstDesa) {
+                rowCstDesa.classList.add('hidden');
+            }
+
+            if (showAlamat && elCstAlamat && rowCstAlamat) {
+                elCstAlamat.textContent = rawAlamat;
+                rowCstAlamat.classList.remove('hidden');
+            } else if (rowCstAlamat) {
+                rowCstAlamat.classList.add('hidden');
+            }
+
+            if (showNama || showDesa || showAlamat) {
+                wrapPelanggan.classList.remove('hidden');
+            } else {
+                wrapPelanggan.classList.add('hidden');
+            }
+        }
+
         // 2. Render daftar produk yang dibeli + hitung breakdown diskon
         const listContainer = document.getElementById('strukListProduk');
         let rawSubtotal = 0;
@@ -2146,6 +2215,9 @@
         document.getElementById('printTotal').value = strukTerakhir.total || 0;
         document.getElementById('printDibayar').value = isTunai ? (strukTerakhir.dibayar || 0) : '';
         document.getElementById('printKembalian').value = isTunai ? (strukTerakhir.kembalian || 0) : '';
+        document.getElementById('printCustomerNama').value = strukTerakhir.customer_nama || '';
+        document.getElementById('printCustomerDesa').value = strukTerakhir.customer_desa || '';
+        document.getElementById('printCustomerAlamat').value = strukTerakhir.customer_alamat || '';
         document.getElementById('printItems').value = JSON.stringify(items);
 
         document.getElementById('formPrintStruk').submit();

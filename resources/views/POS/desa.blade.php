@@ -6,14 +6,19 @@
 @section('content')
 
 @php
-    // Sort ditentukan dari query string (?sort=a-z|z-a|terbanyak|terdikit), default a-z
+    // Sort ditentukan dari query string, default a-z
     $sortOptions = [
-        'a-z'       => 'Nama (A - Z)',
-        'z-a'       => 'Nama (Z - A)',
-        'terbanyak' => 'Terbanyak',
-        'terdikit'  => 'Terdikit',
+        'a-z'               => 'Nama (A - Z)',
+        'z-a'               => 'Nama (Z - A)',
+        'transaksi-banyak'  => 'Transaksi Terbanyak',
+        'transaksi-sedikit' => 'Transaksi Tersedikit',
+        'nominal-banyak'    => 'Nominal Terbanyak',
+        'nominal-sedikit'   => 'Nominal Tersedikit',
     ];
-    $sort = array_key_exists((string) request('sort'), $sortOptions) ? request('sort') : 'a-z';
+    $requestedSort = (string) request('sort', 'a-z');
+    if ($requestedSort === 'terbanyak') $requestedSort = 'transaksi-banyak';
+    if ($requestedSort === 'terdikit') $requestedSort = 'transaksi-sedikit';
+    $sort = array_key_exists($requestedSort, $sortOptions) ? $requestedSort : 'a-z';
     $sortLabel = $sortOptions[$sort];
 @endphp
 
@@ -50,7 +55,7 @@
 
                     <input
                         type="text"
-                        placeholder="Cari desa"
+                        placeholder="Cari desa, transaksi, atau nominal..."
                         class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db shadow-xs"
                         value="{{ request('keyword') }}"
                         name="keyword"
@@ -76,7 +81,7 @@
                 {{-- Panel Pop-up Timbul --}}
                 <div
                     id="panelFilterDesa"
-                    class="hidden absolute left-0 mt-2 w-48 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
+                    class="hidden absolute left-0 mt-2 w-52 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5"
                 >
                     @foreach ($sortOptions as $key => $label)
                         <a
@@ -130,7 +135,7 @@
                             Total Transaksi
                         </th>
                         <th class="py-2.5 px-4 text-right">
-                            Harga Total Barang
+                            Total Pembelian
                         </th>
                         <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">
                             Aksi
@@ -152,14 +157,14 @@
                                 {{ $desa->DES }}
                             </td>
 
-                            {{-- Total Transaksi (Placeholder) --}}
-                            <td class="py-3.5 px-4 text-gray-700 text-right">
-                                -
+                            {{-- Total Transaksi --}}
+                            <td class="py-3.5 px-4 text-gray-900 text-right font-medium">
+                                {{ number_format($desa->total_transaksi ?? 0, 0, ',', '.') }}
                             </td>
 
-                            {{-- Harga Total Barang (Placeholder) --}}
-                            <td class="py-3.5 px-4 text-gray-700 text-right">
-                                -
+                            {{-- Total Pembelian --}}
+                            <td class="py-3.5 px-4 text-gray-900 text-right font-medium">
+                                Rp {{ number_format($desa->total_nominal ?? 0, 0, ',', '.') }}
                             </td>
 
                             {{-- Aksi --}}
