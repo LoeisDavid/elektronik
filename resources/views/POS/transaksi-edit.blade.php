@@ -163,13 +163,12 @@
                                                     Rp
                                                 </span>
                                                 <input
-                                                    type="number"
-                                                    step="any"
-                                                    min="0"
+                                                    type="text"
+                                                    inputmode="numeric"
                                                     name="items[{{ $idx }}][hgj]"
-                                                    value="{{ $hgjVal }}"
+                                                    value="{{ number_format($hgjVal, 0, ',', '.') }}"
                                                     required
-                                                    class="input-hgj w-full pl-8 pr-2.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
+                                                    class="input-hgj input-currency w-full pl-8 pr-2.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
                                                 >
                                             </div>
                                         </td>
@@ -201,13 +200,12 @@
                                                     Rp
                                                 </span>
                                                 <input
-                                                    type="number"
-                                                    step="any"
-                                                    min="0"
+                                                    type="text"
+                                                    inputmode="numeric"
                                                     placeholder="0"
                                                     name="items[{{ $idx }}][pot_r]"
-                                                    value="{{ $potRVal > 0 ? $potRVal : '' }}"
-                                                    class="input-potr w-full pl-7 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
+                                                    value="{{ $potRVal > 0 ? number_format($potRVal, 0, ',', '.') : '' }}"
+                                                    class="input-potr input-currency w-full pl-7 pr-2 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
                                                 >
                                             </div>
                                         </td>
@@ -266,14 +264,13 @@
                                     Rp
                                 </span>
                                 <input
-                                    type="number"
-                                    step="any"
-                                    min="0"
+                                    type="text"
+                                    inputmode="numeric"
                                     id="inputVoucher"
                                     name="voucher"
-                                    value="{{ $voucherCalc > 0 ? $voucherCalc : '' }}"
+                                    value="{{ $voucherCalc > 0 ? number_format($voucherCalc, 0, ',', '.') : '' }}"
                                     placeholder="0"
-                                    class="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
+                                    class="input-currency w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db transition-all"
                                 >
                             </div>
                         </div>
@@ -347,6 +344,26 @@
 {{-- JAVASCRIPT REAL-TIME CALCULATION                           --}}
 {{-- ========================================================= --}}
 <script>
+    function parseCurrency(val) {
+        if (!val) return 0;
+        return Math.max(0, parseFloat(val.toString().replace(/\./g, '')) || 0);
+    }
+
+    function formatCurrencyInput(el) {
+        const cursorPosition = el.selectionStart;
+        const originalLength = el.value.length;
+        const clean = el.value.replace(/\D/g, '');
+        if (!clean) {
+            el.value = '';
+            return;
+        }
+        const formatted = parseInt(clean, 10).toLocaleString('id-ID');
+        el.value = formatted;
+        const newLength = formatted.length;
+        const newPos = Math.max(0, cursorPosition + (newLength - originalLength));
+        el.setSelectionRange(newPos, newPos);
+    }
+
     function recalculateTotals() {
         const rows = document.querySelectorAll('.item-row');
         let rawSubtotal = 0;
@@ -359,9 +376,9 @@
             const subtotalDisplay = row.querySelector('.item-subtotal-display');
             const discountNominal = row.querySelector('.item-discount-nominal');
 
-            const hgj = Math.max(0, parseFloat(hgjInput ? hgjInput.value : 0) || 0);
+            const hgj = parseCurrency(hgjInput ? hgjInput.value : 0);
             const pot1 = Math.min(100, Math.max(0, parseFloat(pot1Input ? pot1Input.value : 0) || 0));
-            const potr = Math.max(0, parseFloat(potrInput ? potrInput.value : 0) || 0);
+            const potr = parseCurrency(potrInput ? potrInput.value : 0);
 
             // Hitung diskon item
             const discPctNominal = hgj * (pot1 / 100);
@@ -387,7 +404,7 @@
         const ppnInput = document.getElementById('inputPpn');
 
         const globalPct = Math.min(100, Math.max(0, parseFloat(discPercentInput ? discPercentInput.value : 0) || 0));
-        const voucher = Math.max(0, parseFloat(voucherInput ? voucherInput.value : 0) || 0);
+        const voucher = parseCurrency(voucherInput ? voucherInput.value : 0);
 
         // PPN Global Rate
         let ppnRate = 0;
@@ -436,6 +453,9 @@
         const editForm = document.getElementById('formEditTransaksi');
         if (editForm) {
             editForm.addEventListener('input', function (e) {
+                if (e.target.matches('.input-currency')) {
+                    formatCurrencyInput(e.target);
+                }
                 if (e.target.matches('.input-hgj, .input-pot1, .input-potr, #inputDiscountPercent, #inputVoucher, #inputPpn')) {
                     recalculateTotals();
                 }
@@ -445,6 +465,13 @@
                 if (e.target.matches('.input-hgj, .input-pot1, .input-potr, #inputDiscountPercent, #inputVoucher, #inputPpn')) {
                     recalculateTotals();
                 }
+            });
+
+            // Sebelum submit, bersihkan tanda titik agar nilai numerik bersih
+            editForm.addEventListener('submit', function () {
+                editForm.querySelectorAll('.input-currency').forEach(input => {
+                    input.value = input.value.replace(/\./g, '');
+                });
             });
         }
 

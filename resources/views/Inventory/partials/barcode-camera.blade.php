@@ -1,3 +1,4 @@
+@if(false)
 {{--
     =========================================================================
     PARTIAL: Scanner Barcode via Kamera
@@ -352,3 +353,4 @@
 })();
 </script>
 @endonce
+@endif

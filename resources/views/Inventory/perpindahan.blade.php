@@ -6,9 +6,11 @@
 @section('content')
 @php
     $badge = [
-        'Request'  => 'bg-blue-100 border-blue-400 text-blue-700',
-        'Pending'  => 'bg-amber-100 border-amber-400 text-amber-600',
-        'Diterima' => 'bg-green-100 border-green-600 text-green-800',
+        'Request'    => 'bg-blue-100 border-blue-400 text-blue-700',
+        'Pengiriman' => 'bg-amber-100 border-amber-400 text-amber-700',
+        'Pending'    => 'bg-amber-100 border-amber-400 text-amber-700',
+        'Diterima'   => 'bg-green-100 border-green-600 text-green-800',
+        'Ditolak'    => 'bg-red-100 border-red-400 text-red-700',
     ];
 
     $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
@@ -117,14 +119,21 @@
                                     </button>
                                     <div class="action-menu absolute right-0 top-full mt-1 w-44 bg-white border border-gray-300 rounded-xl shadow-xl py-1.5 z-50 text-left hidden divide-y divide-gray-100">
                                         <div class="py-1">
-                                            <button
-                                                type="button"
-                                                onclick="bukaDetailPerpindahan('{{ $rp->RP }}'); tutupSemuaMenu();"
+                                            <a
+                                                href="{{ route('inventory.perpindahan.show', $rp->RP) }}"
                                                 class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                             >
                                                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                                 <span>Lihat Detail</span>
-                                            </button>
+                                            </a>
+                                            <a
+                                                href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
+                                                target="_blank"
+                                                class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                                            >
+                                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.03-.42-2.109-.52-3.21a20.08 20.08 0 010-1.238c.1-1.101.28-2.18.52-3.21m8.56 0c.24 1.03.42 2.109.52 3.21a20.08 20.08 0 010 1.238c-.1 1.101-.28 2.18-.52 3.21M17 17v4.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 21.5V17m10 0H7m10 0a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v6a2 2 0 002 2m0-12.5V3a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 3v1.5" /></svg>
+                                                <span>Cetak Laporan</span>
+                                            </a>
                                         </div>
 
                                         {{-- AKSI KONFIRMASI --}}
@@ -137,24 +146,31 @@
                                                         <span>Konfirmasi 1 (Kirim)</span>
                                                     </button>
                                                 </form>
+                                                <form action="{{ route('inventory.perpindahan.tolak', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Tolak request perpindahan barang ini?')">
+                                                    @csrf
+                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer">
+                                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        <span>Tolak Request</span>
+                                                    </button>
+                                                </form>
                                                 <form action="{{ route('inventory.perpindahan.destroy', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Batalkan dan hapus request perpindahan ini?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" /></svg>
+                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer">
+                                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" /></svg>
                                                         <span>Hapus Request</span>
                                                     </button>
                                                 </form>
                                             </div>
-                                        @elseif($rp->SS === 'Pending')
+                                        @elseif($rp->SS === 'Pengiriman' || $rp->SS === 'Pending')
                                             <div class="py-1">
-                                                <form action="{{ route('inventory.perpindahan.konfirmasi2', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Konfirmasi penerimaan barang di gudang tujuan? Stok barang akan resmi dipindahkan ke gudang tujuan.')">
-                                                    @csrf
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                        <span>Konfirmasi 2 (Terima)</span>
-                                                    </button>
-                                                </form>
+                                                <a
+                                                    href="{{ route('inventory.perpindahan.show', $rp->RP) }}"
+                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    <span>Konfirmasi 2 (Scan)</span>
+                                                </a>
                                             </div>
                                         @endif
                                     </div>

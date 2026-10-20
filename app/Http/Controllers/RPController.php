@@ -166,7 +166,7 @@ class RPController extends Controller
 
                     // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
                     $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-                        ->whereIn('SS', ['Request', 'Pending'])
+                        ->whereIn('SS', ['Ready', 'Dikirim', 'Request', 'Pending'])
                         ->exists();
 
                     if ($adaPerpindahanAktif) {
@@ -192,14 +192,14 @@ class RPController extends Controller
                     'CF2'       => null,
                 ]);
 
-                // Simpan baris detail RPD
+                // Simpan baris detail RPD (Status awal: Ready)
                 foreach ($items as $bcOut) {
                     $rpdCode = $this->generateRpdCode();
                     RPD::create([
                         'RPD'    => $rpdCode,
                         'RP'     => $rpCode,
                         'BC_OUT' => $bcOut,
-                        'SS'     => 'Request',
+                        'SS'     => 'Ready',
                     ]);
                 }
             });
@@ -287,7 +287,7 @@ class RPController extends Controller
 
         // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
         $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-            ->whereIn('SS', ['Request', 'Pending'])
+            ->whereIn('SS', ['Ready', 'Dikirim', 'Request', 'Pending'])
             ->exists();
 
         if ($adaPerpindahanAktif) {
@@ -335,7 +335,7 @@ class RPController extends Controller
             ->whereNotExists(function ($sub) {
                 $sub->select(DB::raw(1))->from('rpd')
                     ->whereColumn('rpd.BC_OUT', 'itmdt.BC_OUT')
-                    ->whereIn('rpd.SS', ['Request', 'Pending']);
+                    ->whereIn('rpd.SS', ['Ready', 'Dikirim', 'Request', 'Pending']);
             })
             ->select('itmdt.BC_OUT', 'itmdt.ITM', 'itm.DES', 'gd.DES as GD_DES');
 
@@ -353,15 +353,17 @@ class RPController extends Controller
     }
 
     /**
-     * Mengambil detail perpindahan untuk modal Detail.
+     * Menampilkan detail perpindahan (halaman detail blade atau respon JSON).
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $rp = RP::with(['gudangAsal', 'gudangTujuan', 'userRequest', 'userConfirm1', 'userConfirm2', 'rpd'])
             ->where('RP', $id)
             ->firstOrFail();
 
-        $items = DB::table('rpd')
+        $keyword = trim((string) $request->query('keyword', ''));
+
+        $itemsQuery = DB::table('rpd')
             ->join('itmdt', 'itmdt.BC_OUT', '=', 'rpd.BC_OUT')
             ->leftJoin('itm', 'itm.ITM', '=', 'itmdt.ITM')
             ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
@@ -371,36 +373,78 @@ class RPController extends Controller
                 'rpd.RPD',
                 'rpd.BC_OUT',
                 'rpd.SS',
+                'rpd.updated_at',
+                'itm.DES as NAMA_BARANG',
+                'mrk.DES as NAMA_MERK',
+                'ktg.DES as NAMA_KATEGORI'
+            );
+
+        if ($keyword !== '') {
+            $itemsQuery->where(function ($q) use ($keyword) {
+                $q->where('rpd.BC_OUT', 'LIKE', "%{$keyword}%")
+                  ->orWhere('itm.DES', 'LIKE', "%{$keyword}%")
+                  ->orWhere('ktg.DES', 'LIKE', "%{$keyword}%")
+                  ->orWhere('rpd.SS', 'LIKE', "%{$keyword}%");
+            });
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $items = $itemsQuery->get();
+            return response()->json([
+                'success' => true,
+                'rp'      => [
+                    'RP'           => $rp->RP,
+                    'DTRQ'         => $rp->DTRQ,
+                    'DTCF1'        => $rp->DTCF1,
+                    'DTCF2'        => $rp->DTCF2,
+                    'GD_ASAL'      => $rp->GD_ASAL,
+                    'GD_ASAL_NAMA' => $rp->gudangAsal?->DES ?? $rp->GD_ASAL,
+                    'GD_TUJUAN'    => $rp->GD_TUJUAN,
+                    'GD_TUJUAN_NAMA'=> $rp->gudangTujuan?->DES ?? $rp->GD_TUJUAN,
+                    'SS'           => $rp->SS,
+                    'RQ'           => $rp->RQ,
+                    'RQ_NAMA'      => $rp->userRequest?->DES ?? $rp->RQ,
+                    'CF1'          => $rp->CF1,
+                    'CF1_NAMA'     => $rp->userConfirm1?->DES ?? $rp->CF1,
+                    'CF2'          => $rp->CF2,
+                    'CF2_NAMA'     => $rp->userConfirm2?->DES ?? $rp->CF2,
+                    'created_at'   => $rp->created_at?->format('Y-m-d H:i:s'),
+                    'total_items'  => $items->count(),
+                ],
+                'items'   => $items,
+            ]);
+        }
+
+        // Ambil semua item untuk scanning konfirmasi di modal
+        $allItems = DB::table('rpd')
+            ->join('itmdt', 'itmdt.BC_OUT', '=', 'rpd.BC_OUT')
+            ->leftJoin('itm', 'itm.ITM', '=', 'itmdt.ITM')
+            ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
+            ->leftJoin('ktg', 'ktg.KTG', '=', 'itm.KTG')
+            ->where('rpd.RP', $id)
+            ->select(
+                'rpd.RPD',
+                'rpd.BC_OUT',
+                'rpd.SS',
+                'rpd.updated_at',
                 'itm.DES as NAMA_BARANG',
                 'mrk.DES as NAMA_MERK',
                 'ktg.DES as NAMA_KATEGORI'
             )
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'rp'      => [
-                'RP'           => $rp->RP,
-                'DTRQ'         => $rp->DTRQ,
-                'DTCF1'        => $rp->DTCF1,
-                'DTCF2'        => $rp->DTCF2,
-                'GD_ASAL'      => $rp->GD_ASAL,
-                'GD_ASAL_NAMA' => $rp->gudangAsal?->DES ?? $rp->GD_ASAL,
-                'GD_TUJUAN'    => $rp->GD_TUJUAN,
-                'GD_TUJUAN_NAMA'=> $rp->gudangTujuan?->DES ?? $rp->GD_TUJUAN,
-                'SS'           => $rp->SS,
-                'RQ'           => $rp->RQ,
-                'CF1'          => $rp->CF1,
-                'CF2'          => $rp->CF2,
-                'created_at'   => $rp->created_at?->format('Y-m-d H:i:s'),
-                'total_items'  => $items->count(),
-            ],
-            'items'   => $items,
+        $itemsPaginated = $itemsQuery->paginate(5)->withQueryString();
+
+        return view('Inventory.perpindahan-detail', [
+            'rp'             => $rp,
+            'itemsPaginated' => $itemsPaginated,
+            'allItems'       => $allItems,
+            'keyword'        => $keyword,
         ]);
     }
 
     /**
-     * Konfirmasi 1: Barang dikonfirmasi untuk dikirim dari gudang asal.
+     * Konfirmasi 1: Barang dikonfirmasi untuk dikirim dari gudang asal (status menjadi 'Pengiriman', rpd 'Dikirim').
      */
     public function konfirmasi1(Request $request, string $id)
     {
@@ -418,36 +462,80 @@ class RPController extends Controller
                 $rp->update([
                     'DTCF1' => $now,
                     'CF1'   => $currentUser,
-                    'SS'    => 'Pending',
+                    'SS'    => 'Pengiriman',
                 ]);
 
-                RPD::where('RP', $rp->RP)->update(['SS' => 'Pending']);
+                RPD::where('RP', $rp->RP)->update(['SS' => 'Dikirim']);
             });
 
-            return redirect()->route('inventory.perpindahan')
-                ->with('success', "Konfirmasi 1 pengiriman ({$id}) berhasil disimpan.");
+            return redirect()->back()
+                ->with('success', "Konfirmasi 1 pengiriman ({$id}) berhasil disimpan. Status perpindahan saat ini 'Pengiriman'.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memproses konfirmasi 1: ' . $e->getMessage());
         }
     }
 
     /**
-     * Konfirmasi 2: Barang diterima di gudang tujuan (stok ITMDT.GD resmi berpindah).
+     * Konfirmasi 2: Penerimaan barang di gudang tujuan dengan validasi scanning.
+     * Semua barang yang dikirim harus discan (berubah jadi 'Diterima') atau jika tidak terscan diinputkan 'Rusak' atau 'Hilang'.
      */
     public function konfirmasi2(Request $request, string $id)
     {
         $rp = RP::where('RP', $id)->firstOrFail();
 
-        if (!in_array($rp->SS, ['Request', 'Pending'])) {
-            return redirect()->back()->with('error', "Perpindahan {$id} sudah selesai atau tidak dapat dikonfirmasi.");
+        if (!in_array($rp->SS, ['Pengiriman', 'Pending'])) {
+            return redirect()->back()->with('error', "Perpindahan {$id} belum dalam tahap pengiriman atau sudah selesai.");
+        }
+
+        $rpdList = RPD::where('RP', $rp->RP)->get();
+        if ($rpdList->isEmpty()) {
+            return redirect()->back()->with('error', "Tidak ada barang dalam perpindahan {$id}.");
+        }
+
+        $itemsInput = $request->input('items', []);
+        $validStatuses = ['Diterima', 'Rusak', 'Hilang'];
+        $unresolved = [];
+
+        foreach ($rpdList as $rpd) {
+            $st = $itemsInput[$rpd->BC_OUT] ?? null;
+            if (!$st || !in_array($st, $validStatuses)) {
+                $unresolved[] = $rpd->BC_OUT;
+            }
+        }
+
+        if (!empty($unresolved)) {
+            return redirect()->back()->with('error', 'Semua barang yang dikirim harus discan atau ditentukan statusnya (Rusak atau Hilang) sebelum konfirmasi kedua dapat diselesaikan. Terdapat ' . count($unresolved) . ' barang yang belum ditentukan.');
         }
 
         try {
-            DB::transaction(function () use ($rp) {
+            DB::transaction(function () use ($rp, $rpdList, $itemsInput) {
                 $now = date('Y-m-d');
                 $currentUser = Auth::user()?->USERNAME ?? 'admin';
 
-                // Jika konfirmasi 1 belum ada, isi sekaligus
+                $totalDiterima = 0;
+                $totalRusak = 0;
+                $totalHilang = 0;
+
+                foreach ($rpdList as $rpd) {
+                    $newStatus = $itemsInput[$rpd->BC_OUT];
+                    $rpd->update(['SS' => $newStatus]);
+
+                    if ($newStatus === 'Diterima') {
+                        $totalDiterima++;
+                        // Pindahkan stok barang ke gudang tujuan
+                        ITMDT::where('BC_OUT', $rpd->BC_OUT)->update(['GD' => $rp->GD_TUJUAN]);
+                    } elseif (in_array($newStatus, ['Rusak', 'Hilang'])) {
+                        if ($newStatus === 'Rusak') $totalRusak++;
+                        if ($newStatus === 'Hilang') $totalHilang++;
+
+                        // Kurangi STOK di tabel ITM karena barang rusak/hilang
+                        $itmCode = ITMDT::where('BC_OUT', $rpd->BC_OUT)->value('ITM');
+                        if ($itmCode) {
+                            ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
+                        }
+                    }
+                }
+
                 $updateData = [
                     'DTCF2' => $now,
                     'CF2'   => $currentUser,
@@ -459,18 +547,39 @@ class RPController extends Controller
                 }
 
                 $rp->update($updateData);
-
-                RPD::where('RP', $rp->RP)->update(['SS' => 'Diterima']);
-
-                // Pindahkan gudang barang (ITMDT.GD = GD_TUJUAN)
-                $barcodes = RPD::where('RP', $rp->RP)->pluck('BC_OUT');
-                ITMDT::whereIn('BC_OUT', $barcodes)->update(['GD' => $rp->GD_TUJUAN]);
             });
 
-            return redirect()->route('inventory.perpindahan')
-                ->with('success', "Konfirmasi 2 penerimaan ({$id}) berhasil. Barang resmi berpindah ke gudang tujuan.");
+            return redirect()->route('inventory.perpindahan.show', $rp->RP)
+                ->with('success', "Konfirmasi 2 penerimaan ({$id}) berhasil disimpan. Semua barang telah diproses.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memproses konfirmasi 2: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Menolak request perpindahan barang (hanya jika masih berstatus 'Request').
+     */
+    public function tolak(Request $request, string $id)
+    {
+        $rp = RP::where('RP', $id)->firstOrFail();
+
+        if ($rp->SS !== 'Request') {
+            return redirect()->back()->with('error', "Perpindahan {$id} tidak dalam status 'Request' sehingga tidak dapat ditolak.");
+        }
+
+        try {
+            DB::transaction(function () use ($rp) {
+                $rp->update([
+                    'SS' => 'Ditolak',
+                ]);
+
+                RPD::where('RP', $rp->RP)->update(['SS' => 'Ditolak']);
+            });
+
+            return redirect()->back()
+                ->with('success', "Request perpindahan {$id} berhasil ditolak.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menolak perpindahan: ' . $e->getMessage());
         }
     }
 
@@ -529,4 +638,58 @@ class RPController extends Controller
 
         return $code;
     }
+
+    /**
+     * Halaman cetak laporan perpindahan stok (bisa dicetak saat status Request, Pengiriman, atau Diterima).
+     */
+    public function cetak(string $id)
+    {
+        $rp = RP::with(['gudangAsal', 'gudangTujuan', 'userRequest', 'userConfirm1', 'userConfirm2'])
+            ->where('RP', $id)
+            ->firstOrFail();
+
+        $items = DB::table('rpd')
+            ->join('itmdt', 'itmdt.BC_OUT', '=', 'rpd.BC_OUT')
+            ->leftJoin('itm', 'itm.ITM', '=', 'itmdt.ITM')
+            ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
+            ->leftJoin('ktg', 'ktg.KTG', '=', 'itm.KTG')
+            ->where('rpd.RP', $id)
+            ->select(
+                'rpd.RPD',
+                'rpd.BC_OUT',
+                'rpd.SS',
+                'rpd.updated_at',
+                'itm.DES as NAMA_BARANG',
+                'mrk.DES as NAMA_MERK',
+                'ktg.DES as NAMA_KATEGORI'
+            )
+            ->get();
+
+        $petugas = auth()->user()?->USERNAME ?? 'admin';
+        $tanggalCetak = now()->locale('id')->translatedFormat('d F Y');
+        $lokasi = 'Sumenep';
+
+        // Hitung ringkasan status detail
+        $countTotal = $items->count();
+        $countDiterima = $items->where('SS', 'Diterima')->count();
+        $countRusak = $items->where('SS', 'Rusak')->count();
+        $countHilang = $items->where('SS', 'Hilang')->count();
+        $countDikirim = $items->where('SS', 'Dikirim')->count();
+        $countReady = $items->where('SS', 'Ready')->count();
+
+        return view('Inventory.perpindahan-print', compact(
+            'rp',
+            'items',
+            'petugas',
+            'tanggalCetak',
+            'lokasi',
+            'countTotal',
+            'countDiterima',
+            'countRusak',
+            'countHilang',
+            'countDikirim',
+            'countReady'
+        ));
+    }
 }
+

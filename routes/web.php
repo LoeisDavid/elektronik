@@ -64,12 +64,14 @@ Route::middleware('auth')->group(function () {
 
         // Desa
         Route::get('desa', [DSController::class, 'index'])->name('desa');
+        Route::get('desa/cetak', [DSController::class, 'cetak'])->name('desa.cetak');
         Route::post('desa', [DSController::class, 'store'])->name('desa.store');
         Route::put('desa/{id}', [DSController::class, 'update'])->name('desa.update');
         Route::delete('desa/{id}', [DSController::class, 'destroy'])->name('desa.destroy');
 
         // Riwayat Transaksi View, Edit, & Update
         Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
+        Route::get('transaksi/cetak', [ACRController::class, 'cetakLaporan'])->name('transaksi.cetak');
         Route::get('transaksi/{id}/edit', [ACRController::class, 'edit'])->name('transaksi.edit');
         Route::put('transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
 
@@ -120,8 +122,10 @@ Route::middleware('auth')->group(function () {
         Route::get('perpindahan/check-barcode', [RPController::class, 'checkBarcode'])->name('perpindahan.check-barcode');
         Route::get('perpindahan/available-items', [RPController::class, 'getAvailableItems'])->name('perpindahan.available-items');
         Route::get('perpindahan/{id}', [RPController::class, 'show'])->name('perpindahan.show');
+        Route::get('perpindahan/{id}/cetak', [RPController::class, 'cetak'])->name('perpindahan.cetak');
         Route::post('perpindahan/{id}/konfirmasi1', [RPController::class, 'konfirmasi1'])->name('perpindahan.konfirmasi1');
         Route::post('perpindahan/{id}/konfirmasi2', [RPController::class, 'konfirmasi2'])->name('perpindahan.konfirmasi2');
+        Route::post('perpindahan/{id}/tolak', [RPController::class, 'tolak'])->name('perpindahan.tolak');
         Route::delete('perpindahan/{id}', [RPController::class, 'destroy'])->name('perpindahan.destroy');
 
         Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');

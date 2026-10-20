@@ -12,16 +12,21 @@ use App\Models\KTG;
 use App\Models\MRK;
 use App\Models\SLS;
 use App\Models\SPP;
+use App\Models\RP;
+use App\Models\RPD;
 use App\Models\STS;
 use App\Models\User;
 use Database\Factories\ACRFactory;
 use Database\Factories\CSTFactory;
+use Database\Factories\DSFactory;
 use Database\Factories\GDFactory;
 use Database\Factories\ITMDTFactory;
 use Database\Factories\ITMFactory;
 use Database\Factories\KASFactory;
 use Database\Factories\KTGFactory;
 use Database\Factories\MRKFactory;
+use Database\Factories\RPDFactory;
+use Database\Factories\RPFactory;
 use Database\Factories\SLSFactory;
 use Database\Factories\SPPFactory;
 use Database\Factories\STSFactory;
@@ -37,7 +42,7 @@ trait SeedsStoreData
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        $tables = ['sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'users', 'kas'];
+        $tables = ['rpd', 'rp', 'sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'ds', 'users', 'kas'];
         foreach ($tables as $table) {
             DB::table($table)->truncate();
         }
@@ -55,8 +60,9 @@ trait SeedsStoreData
             'ROLE'     => 1,
         ]);
 
-        // 2. CST (Customer)
-        $this->command?->info("Seeding CST ($totalRecords records)...");
+        // 2. CST (Customer) & DS (Desa)
+        $this->command?->info("Seeding CST & DS ($totalRecords records)...");
+        DSFactory::resetSequence(1);
         CSTFactory::resetSequence(1);
         $cstData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -307,6 +313,24 @@ trait SeedsStoreData
                 'TGLM' => $todayStr . ' ' . sprintf('%02d:%02d:%02d', fake()->numberBetween(7, 10), fake()->numberBetween(0, 59), fake()->numberBetween(0, 59)),
                 'TGLK' => null,
             ]);
+        }
+
+        // 13. RP & RPD (Perpindahan Gudang: 5-20 barang per dokumen)
+        $this->command?->info("Seeding Perpindahan Gudang (RP & RPD)...");
+        RPFactory::resetSequence(1);
+        RPDFactory::resetSequence(1);
+
+        $rpScenarios = [
+            'request',
+            'pengiriman',
+            'pengiriman',
+            'diterima',
+            'ditolak',
+        ];
+
+        foreach ($rpScenarios as $state) {
+            $itemCount = rand(5, 20);
+            RP::factory()->$state()->withItems($itemCount)->create();
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
