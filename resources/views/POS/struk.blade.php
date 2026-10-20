@@ -19,15 +19,15 @@
             <div class="text-center space-y-1">
                 <h2 class="text-2xl font-serif font-extrabold text-black tracking-tight" id="strukNamaToko">Pomelo.</h2>
                 <p class="text-[11px] text-gray-400 font-medium mt-1">No. Transaksi</p>
-                <p id="strukNoNota" class="text-sm font-bold text-gray-900 font-mono tracking-wider">202609210002</p>
+                <p id="strukNoNota" class="text-sm font-bold text-gray-900 font-mono tracking-wider">-</p>
             </div>
 
             <div class="border-b border-dashed border-gray-300 my-2"></div>
 
             <!-- Detail Transaksi (Kiri) -->
             <div class="space-y-0.5 text-xs text-gray-500 font-medium">
-                <p id="strukTanggal">21 Sep 2026</p>
-                <p id="strukWaktu">22.31</p>
+                <p id="strukTanggal">-</p>
+                <p id="strukWaktu">-</p>
                 <p>Dilayani oleh: <span id="strukKasir" class="text-gray-800 font-semibold">Kasir</span></p>
                 
                 {{-- Info Pelanggan, Desa & Alamat --}}
@@ -115,7 +115,7 @@
             </button>
             <button 
                 type="button" 
-                onclick="cetakStrukPdf()" 
+                onclick="if(typeof cetakStrukPdf === 'function'){ cetakStrukPdf(); } else if(typeof cetakStruk === 'function'){ cetakStruk(); }" 
                 class="w-full bg-[#1A1F36] hover:bg-black active:bg-black text-white rounded-xl py-2.5 text-center text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>

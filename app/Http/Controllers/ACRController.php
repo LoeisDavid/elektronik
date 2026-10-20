@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ACR;
 use App\Models\STS;
+use App\Models\KAS;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -46,15 +48,15 @@ class ACRController extends Controller
             // SORT
             // ---------------------------------------------------------
             if ($request->sort == 'terbaru') {
-                $query->orderBy('DT', 'desc');
+                $query->orderBy('created_at', 'desc')->orderBy('DT', 'desc')->orderBy('REF_NO', 'desc');
             } else if ($request->sort == 'terlama') {
-                $query->orderBy('DT', 'asc');
+                $query->orderBy('created_at', 'asc')->orderBy('DT', 'asc')->orderBy('REF_NO', 'asc');
             } else if ($request->sort == 'termahal') {
-                $query->orderBy('BRT', 'desc');
+                $query->orderBy('BRT', 'desc')->orderBy('created_at', 'desc');
             } else if ($request->sort == 'termurah') {
-                $query->orderBy('BRT', 'asc');
+                $query->orderBy('BRT', 'asc')->orderBy('created_at', 'desc');
             } else {
-                $query->orderBy('DT', 'desc');
+                $query->orderBy('created_at', 'desc')->orderBy('DT', 'desc')->orderBy('REF_NO', 'desc');
             }
 
             $data = $query->paginate(10)->withQueryString();
@@ -370,6 +372,51 @@ class ACRController extends Controller
                 'POT_1'   => $globalPct > 0 ? (int) $globalPct : null,
                 'POT_R'   => ($voucherGlobal + $totalItemDiscount) > 0 ? ($voucherGlobal + $totalItemDiscount) : null,
             ]);
+
+            // -----------------------------------------------------------------
+            // SINKRONISASI KAS: Perbarui saldo kas pada shift kasir terkait
+            // -----------------------------------------------------------------
+            $createdAt = $acr->created_at ?? ($acr->DT ? Carbon::parse($acr->DT) : now());
+
+            // Cari kas yang mencakup waktu transaksi (range TGLM s/d TGLK, jika TGLK null maka pakai saat ini)
+            $kas = KAS::where('TGLM', '<=', $createdAt)
+                ->where(function ($q) use ($createdAt) {
+                    $q->where('TGLK', '>=', $createdAt)
+                      ->orWhereNull('TGLK');
+                })
+                ->when($acr->USER, function ($q) use ($acr) {
+                    $q->where('USER', $acr->USER);
+                })
+                ->orderBy('TGLM', 'desc')
+                ->first();
+
+            if (!$kas) {
+                $kas = KAS::where('TGLM', '<=', $createdAt)
+                    ->where(function ($q) use ($createdAt) {
+                        $q->where('TGLK', '>=', $createdAt)
+                          ->orWhereNull('TGLK');
+                    })
+                    ->orderBy('TGLM', 'desc')
+                    ->first();
+            }
+
+            if (!$kas) {
+                $kas = KAS::whereDate('TGL', $createdAt->toDateString())
+                    ->orderBy('TGLM', 'desc')
+                    ->first();
+            }
+
+            if ($kas) {
+                $isTunai = ($acr->JNS == 1);
+                if ($isTunai) {
+                    $kas->DBT  = ($kas->DBT ?? 0) - $oldGrandTotal + $newGrandTotal;
+                    $kas->AKHT = ($kas->AWLT ?? 0) + $kas->DBT - ($kas->CRT ?? 0);
+                } else {
+                    $kas->DBNT  = ($kas->DBNT ?? 0) - $oldGrandTotal + $newGrandTotal;
+                    $kas->AKHNT = ($kas->AWLNT ?? 0) + $kas->DBNT - ($kas->CRNT ?? 0);
+                }
+                $kas->save();
+            }
 
             DB::commit();
 

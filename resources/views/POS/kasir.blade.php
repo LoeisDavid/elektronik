@@ -174,7 +174,7 @@
             {{-- Kanan: Tombol aksi (vertikal center / floating sesuai referensi) --}}
             <div class="flex items-end gap-2.5 shrink-0">
                 <!-- PPN -->
-                <div class="w-16 flex flex-col items-start">
+                <div class="w-18 flex flex-col items-start">
                     <label for="ppnInput" class="text-xs font-bold text-black mb-1">PPN</label>
                     <div class="relative w-full">
                         <input
@@ -182,11 +182,12 @@
                             type="number"
                             min="0"
                             max="100"
-                            placeholder="0%"
+                            placeholder="0"
                             title="PPN (%)"
                             value="{{ $ppn ?? '' }}"
                             oninput="handlePpnInput(this)"
-                            class="w-full h-11 bg-white border border-black rounded-lg px-2 text-sm font-semibold text-black placeholder-gray-400 outline-none text-center focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            class="w-full h-11 bg-white border border-black rounded-lg pl-2 pr-6 text-sm font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
                     </div>
                 </div>
                 {{-- Kosongkan Keranjang (trash) --}}
@@ -786,6 +787,7 @@
         <input type="hidden" name="ppn_nominal" id="printPpnNominal">
         <input type="hidden" name="total" id="printTotal">
         <input type="hidden" name="dibayar" id="printDibayar">
+        <input type="hidden" name="kembalian" id="printKembalian">
         <input type="hidden" name="customer_nama" id="printCustomerNama">
         <input type="hidden" name="customer_desa" id="printCustomerDesa">
         <input type="hidden" name="customer_alamat" id="printCustomerAlamat">
@@ -1845,6 +1847,9 @@
                             minute: '2-digit'
                         }).replace(':', '.'),
                         kasir: data.kasir || 'Kasir',
+                        customer_nama: data.customer_nama || '',
+                        customer_desa: data.customer_desa || '',
+                        customer_alamat: data.customer_alamat || '',
                         metode: activePaymentMethod,
                         items: Object.values(cartData),
                         subtotal: data.subtotal,
@@ -1987,7 +1992,7 @@
 
             items.forEach(item => {
                 const qty = parseInt(item.qty) || 1;
-                const nama = item.nama_produk || item.name || 'Produk';
+                const nama = item.nama || item.nama_produk || item.name || 'Produk';
                 const price = parseFloat(item.price) || 0;
                 const discPct = parseFloat(item.discount) || 0;
                 const discVch = parseFloat(item.discount_voucher) || 0;
@@ -2001,7 +2006,7 @@
 
                 let discInfoText = '';
                 if (discPct > 0 && discVch > 0) {
-                    discInfoText = `Diskon: -${discPct}% -${formatRupiah(discVch)}`;
+                    discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)}) + Voucher item: -${formatRupiah(discVch)}`;
                 } else if (discPct > 0) {
                     discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)})`;
                 } else if (discVch > 0) {
@@ -2161,11 +2166,12 @@
 
         const items = rawItems.map(function(item) {
             const qty = parseInt(item.qty) || 1;
-            const nama = item.nama_produk || item.name || 'Produk';
+            const nama = item.nama || item.nama_produk || item.name || 'Produk';
             const price = parseFloat(item.price) || 0;
             const pct = parseFloat(item.discount) || 0;
             const vch = parseFloat(item.discount_voucher) || 0;
-            const itemDiscUnit = (price * (pct / 100)) + vch;
+            const discPctNominal = price * (pct / 100);
+            const itemDiscUnit = discPctNominal + vch;
             const hargaAkhir = Math.max(0, price - itemDiscUnit);
             const subtotal = hargaAkhir * qty;
 
@@ -2174,11 +2180,11 @@
 
             let discInfo = '';
             if (pct > 0 && vch > 0) {
-                discInfo = `${pct}% + ${formatRupiah(vch)}`;
+                discInfo = `Diskon: -${pct}% (-${formatRupiah(discPctNominal)}) + Voucher item: -${formatRupiah(vch)}`;
             } else if (pct > 0) {
-                discInfo = `${pct}%`;
+                discInfo = `Diskon: -${pct}% (-${formatRupiah(discPctNominal)})`;
             } else if (vch > 0) {
-                discInfo = `${formatRupiah(vch)}`;
+                discInfo = `Voucher item: -${formatRupiah(vch)}`;
             }
 
             return {
@@ -2201,26 +2207,32 @@
             Math.max(0, (finalSubtotal - finalItemDisc) * (globalPct / 100));
         const finalVoucher = parseFloat(strukTerakhir.voucher) || 0;
 
-        document.getElementById('printRefNo').value = strukTerakhir.ref_no || '';
-        document.getElementById('printTanggal').value = strukTerakhir.tanggal || '';
-        document.getElementById('printWaktu').value = strukTerakhir.waktu || '';
-        document.getElementById('printKasir').value = strukTerakhir.kasir || '';
-        document.getElementById('printMetode').value = metode;
-        document.getElementById('printSubtotal').value = finalSubtotal;
-        document.getElementById('printDiscountItem').value = finalItemDisc;
-        document.getElementById('printDiscountGlobal').value = finalGlobalDisc;
-        document.getElementById('printVoucher').value = finalVoucher;
-        document.getElementById('printPpn').value = strukTerakhir.ppn_percent || '';
-        document.getElementById('printPpnNominal').value = strukTerakhir.ppn_nominal || 0;
-        document.getElementById('printTotal').value = strukTerakhir.total || 0;
-        document.getElementById('printDibayar').value = isTunai ? (strukTerakhir.dibayar || 0) : '';
-        document.getElementById('printKembalian').value = isTunai ? (strukTerakhir.kembalian || 0) : '';
-        document.getElementById('printCustomerNama').value = strukTerakhir.customer_nama || '';
-        document.getElementById('printCustomerDesa').value = strukTerakhir.customer_desa || '';
-        document.getElementById('printCustomerAlamat').value = strukTerakhir.customer_alamat || '';
-        document.getElementById('printItems').value = JSON.stringify(items);
+        const setField = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== null && val !== undefined) ? val : '';
+        };
 
-        document.getElementById('formPrintStruk').submit();
+        setField('printRefNo', strukTerakhir.ref_no || '');
+        setField('printTanggal', strukTerakhir.tanggal || '');
+        setField('printWaktu', strukTerakhir.waktu || '');
+        setField('printKasir', strukTerakhir.kasir || '');
+        setField('printMetode', metode);
+        setField('printSubtotal', finalSubtotal);
+        setField('printDiscountItem', finalItemDisc);
+        setField('printDiscountGlobal', finalGlobalDisc);
+        setField('printVoucher', finalVoucher);
+        setField('printPpn', strukTerakhir.ppn_percent || '');
+        setField('printPpnNominal', strukTerakhir.ppn_nominal || 0);
+        setField('printTotal', strukTerakhir.total || 0);
+        setField('printDibayar', isTunai ? (strukTerakhir.dibayar || 0) : '');
+        setField('printKembalian', isTunai ? (strukTerakhir.kembalian || 0) : '');
+        setField('printCustomerNama', strukTerakhir.customer_nama || '');
+        setField('printCustomerDesa', strukTerakhir.customer_desa || '');
+        setField('printCustomerAlamat', strukTerakhir.customer_alamat || '');
+        setField('printItems', JSON.stringify(items));
+
+        const formPrint = document.getElementById('formPrintStruk');
+        if (formPrint) formPrint.submit();
     }
 
     // Alias: jika tombol Print di POS/struk.blade.php memanggil cetakStruk(),

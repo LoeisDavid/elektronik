@@ -323,12 +323,12 @@
         </div>
 
         <div class="mt-5 flex items-center gap-3">
+            <button id="btnTutupSummary" type="button" class="flex-1 py-2.5 rounded-md text-xs font-semibold border border-gray-300 text-[#0D1C43] bg-white hover:bg-gray-100 cursor-pointer transition">
+                Tutup
+            </button>
             <button id="btnPrintSummary" type="button" class="flex-1 py-2.5 rounded-md text-xs font-semibold bg-[#0D1C43] text-white hover:bg-[#22396F] flex items-center justify-center gap-1.5 cursor-pointer transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                 Print
-            </button>
-            <button id="btnTutupSummary" type="button" class="flex-1 py-2.5 rounded-md text-xs font-semibold border border-gray-300 text-[#0D1C43] bg-white hover:bg-gray-100 cursor-pointer transition">
-                Tutup
             </button>
         </div>
     </div>
