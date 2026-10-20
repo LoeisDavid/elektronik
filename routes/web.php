@@ -15,6 +15,7 @@ use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
 use App\Http\Controllers\OpnameStokController;
 use App\Http\Controllers\DSController;
+use App\Http\Controllers\RPController;
 
 // Redirect root to Kasir for preview
 Route::get('/', function () {
@@ -113,10 +114,15 @@ Route::middleware('auth')->group(function () {
         Route::get('gudang/{gd}/barang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
         Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->name('gudang.destroy');
 
-        // Perpindahan Gudang — FRONTEND ONLY (backend to implement RPController)
-        Route::get('perpindahan', function () {
-            return view('Inventory.perpindahan');
-        })->name('perpindahan');
+        // Perpindahan Gudang
+        Route::get('perpindahan', [RPController::class, 'index'])->name('perpindahan');
+        Route::post('perpindahan', [RPController::class, 'store'])->name('perpindahan.store');
+        Route::get('perpindahan/check-barcode', [RPController::class, 'checkBarcode'])->name('perpindahan.check-barcode');
+        Route::get('perpindahan/available-items', [RPController::class, 'getAvailableItems'])->name('perpindahan.available-items');
+        Route::get('perpindahan/{id}', [RPController::class, 'show'])->name('perpindahan.show');
+        Route::post('perpindahan/{id}/konfirmasi1', [RPController::class, 'konfirmasi1'])->name('perpindahan.konfirmasi1');
+        Route::post('perpindahan/{id}/konfirmasi2', [RPController::class, 'konfirmasi2'])->name('perpindahan.konfirmasi2');
+        Route::delete('perpindahan/{id}', [RPController::class, 'destroy'])->name('perpindahan.destroy');
 
         Route::get('kategori', [App\Http\Controllers\KTGController::class, 'index'])->name('kategori');
         Route::get('merk', [App\Http\Controllers\MRKController::class, 'index'])->name('merk');
