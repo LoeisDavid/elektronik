@@ -100,15 +100,30 @@
 
         </div>
 
-        {{-- TAMBAH DESA --}}
-        <button
-            type="button"
-            onclick="openTambahModal()"
-            class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
-        >
-            <span class="text-lg leading-none font-bold">+</span>
-            <span>Tambah desa</span>
-        </button>
+        <div class="flex items-center gap-2">
+            {{-- PRINT LAPORAN DESA --}}
+            <a
+                href="{{ route('POS.desa.cetak') }}"
+                target="_blank"
+                class="h-9.5 px-3.5 bg-white border border-gray-800 hover:bg-gray-100 active:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs"
+                title="Cetak Laporan Penjualan Per Desa"
+            >
+                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
+                </svg>
+                <span>Print Laporan</span>
+            </a>
+
+            {{-- TAMBAH DESA --}}
+            <button
+                type="button"
+                onclick="openTambahModal()"
+                class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
+            >
+                <span class="text-lg leading-none font-bold">+</span>
+                <span>Tambah desa</span>
+            </button>
+        </div>
 
     </div>
 

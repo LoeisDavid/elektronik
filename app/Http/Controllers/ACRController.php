@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ACR;
 use App\Models\STS;
 use App\Models\KAS;
+use App\Models\DS;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -295,6 +296,23 @@ class ACRController extends Controller
         $refNo = urldecode($id);
         $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
 
+        // Sanitize input nominal yang memakai format titik (ribuan)
+        if ($request->has('items')) {
+            $items = $request->input('items');
+            foreach ($items as &$itm) {
+                if (isset($itm['hgj'])) {
+                    $itm['hgj'] = str_replace('.', '', (string) $itm['hgj']);
+                }
+                if (isset($itm['pot_r'])) {
+                    $itm['pot_r'] = str_replace('.', '', (string) $itm['pot_r']);
+                }
+            }
+            $request->merge(['items' => $items]);
+        }
+        if ($request->has('voucher')) {
+            $request->merge(['voucher' => str_replace('.', '', (string) $request->input('voucher'))]);
+        }
+
         $request->validate([
             'items'            => 'required|array|min:1',
             'items.*.rec'      => 'required|string',
@@ -424,6 +442,141 @@ class ACRController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui transaksi: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Halaman cetak laporan penjualan berdasarkan range tanggal (sesuai SS Frame 6).
+     */
+    public function cetakLaporan(Request $request)
+    {
+        try {
+            $dari   = $request->input('tanggal_dari');
+            $sampai = $request->input('tanggal_sampai');
+
+            if ($dari && $sampai && $dari > $sampai) {
+                [$dari, $sampai] = [$sampai, $dari];
+            }
+
+            $query = ACR::query();
+
+            if ($dari) {
+                $query->whereDate('DT', '>=', $dari);
+            }
+            if ($sampai) {
+                $query->whereDate('DT', '<=', $sampai);
+            }
+
+            $transactions = $query->orderBy('DT', 'asc')->orderBy('created_at', 'asc')->orderBy('REF_NO', 'asc')->get();
+
+            $reportData = [];
+            $grandTotalKeseluruhan = 0;
+
+            foreach ($transactions as $acr) {
+                $cst = $acr->cst();
+                $cstName = $cst ? $cst->DES : 'Umum';
+
+                // Ambil nama desa customer
+                $cstDesa = '-';
+                if ($cst && $cst->DS) {
+                    $ds = DS::where('DS', $cst->DS)->first();
+                    $cstDesa = $ds ? $ds->DES : '-';
+                }
+
+                $waktuStr = $acr->created_at 
+                    ? Carbon::parse($acr->created_at)->locale('id')->translatedFormat('d M Y H:i')
+                    : ($acr->DT ? Carbon::parse($acr->DT)->locale('id')->translatedFormat('d M Y') : '-');
+
+                $kasirMetode = 'Kasir ' . ($acr->USER ?: 'admin') . ' ' . ($acr->JNS == 2 ? 'Non-Tunai' : 'Tunai');
+
+                $items = [];
+                $rawSubtotal = 0;
+                $totalItemDiscount = 0;
+                $ppnPercent = null;
+
+                foreach ($acr->sts() as $st) {
+                    $itmModel = $st->itm();
+                    $kodeBarang = $st->ITM ?? '-';
+                    $namaBarang = $itmModel?->DES ?? $kodeBarang;
+
+                    $hgj = (float) ($st->HGJ ?? 0);
+                    $pot1 = (float) ($st->POT_1 ?? 0);
+                    $potR = (float) ($st->POT_R ?? 0);
+
+                    $discPctNominal = $hgj * ($pot1 / 100);
+                    $itemDiscount = $discPctNominal + $potR;
+                    $subtotalItem = (float) ($st->BRT ?? max(0, $hgj - $itemDiscount));
+
+                    $rawSubtotal += $hgj;
+                    $totalItemDiscount += $itemDiscount;
+
+                    if ($st->PPN !== null && $ppnPercent === null) {
+                        $ppnPercent = (int) $st->PPN;
+                    }
+
+                    $items[] = [
+                        'kode'           => $kodeBarang,
+                        'nama'           => $namaBarang,
+                        'harga_satuan'   => $hgj,
+                        'diskon_persen'  => $pot1,
+                        'voucher_satuan' => $potR,
+                        'subtotal'       => $subtotalItem,
+                    ];
+                }
+
+                // Diskon global, voucher global, PPN
+                $globalPct = (float) ($acr->POT_1 ?? 0);
+                $afterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
+                $globalDiscNominal = $afterItemDisc * ($globalPct / 100);
+
+                $totPot = (float) ($acr->TOT_POT ?? ($acr->POT_R ?? 0));
+                $voucherCalc = max(0, $totPot - $totalItemDiscount - $globalDiscNominal);
+                $totalSetelahDiskon = max(0, $afterItemDisc - $voucherCalc - $globalDiscNominal);
+
+                $ppnNominal = ($ppnPercent !== null && $ppnPercent > 0) ? ($totalSetelahDiskon * ($ppnPercent / 100)) : 0;
+                $invGrandTotal = (float) ($acr->BRT ?? ($totalSetelahDiskon + $ppnNominal));
+
+                $grandTotalKeseluruhan += $invGrandTotal;
+
+                $reportData[] = [
+                    'ref_no'         => $acr->REF_NO,
+                    'waktu'          => $waktuStr,
+                    'customer'       => $cstName,
+                    'desa'           => $cstDesa,
+                    'kasir_metode'   => $kasirMetode,
+                    'items'          => $items,
+                    'subtotal'       => $rawSubtotal,
+                    'diskon_global'  => $globalDiscNominal,
+                    'voucher_global' => $voucherCalc,
+                    'ppn_pct'        => $ppnPercent ?? 0,
+                    'ppn_nominal'    => $ppnNominal,
+                    'total'          => $invGrandTotal,
+                ];
+            }
+
+            $petugas = auth()->user()?->USERNAME ?? 'admin';
+            $lokasi  = 'Sumenep';
+
+            $tanggalDisplay = now()->locale('id')->translatedFormat('d F Y');
+            if ($dari && $sampai) {
+                $tanggalDisplay = Carbon::parse($dari)->locale('id')->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y');
+            } elseif ($dari) {
+                $tanggalDisplay = 'Mulai ' . Carbon::parse($dari)->locale('id')->translatedFormat('d M Y');
+            } elseif ($sampai) {
+                $tanggalDisplay = 'Sampai ' . Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y');
+            }
+
+            return view('POS.transaksi-print', compact(
+                'reportData',
+                'grandTotalKeseluruhan',
+                'petugas',
+                'lokasi',
+                'tanggalDisplay',
+                'dari',
+                'sampai'
+            ));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memuat cetak laporan transaksi: ' . $e->getMessage());
         }
     }
 }

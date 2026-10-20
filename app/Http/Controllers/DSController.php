@@ -155,4 +155,57 @@ class DSController extends Controller
             return redirect()->route('POS.desa')->with('error', 'Terjadi kesalahan ketika menghapus data desa.');
         }
     }
+
+    /**
+     * Halaman cetak laporan penjualan per desa (sesuai SS Frame 4).
+     */
+    public function cetak(Request $request)
+    {
+        try {
+            $desaList = DB::table('ds')
+                ->leftJoin('cst', 'cst.DS', '=', 'ds.DS')
+                ->leftJoin('acr', 'acr.CST', '=', 'cst.CST')
+                ->leftJoin('sts', 'sts.REF_NO', '=', 'acr.REF_NO')
+                ->select(
+                    'ds.DS',
+                    'ds.DES',
+                    DB::raw('COUNT(DISTINCT acr.REF_NO) as total_transaksi'),
+                    DB::raw('COALESCE(SUM(sts.BRT), 0) as total_nominal')
+                )
+                ->groupBy('ds.DS', 'ds.DES')
+                ->orderBy('total_nominal', 'desc')
+                ->get();
+
+            // Top 5 Total Pembelian (Nominal)
+            $top5Nominal = $desaList->sortByDesc('total_nominal')->take(5)->values();
+            $maxNominal = $top5Nominal->max('total_nominal') ?: 1;
+
+            // Top 5 Frekuensi (Transaksi)
+            $top5Frekuensi = $desaList->sortByDesc('total_transaksi')->take(5)->values();
+            $maxFrekuensi = $top5Frekuensi->max('total_transaksi') ?: 1;
+
+            // Identifikasi desa dengan nominal tertinggi dan frekuensi tertinggi
+            $desaNominalTertinggi = $top5Nominal->first()?->DS;
+            $desaFrekuensiTertinggi = $top5Frekuensi->first()?->DS;
+
+            $petugas = auth()->user()?->USERNAME ?? 'admin';
+            $tanggal = now()->locale('id')->translatedFormat('d F Y');
+            $lokasi  = 'Sumenep';
+
+            return view('POS.desa-print', compact(
+                'desaList',
+                'top5Nominal',
+                'maxNominal',
+                'top5Frekuensi',
+                'maxFrekuensi',
+                'desaNominalTertinggi',
+                'desaFrekuensiTertinggi',
+                'petugas',
+                'tanggal',
+                'lokasi'
+            ));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memuat halaman cetak laporan desa: ' . $e->getMessage());
+        }
+    }
 }
