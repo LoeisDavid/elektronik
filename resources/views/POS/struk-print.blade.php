@@ -153,7 +153,7 @@
                         </div>
                         @if (!empty($item['discount_info']))
                             <div style="font-size: 7.5px; color: #dc2626;">
-                                Diskon: -{{ $item['discount_info'] }}
+                                {{ (str_starts_with(trim($item['discount_info']), 'Diskon:') || str_starts_with(trim($item['discount_info']), 'Voucher')) ? $item['discount_info'] : 'Diskon: -' . $item['discount_info'] }}
                             </div>
                         @endif
                     </td>

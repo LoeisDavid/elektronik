@@ -590,137 +590,7 @@
     {{-- ========================================================= --}}
     {{-- MODAL STRUK (SESUAI DESAIN KASIR / POMELO)                --}}
     {{-- ========================================================= --}}
-
-    <div
-        id="modalStrukPembayaran"
-        onclick="closeStrukKlikLuar(event)"
-        class="fixed inset-0 bg-black/40 backdrop-blur-[2px] hidden items-center justify-center z-50 p-4"
-    >
-
-        <!-- Card Modal -->
-        <div
-            onclick="event.stopPropagation()"
-            class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-4 border border-gray-100 animate-fade-in"
-        >
-
-            <!-- Judul Modal -->
-            <h3 class="text-xl font-extrabold text-gray-900 tracking-tight">Struk</h3>
-
-            <!-- Tampilan Kertas Struk Sesuai Mockup Kasir -->
-            <div id="areaStrukPrint" class="bg-white p-5 rounded-2xl border border-dashed border-gray-300 text-xs font-sans text-gray-800 space-y-3">
-
-                <!-- Header Toko / Brand Name -->
-                <div class="text-center space-y-1">
-                    <h2 class="text-2xl font-serif font-extrabold text-black tracking-tight" id="strukNamaToko">Pomelo.</h2>
-                    <p class="text-[11px] text-gray-400 font-medium mt-1">No. Transaksi</p>
-                    <p id="strukNoNota" class="text-sm font-bold text-gray-900 font-mono tracking-wider">-</p>
-                </div>
-
-                <div class="border-b border-dashed border-gray-300 my-2"></div>
-
-                <!-- Detail Transaksi (Kiri) -->
-                <div class="space-y-0.5 text-xs text-gray-500 font-medium">
-                    <p id="strukTanggal">-</p>
-                    <p id="strukWaktu">-</p>
-                    <p>Dilayani oleh: <span id="strukKasir" class="text-gray-800 font-semibold">Kasir</span></p>
-
-                    {{-- Info Pelanggan, Desa & Alamat --}}
-                    <div id="wrapperStrukPelanggan" class="hidden pt-1 mt-1 border-t border-dashed border-gray-200 space-y-0.5 text-xs text-gray-500 font-medium">
-                        <p id="rowStrukCustomerNama" class="hidden">Pelanggan: <span id="strukCustomerNama" class="text-gray-800 font-semibold">-</span></p>
-                        <p id="rowStrukCustomerDesa" class="hidden">Desa: <span id="strukCustomerDesa" class="text-gray-800 font-semibold">-</span></p>
-                        <p id="rowStrukCustomerAlamat" class="hidden">Alamat: <span id="strukCustomerAlamat" class="text-gray-800 font-semibold">-</span></p>
-                    </div>
-                </div>
-
-                <div class="border-b border-dashed border-gray-300 my-2"></div>
-
-                <!-- Item / Produk -->
-                <div id="strukListProduk" class="space-y-2.5">
-                    <!-- Diisi secara dinamis via JavaScript -->
-                </div>
-
-                <div class="border-b border-dashed border-gray-300 my-2"></div>
-
-                <!-- Rincian Subtotal, Diskon & Total -->
-                <div class="space-y-1.5 pt-0.5 text-xs">
-                    <!-- Subtotal -->
-                    <div class="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span id="strukSubtotal" class="font-semibold text-gray-900">Rp 0</span>
-                    </div>
-
-                    <!-- Diskon Per Item (Tampil jika ada) -->
-                    <div id="wrapperStrukDiskonItem" class="hidden justify-between text-gray-600">
-                        <span>Diskon Per Item</span>
-                        <span id="strukDiskonItem" class="font-semibold text-red-600">- Rp 0</span>
-                    </div>
-
-                    <!-- Diskon Global (Tampil jika ada) -->
-                    <div id="wrapperStrukDiskonGlobal" class="hidden justify-between text-gray-600">
-                        <span id="labelStrukDiskonGlobal">Diskon Global</span>
-                        <span id="strukDiskonGlobal" class="font-semibold text-red-600">- Rp 0</span>
-                    </div>
-
-                    <!-- Voucher Global (Tampil jika ada) -->
-                    <div id="wrapperStrukVoucher" class="hidden justify-between text-gray-600">
-                        <span>Voucher</span>
-                        <span id="strukVoucher" class="font-semibold text-red-600">- Rp 0</span>
-                    </div>
-
-                    <!-- PPN (Tampil jika ada) -->
-                    <div id="wrapperStrukPPN" class="hidden justify-between text-gray-600">
-                        <span id="labelStrukPPN">PPN</span>
-                        <span id="strukPPN" class="font-semibold text-gray-900">+ Rp 0</span>
-                    </div>
-
-                    <!-- Total -->
-                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-100">
-                        <span>Total</span>
-                        <span id="strukTotal" class="text-base font-extrabold text-black">Rp 0</span>
-                    </div>
-
-                    <!-- Metode Pembayaran -->
-                    <div class="flex justify-between text-gray-600 pt-0.5">
-                        <span>Pembayaran</span>
-                        <span id="strukMetode" class="font-semibold text-gray-900">Tunai</span>
-                    </div>
-
-                    <!-- Rincian Tunai (Dibayar & Kembali) -->
-                    <div id="wrapperDetailTunai" class="hidden space-y-1 pt-0.5 text-gray-600">
-                        <div class="flex justify-between">
-                            <span>Dibayar</span>
-                            <span id="strukDibayar" class="font-semibold text-gray-900">Rp 0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Kembali</span>
-                            <span id="strukKembali" class="font-semibold text-gray-900">Rp 0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tombol Aksi (Tutup & Print Struk) -->
-            <div class="grid grid-cols-2 gap-3 pt-1">
-                <button
-                    type="button"
-                    onclick="closeStrukModal()"
-                    class="w-full bg-white border border-gray-400 hover:bg-gray-100 active:bg-gray-200 text-gray-900 rounded-xl py-2.5 text-center text-xs font-bold transition-colors cursor-pointer shadow-xs">
-                    Tutup
-                </button>
-                <button
-                    type="button"
-                    onclick="cetakStruk()"
-                    class="w-full bg-[#1A1F36] hover:bg-black active:bg-black text-white rounded-xl py-2.5 text-center text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
-                    Print Struk
-                </button>
-            </div>
-
-        </div>
-
-    </div>
+    @include('POS.struk')
 
     {{-- ========================================================= --}}
     {{-- [TAMBAHAN PRINT] FORM TERSEMBUNYI -> POST KE CONTROLLER    --}}
@@ -744,6 +614,9 @@
         <input type="hidden" name="voucher"         id="printVoucher">
         <input type="hidden" name="ppn"             id="printPpn">
         <input type="hidden" name="ppn_nominal"     id="printPpnNominal">
+        <input type="hidden" name="total"           id="printTotal">
+        <input type="hidden" name="dibayar"         id="printDibayar">
+        <input type="hidden" name="kembalian"       id="printKembalian">
         <input type="hidden" name="customer_nama"   id="printCustomerNama">
         <input type="hidden" name="customer_desa"   id="printCustomerDesa">
         <input type="hidden" name="customer_alamat" id="printCustomerAlamat">
@@ -1128,23 +1001,27 @@
 
 
     function closeStrukModal() {
-
-        const modal =
-            document.getElementById('modalStrukPembayaran');
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-
+        const modal = document.getElementById('modalStrukPembayaran');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     }
 
+    window.closeStrukModal = closeStrukModal;
+    window.tutupModalStruk = closeStrukModal;
 
     function closeStrukKlikLuar(event) {
-
         if (event.target === event.currentTarget) {
             closeStrukModal();
         }
-
     }
+
+    window.tutupModalStrukKlikLuar = function(event) {
+        if (event.target && event.target.id === 'modalStrukPembayaran') {
+            closeStrukModal();
+        }
+    };
 
 
     // ============================================================
@@ -1231,64 +1108,38 @@
 
         const isTunai = (strukAktif.metode || '').toLowerCase().includes('tunai') || (strukAktif.metode || '').toLowerCase().includes('cash');
 
-        document.getElementById('printRefNo').value =
-            strukAktif.ref;
+        const setField = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== null && val !== undefined) ? val : '';
+        };
 
-        document.getElementById('printTanggal').value =
-            strukAktif.tanggal;
+        setField('printRefNo', strukAktif.ref);
+        setField('printTanggal', strukAktif.tanggal);
+        setField('printWaktu', strukAktif.waktu);
+        setField('printKasir', strukAktif.kasir);
+        setField('printMetode', strukAktif.metode);
+        setField('printSubtotal', strukAktif.subtotal);
+        setField('printDiscountItem', strukAktif.diskonItem);
+        setField('printDiscountGlobal', strukAktif.diskonGlobal);
+        setField('printVoucher', strukAktif.voucher);
+        setField('printPpn', strukAktif.ppn || '');
+        setField('printPpnNominal', strukAktif.ppnNominal || 0);
+        setField('printTotal', strukAktif.total);
+        setField('printDibayar', isTunai ? strukAktif.dibayar : '');
+        setField('printKembalian', isTunai ? strukAktif.kembalian : '');
+        setField('printCustomerNama', strukAktif.customer_nama || '');
+        setField('printCustomerDesa', strukAktif.customer_desa || '');
+        setField('printCustomerAlamat', strukAktif.customer_alamat || '');
+        setField('printItems', JSON.stringify(items));
 
-        document.getElementById('printWaktu').value =
-            strukAktif.waktu;
-
-        document.getElementById('printKasir').value =
-            strukAktif.kasir;
-
-        document.getElementById('printMetode').value =
-            strukAktif.metode;
-
-        document.getElementById('printSubtotal').value =
-            strukAktif.subtotal;
-
-        document.getElementById('printDiscountItem').value =
-            strukAktif.diskonItem;
-
-        document.getElementById('printDiscountGlobal').value =
-            strukAktif.diskonGlobal;
-
-        document.getElementById('printVoucher').value =
-            strukAktif.voucher;
-
-        document.getElementById('printPpn').value =
-            strukAktif.ppn || '';
-
-        document.getElementById('printPpnNominal').value =
-            strukAktif.ppnNominal || 0;
-
-        document.getElementById('printTotal').value =
-            strukAktif.total;
-
-        document.getElementById('printDibayar').value =
-            isTunai ? strukAktif.dibayar : '';
-
-        document.getElementById('printKembalian').value =
-            isTunai ? strukAktif.kembalian : '';
-
-        document.getElementById('printCustomerNama').value =
-            strukAktif.customer_nama || '';
-
-        document.getElementById('printCustomerDesa').value =
-            strukAktif.customer_desa || '';
-
-        document.getElementById('printCustomerAlamat').value =
-            strukAktif.customer_alamat || '';
-
-        document.getElementById('printItems').value =
-            JSON.stringify(items);
-
-
-        document.getElementById('formPrintStruk').submit();
-
+        const formPrint = document.getElementById('formPrintStruk');
+        if (formPrint) {
+            formPrint.submit();
+        }
     }
+
+    window.cetakStruk = cetakStruk;
+    window.cetakStrukPdf = cetakStruk;
 
 
     // ============================================================
