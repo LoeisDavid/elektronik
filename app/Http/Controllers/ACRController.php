@@ -571,7 +571,7 @@ class ACRController extends Controller
                 $tanggalDisplay = 'Sampai ' . Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y');
             }
 
-            return view('POS.transaksi-print', compact(
+            $pdf = Pdf::loadView('POS.transaksi-print', compact(
                 'reportData',
                 'grandTotalKeseluruhan',
                 'petugas',
@@ -579,7 +579,9 @@ class ACRController extends Controller
                 'tanggalDisplay',
                 'dari',
                 'sampai'
-            ));
+            ))->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-penjualan-' . date('YmdHis') . '.pdf');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memuat cetak laporan transaksi: ' . $e->getMessage());
         }

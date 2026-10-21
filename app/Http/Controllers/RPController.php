@@ -8,6 +8,7 @@ use App\Models\ITMDT;
 use App\Models\RP;
 use App\Models\RPD;
 use App\Models\STS;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -677,7 +678,7 @@ class RPController extends Controller
         $countDikirim = $items->where('SS', 'Dikirim')->count();
         $countReady = $items->where('SS', 'Ready')->count();
 
-        return view('Inventory.perpindahan-print', compact(
+        $pdf = Pdf::loadView('Inventory.perpindahan-print', compact(
             'rp',
             'items',
             'petugas',
@@ -689,7 +690,9 @@ class RPController extends Controller
             'countHilang',
             'countDikirim',
             'countReady'
-        ));
+        ))->setPaper('a4', 'portrait');
+
+        return $pdf->stream('laporan-perpindahan-' . $rp->RP . '.pdf');
     }
 }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ITM;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -110,7 +111,10 @@ class OpnameStokController extends Controller
                 'tidak_terscan' => $payload['summary']['tidak_terscan'] ?? $cChecking,
             ];
 
-            return view('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'));
+            $pdf = Pdf::loadView('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'))
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-cek-stok-' . date('YmdHis') . '.pdf');
         }
 
         // Fallback jika dibuka via GET dengan parameter itm
@@ -143,7 +147,10 @@ class OpnameStokController extends Controller
                 'tidak_terscan' => $cChecking,
             ];
 
-            return view('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'));
+            $pdf = Pdf::loadView('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'))
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-cek-stok-' . date('YmdHis') . '.pdf');
         }
 
         return redirect()->route('inventory.opname');

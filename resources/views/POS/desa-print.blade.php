@@ -2,546 +2,382 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Penjualan Per Desa</title>
-    
-    <!-- Google Fonts: Montserrat -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+        @page {
+            size: a4 portrait;
+            margin: 14mm 14mm 14mm 14mm;
         }
 
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 9px;
+            color: #1e293b;
             margin: 0;
             padding: 0;
-            background-color: #525659;
-            color: #1E293B;
-            -webkit-font-smoothing: antialiased;
+            line-height: 1.35;
         }
 
-        /* Top bar untuk preview di layar */
-        .no-print-bar {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background-color: #0D1C43;
-            color: #ffffff;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-        }
-
-        .no-print-bar .title {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .no-print-bar .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .no-print-bar button, .no-print-bar a {
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .btn-close {
-            background-color: transparent;
-            color: #ffffff;
-            border: 1px solid rgba(255,255,255,0.4);
-        }
-        .btn-close:hover {
-            background-color: rgba(255,255,255,0.1);
-            border-color: #ffffff;
-        }
-
-        .btn-print {
-            background-color: #F2B80C;
-            color: #0D1C43;
-            border: none;
-        }
-        .btn-print:hover {
-            background-color: #e0aa0a;
-        }
-
-        /* Container lembar kertas */
-        .page-wrapper {
-            padding: 24px 0 48px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .paper {
-            background-color: #ffffff;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 18mm 18mm 20mm;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border-radius: 2px;
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        /* HEADER */
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .header-left .sub-title {
-            font-size: 11px;
-            color: #64748B;
-            font-weight: 500;
-            margin: 0 0 2px 0;
-            letter-spacing: 0.3px;
-        }
-
-        .header-left .main-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #0D1C43;
-            margin: 0;
-            letter-spacing: -0.3px;
-        }
-
-        .header-right table {
+        table {
+            width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
-            color: #1E293B;
         }
 
-        .header-right td {
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .main-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0D1C43;
+            margin: 0 0 2px 0;
+        }
+
+        .sub-title {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .meta-table {
+            float: right;
+            border-collapse: collapse;
+            font-size: 9.5px;
+        }
+
+        .meta-table td {
             padding: 1.5px 4px;
         }
 
-        .header-right td.label {
-            color: #475569;
-            font-weight: 500;
-            width: 60px;
+        .meta-label {
+            color: #64748b;
+            text-align: right;
         }
 
-        .header-right td.colon {
-            width: 8px;
+        .meta-colon {
+            width: 6px;
             text-align: center;
         }
 
-        .header-right td.val {
-            font-weight: 600;
-            color: #0F172A;
-            text-align: right;
+        .meta-val {
+            font-weight: bold;
+            color: #0f172a;
         }
 
         .divider-line {
-            height: 1.5px;
-            background-color: #0D1C43;
-            width: 100%;
-            margin: 8px 0 16px 0;
+            border-top: 1.5px solid #0D1C43;
+            margin: 10px 0 14px 0;
         }
 
-        /* SECTION: DESA TERLARIS */
         .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #0D1C43;
-            margin: 0 0 8px 0;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-
-        .summary-card {
-            border: 1px solid #94A3B8;
-            border-radius: 10px;
-            padding: 10px 14px 12px;
-            background-color: #FFFFFF;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             font-size: 11px;
-            font-weight: 700;
-            color: #0F172A;
-            margin-bottom: 10px;
-            border-bottom: 1px dashed #E2E8F0;
-            padding-bottom: 4px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        .card-header .unit {
-            color: #475569;
-            font-weight: 600;
+        /* Two Cards Grid via Table */
+        .cards-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin-bottom: 16px;
         }
 
-        .bar-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .cards-table td.card-cell {
+            width: 50%;
+            vertical-align: top;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        .card-header-table {
+            width: 100%;
             margin-bottom: 6px;
-            font-size: 10.5px;
+            font-weight: bold;
+            font-size: 9.5px;
+            color: #0f172a;
         }
 
-        .bar-row:last-child {
-            margin-bottom: 0;
+        .card-unit {
+            text-align: right;
+            color: #64748b;
+            font-size: 8.5px;
+            font-weight: normal;
         }
 
-        .bar-label {
-            width: 78px;
-            font-weight: 500;
-            color: #1E293B;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .bar-table {
+            width: 100%;
+            margin-bottom: 4px;
+            font-size: 8.5px;
+        }
+
+        .bar-table td {
+            padding: 2px 0;
+            vertical-align: middle;
         }
 
         .bar-track {
-            flex: 1;
-            background-color: #F1F5F9;
-            border: 1px solid #CBD5E1;
-            height: 9px;
+            background-color: #f1f5f9;
+            height: 6px;
             border-radius: 3px;
+            width: 100%;
             overflow: hidden;
-            position: relative;
         }
 
         .bar-fill-blue {
-            background-color: #1E3A8A;
-            height: 100%;
-            border-radius: 2px;
+            background-color: #2563eb;
+            height: 6px;
+            border-radius: 3px;
         }
 
         .bar-fill-green {
-            background-color: #2E7D32;
-            height: 100%;
-            border-radius: 2px;
+            background-color: #16a34a;
+            height: 6px;
+            border-radius: 3px;
         }
 
-        .bar-value {
-            width: 44px;
-            text-align: right;
-            font-weight: 600;
-            color: #0F172A;
-        }
-
-        /* SECTION: RINCIAN DESA */
-        .table-container {
-            border: 1px solid #94A3B8;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 40px;
-        }
-
-        table.detail-table {
+        /* Detail Table */
+        .detail-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 8.5px;
+            margin-bottom: 20px;
         }
 
-        table.detail-table thead {
+        .detail-table th {
             background-color: #0D1C43;
-            color: #FFFFFF;
+            color: #ffffff;
+            padding: 6px 8px;
+            font-weight: bold;
+            border: 1px solid #0D1C43;
+            font-size: 8.5px;
         }
 
-        table.detail-table th {
-            padding: 8px 12px;
-            font-weight: 600;
-            text-align: left;
-            font-size: 11px;
+        .detail-table td {
+            padding: 5px 8px;
+            border: 1px solid #e2e8f0;
+            vertical-align: middle;
         }
 
-        table.detail-table th.text-center {
-            text-align: center;
+        .detail-table tr:nth-child(even) td {
+            background-color: #f8fafc;
         }
 
-        table.detail-table th.text-right {
-            text-align: right;
-        }
-
-        table.detail-table tbody tr {
-            border-bottom: 1px solid #E2E8F0;
-        }
-
-        table.detail-table tbody tr:last-child {
-            border-bottom: none;
-        }
-
-        table.detail-table td {
-            padding: 7px 12px;
-            color: #1E293B;
-        }
-
-        table.detail-table td.text-center {
-            text-align: center;
-        }
-
-        table.detail-table td.text-right {
-            text-align: right;
-            font-weight: 600;
-        }
+        .text-center { text-align: center; }
+        .text-right  { text-align: right; }
 
         .badge-nominal {
-            background-color: #E8F5E9;
-            border: 1px solid #A5D6A7;
-            color: #2E7D32;
-            font-size: 9px;
-            font-weight: 600;
-            padding: 1px 6px;
-            border-radius: 9999px;
-            margin-left: 8px;
             display: inline-block;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 7.5px;
+            font-weight: bold;
+            margin-left: 6px;
         }
 
         .badge-frekuensi {
-            background-color: #FFF3E0;
-            border: 1px solid #FFCC80;
-            color: #E65100;
-            font-size: 9px;
-            font-weight: 600;
-            padding: 1px 6px;
-            border-radius: 9999px;
-            margin-left: 8px;
             display: inline-block;
+            background-color: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 7.5px;
+            font-weight: bold;
+            margin-left: 6px;
         }
 
-        /* TANDA TANGAN */
-        .signature-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-            padding: 0 10px;
+        /* Signature */
+        .signature-table {
+            width: 100%;
+            margin-top: 28px;
+            page-break-inside: avoid;
         }
 
-        .signature-box {
-            width: 170px;
-            text-align: left;
+        .signature-table td {
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 40px;
         }
 
         .signature-line {
-            border-top: 1.5px solid #64748B;
-            width: 100%;
+            border-bottom: 1px solid #94a3b8;
+            height: 50px;
             margin-bottom: 6px;
         }
 
         .signature-name {
-            font-size: 11px;
+            font-size: 9px;
             color: #334155;
             font-weight: 500;
-        }
-
-        /* PRINT STYLES */
-        @media print {
-            body {
-                background-color: #ffffff;
-            }
-            .no-print-bar {
-                display: none !important;
-            }
-            .page-wrapper {
-                padding: 0;
-            }
-            .paper {
-                width: 100%;
-                min-height: auto;
-                box-shadow: none;
-                border-radius: 0;
-                padding: 15mm 15mm;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 0;
-            }
         }
     </style>
 </head>
 <body>
 
-    {{-- NAV BAR ATAS (HANYA DITAMPILKAN DI LAYAR) --}}
-    <div class="no-print-bar">
-        <div class="title">
-            Preview Cetak — Laporan Penjualan Per Desa
-        </div>
-        <div class="btn-group">
-            <button type="button" class="btn-close" onclick="window.close(); if(!window.closed){ window.history.back(); }">
-                Tutup
-            </button>
-            <button type="button" class="btn-print" onclick="window.print()">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
-                </svg>
-                <span>Cetak Dokumen</span>
-            </button>
-        </div>
-    </div>
+    <!-- Header Laporan -->
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="sub-title">Laporan</div>
+                <div class="main-title">Penjualan Per Desa</div>
+            </td>
+            <td>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Tanggal</td>
+                        <td class="meta-colon">:</td>
+                        <td class="meta-val">{{ $tanggal }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Petugas</td>
+                        <td class="meta-colon">:</td>
+                        <td class="meta-val">{{ $petugas }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Lokasi</td>
+                        <td class="meta-colon">:</td>
+                        <td class="meta-val">{{ $lokasi }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 
-    {{-- KERTAS DOKUMEN CETAK A4 --}}
-    <div class="page-wrapper">
-        <div class="paper">
-            
-            {{-- HEADER LAPORAN --}}
-            <div class="header-container">
-                <div class="header-left">
-                    <p class="sub-title">Laporan</p>
-                    <h1 class="main-title">Penjualan Per Desa</h1>
-                </div>
-                <div class="header-right">
-                    <table>
+    <div class="divider-line"></div>
+
+    <!-- Section: Desa Terlaris (2 Cards) -->
+    <div class="section-title">Desa Terlaris</div>
+    <table class="cards-table">
+        <tr>
+            <!-- Top 5 Nominal -->
+            <td class="card-cell">
+                <table class="card-header-table">
+                    <tr>
+                        <td>Top 5 Total Pembelian</td>
+                        <td class="card-unit">Rp</td>
+                    </tr>
+                </table>
+                @forelse ($top5Nominal as $item)
+                    @php
+                        $pct = $maxNominal > 0 ? round(($item->total_nominal / $maxNominal) * 100) : 0;
+                        $jt = $item->total_nominal >= 1000000 
+                            ? number_format($item->total_nominal / 1000000, 1, ',', '.') . ' jt'
+                            : number_format($item->total_nominal / 1000, 0, ',', '.') . ' rb';
+                    @endphp
+                    <table class="bar-table">
                         <tr>
-                            <td class="label">Tanggal</td>
-                            <td class="colon">:</td>
-                            <td class="val">{{ $tanggal }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Petugas</td>
-                            <td class="colon">:</td>
-                            <td class="val">{{ $petugas }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Lokasi</td>
-                            <td class="colon">:</td>
-                            <td class="val">{{ $lokasi }}</td>
+                            <td style="width: 32%; font-weight: 500;">{{ $item->DES }}</td>
+                            <td style="width: 48%;">
+                                <div class="bar-track">
+                                    <div class="bar-fill-blue" style="width: {{ $pct }}%;"></div>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $jt }}</td>
                         </tr>
                     </table>
-                </div>
-            </div>
+                @empty
+                    <div style="font-size: 8.5px; color: #94a3b8; text-align: center; padding: 10px 0;">Belum ada data</div>
+                @endforelse
+            </td>
 
-            <div class="divider-line"></div>
-
-            {{-- SECTION: DESA TERLARIS --}}
-            <h2 class="section-title">Desa Terlaris</h2>
-            <div class="cards-grid">
-                
-                {{-- KARTU 1: TOP 5 NOMINAL PEMBELIAN --}}
-                <div class="summary-card">
-                    <div class="card-header">
-                        <span>Top 5 Total Pembelian</span>
-                        <span class="unit">Rp</span>
-                    </div>
-                    @forelse ($top5Nominal as $item)
-                        @php
-                            $pct = $maxNominal > 0 ? round(($item->total_nominal / $maxNominal) * 100) : 0;
-                            // Format juta (jt)
-                            $jt = $item->total_nominal >= 1000000 
-                                ? number_format($item->total_nominal / 1000000, 1, ',', '.') . ' jt'
-                                : number_format($item->total_nominal / 1000, 0, ',', '.') . ' rb';
-                        @endphp
-                        <div class="bar-row">
-                            <div class="bar-label" title="{{ $item->DES }}">{{ $item->DES }}</div>
-                            <div class="bar-track">
-                                <div class="bar-fill-blue" style="width: {{ $pct }}%;"></div>
-                            </div>
-                            <div class="bar-value">{{ $jt }}</div>
-                        </div>
-                    @empty
-                        <p style="font-size: 11px; color: #94A3B8; text-align: center; margin: 12px 0;">Belum ada data</p>
-                    @endforelse
-                </div>
-
-                {{-- KARTU 2: TOP 5 FREKUENSI TRANSAKSI --}}
-                <div class="summary-card">
-                    <div class="card-header">
-                        <span>Top 5 Total Pembelian</span>
-                        <span class="unit">Kali</span>
-                    </div>
-                    @forelse ($top5Frekuensi as $item)
-                        @php
-                            $pct = $maxFrekuensi > 0 ? round(($item->total_transaksi / $maxFrekuensi) * 100) : 0;
-                        @endphp
-                        <div class="bar-row">
-                            <div class="bar-label" title="{{ $item->DES }}">{{ $item->DES }}</div>
-                            <div class="bar-track">
-                                <div class="bar-fill-green" style="width: {{ $pct }}%;"></div>
-                            </div>
-                            <div class="bar-value">{{ $item->total_transaksi }}x</div>
-                        </div>
-                    @empty
-                        <p style="font-size: 11px; color: #94A3B8; text-align: center; margin: 12px 0;">Belum ada data</p>
-                    @endforelse
-                </div>
-
-            </div>
-
-            {{-- SECTION: RINCIAN DESA --}}
-            <h2 class="section-title">Rincian Desa</h2>
-            <div class="table-container">
-                <table class="detail-table">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 45px;">No</th>
-                            <th>Nama Desa</th>
-                            <th class="text-center" style="width: 100px;">Transaksi</th>
-                            <th class="text-right" style="width: 160px;">Total Pembelian</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($desaList as $index => $desa)
-                            @php
-                                $isTopNominal = ($desa->DS === $desaNominalTertinggi && $desa->total_nominal > 0);
-                                $isTopFrekuensi = ($desa->DS === $desaFrekuensiTertinggi && $desa->total_transaksi > 0);
-                            @endphp
-                            <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
-                                <td>
-                                    <span>{{ $desa->DES }}</span>
-                                    @if ($isTopNominal)
-                                        <span class="badge-nominal">Nominal tertinggi</span>
-                                    @endif
-                                    @if ($isTopFrekuensi && !$isTopNominal)
-                                        <span class="badge-frekuensi">Frekuensi tertinggi</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">{{ $desa->total_transaksi }}</td>
-                                <td class="text-right">Rp {{ number_format($desa->total_nominal, 0, ',', '.') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" style="text-align: center; color: #94A3B8; padding: 20px;">
-                                    Belum ada data penjualan per desa
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+            <!-- Top 5 Frekuensi -->
+            <td class="card-cell">
+                <table class="card-header-table">
+                    <tr>
+                        <td>Top 5 Total Transaksi</td>
+                        <td class="card-unit">Kali</td>
+                    </tr>
                 </table>
-            </div>
+                @forelse ($top5Frekuensi as $item)
+                    @php
+                        $pct = $maxFrekuensi > 0 ? round(($item->total_transaksi / $maxFrekuensi) * 100) : 0;
+                    @endphp
+                    <table class="bar-table">
+                        <tr>
+                            <td style="width: 32%; font-weight: 500;">{{ $item->DES }}</td>
+                            <td style="width: 48%;">
+                                <div class="bar-track">
+                                    <div class="bar-fill-green" style="width: {{ $pct }}%;"></div>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $item->total_transaksi }}x</td>
+                        </tr>
+                    </table>
+                @empty
+                    <div style="font-size: 8.5px; color: #94a3b8; text-align: center; padding: 10px 0;">Belum ada data</div>
+                @endforelse
+            </td>
+        </tr>
+    </table>
 
-            {{-- TANDA TANGAN --}}
-            <div class="signature-container">
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">Dibuat oleh ({{ $petugas }})</div>
-                </div>
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">Diperiksa oleh</div>
-                </div>
-            </div>
+    <!-- Section: Rincian Desa -->
+    <div class="section-title">Rincian Desa</div>
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th class="text-center" style="width: 7%;">No</th>
+                <th style="width: 48%;">Nama Desa</th>
+                <th class="text-center" style="width: 18%;">Transaksi</th>
+                <th class="text-right" style="width: 27%;">Total Pembelian</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($desaList as $index => $desa)
+                @php
+                    $isTopNominal = ($desa->DS === $desaNominalTertinggi && $desa->total_nominal > 0);
+                    $isTopFrekuensi = ($desa->DS === $desaFrekuensiTertinggi && $desa->total_transaksi > 0);
+                @endphp
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>
+                        <span>{{ $desa->DES }}</span>
+                        @if ($isTopNominal)
+                            <span class="badge-nominal">Nominal tertinggi</span>
+                        @endif
+                        @if ($isTopFrekuensi && !$isTopNominal)
+                            <span class="badge-frekuensi">Frekuensi tertinggi</span>
+                        @endif
+                    </td>
+                    <td class="text-center">{{ $desa->total_transaksi }}</td>
+                    <td class="text-right" style="font-weight: 600;">Rp {{ number_format($desa->total_nominal, 0, ',', '.') }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="text-center" style="padding: 16px; color: #94a3b8;">
+                        Belum ada data penjualan per desa
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 
-        </div>
-    </div>
+    <!-- Tanda Tangan -->
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div class="signature-line"></div>
+                <div class="signature-name">Dibuat oleh ({{ $petugas }})</div>
+            </td>
+            <td>
+                <div class="signature-line"></div>
+                <div class="signature-name">Diperiksa oleh</div>
+            </td>
+        </tr>
+    </table>
 
 </body>
 </html>

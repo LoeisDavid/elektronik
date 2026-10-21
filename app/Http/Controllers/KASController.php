@@ -23,34 +23,36 @@ class KASController extends Controller
             foreach (KAS::all() as $kas) {
                 $user = $kas->user(); // object user
 
-                $kasAwal        = (int) $kas->AWLT + (int) $kas->AWLNT;
+                $kasAwalTunai   = (int) $kas->AWLT;
                 $penjualanTunai = (int) $kas->DBT;
                 $penjualanNon   = (int) $kas->DBNT;
                 $totalPenjualan = $penjualanTunai + $penjualanNon;
-                $pengeluaran    = (int) $kas->CRT + (int) $kas->CRNT;
-                $kasAkhirRill   = (int) $kas->AKHT + (int) $kas->AKHNT;
+                $pengeluaran    = (int) $kas->CRT;
+                $uangAkhirTunai = (int) $kas->AKHT;
 
                 $sudahTutup = !empty($kas->TGLK);
 
-                // Selisih = kas akhir rill - kas akhir seharusnya
+                // Selisih cuma hitung uang tunai doang:
+                // Kas akhir tunai seharusnya = kas awal tunai + penjualan tunai - pengeluaran tunai
+                $kasAkhirTunaiSeharusnya = $kasAwalTunai + $penjualanTunai - $pengeluaran;
                 $selisih = $sudahTutup
-                    ? $kasAkhirRill - ($kasAwal + $totalPenjualan - $pengeluaran)
+                    ? $uangAkhirTunai - $kasAkhirTunaiSeharusnya
                     : null;
 
                 $semuaRow[] = (object) [
-                    'cd'              => $kas->CD,
-                    'kode_user'       => $kas->USER,
-                    'kasir'           => $user->name ?? $kas->USER,
-                    'tanggal'         => is_object($kas->TGL) ? $kas->TGL->format('Y-m-d') : date('Y-m-d', strtotime($kas->TGL)),
-                    'waktu_buka'      => $kas->TGLM,
-                    'waktu_tutup'     => $kas->TGLK,
-                    'sudah_tutup'     => $sudahTutup,
-                    'kas_awal'        => $kasAwal,
-                    'tunai'           => $penjualanTunai,
-                    'non_tunai'       => $penjualanNon,
-                    'total_penjualan' => $totalPenjualan,
-                    'kas_akhir_rill'  => $kasAkhirRill,
-                    'selisih'         => $selisih,
+                    'cd'               => $kas->CD,
+                    'kode_user'        => $kas->USER,
+                    'kasir'            => $user->name ?? $kas->USER,
+                    'tanggal'          => is_object($kas->TGL) ? $kas->TGL->format('Y-m-d') : date('Y-m-d', strtotime($kas->TGL)),
+                    'waktu_buka'       => $kas->TGLM,
+                    'waktu_tutup'      => $kas->TGLK,
+                    'sudah_tutup'      => $sudahTutup,
+                    'kas_awal'         => $kasAwalTunai,
+                    'tunai'            => $penjualanTunai,
+                    'non_tunai'        => $penjualanNon,
+                    'total_penjualan'  => $totalPenjualan,
+                    'uang_akhir_tunai' => $uangAkhirTunai,
+                    'selisih'          => $selisih,
                 ];
             }
 

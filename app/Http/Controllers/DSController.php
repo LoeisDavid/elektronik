@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DS;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
@@ -192,7 +193,7 @@ class DSController extends Controller
             $tanggal = now()->locale('id')->translatedFormat('d F Y');
             $lokasi  = 'Sumenep';
 
-            return view('POS.desa-print', compact(
+            $pdf = Pdf::loadView('POS.desa-print', compact(
                 'desaList',
                 'top5Nominal',
                 'maxNominal',
@@ -203,7 +204,9 @@ class DSController extends Controller
                 'petugas',
                 'tanggal',
                 'lokasi'
-            ));
+            ))->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-penjualan-desa-' . date('YmdHis') . '.pdf');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memuat halaman cetak laporan desa: ' . $e->getMessage());
         }

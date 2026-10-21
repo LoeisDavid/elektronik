@@ -135,13 +135,14 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-3 px-4 font-semibold">Kode</th>
                         <th class="py-3 px-4 font-semibold">Kasir</th>
                         <th class="py-3 px-4 font-semibold">Waktu Buka</th>
                         <th class="py-3 px-4 font-semibold">Waktu Tutup</th>
                         <th class="py-3 px-4 font-semibold">Kas Awal</th>
                         <th class="py-3 px-4 font-semibold">Total Penjualan</th>
-                        <th class="py-3 px-4 font-semibold">Kas Akhir Rill</th>
+                        <th class="py-3 px-4 font-semibold">Total Tunai</th>
+                        <th class="py-3 px-4 font-semibold">Total Non Tunai</th>
+                        <th class="py-3 px-4 font-semibold">Uang Akhir Tunai</th>
                         <th class="py-3 px-4 font-semibold">Selisih</th>
                     </tr>
                 </thead>
@@ -150,19 +151,20 @@
                     <?php if (count($laporan) > 0): ?>
                         <?php foreach ($laporan as $row): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4 font-mono text-gray-600"><?= e($row->cd ?? '-') ?></td>
                                 <td class="py-3.5 px-4 font-medium"><?= e($row->kasir) ?></td>
                                 <td class="py-3.5 px-4"><?= e($jam($row->waktu_buka)) ?></td>
                                 <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($jam($row->waktu_tutup)) : '<span class="text-amber-600">Belum ditutup</span>' ?></td>
                                 <td class="py-3.5 px-4"><?= e($rp($row->kas_awal)) ?></td>
                                 <td class="py-3.5 px-4"><?= e($rp($row->total_penjualan)) ?></td>
-                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($rp($row->kas_akhir_rill)) : '-' ?></td>
+                                <td class="py-3.5 px-4"><?= e($rp($row->tunai)) ?></td>
+                                <td class="py-3.5 px-4"><?= e($rp($row->non_tunai)) ?></td>
+                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($rp($row->uang_akhir_tunai)) : '-' ?></td>
                                 <td class="py-3.5 px-4">
                                     <?php if ($row->selisih === null): ?>
                                         -
                                     <?php else: ?>
-                                        <span class="<?= $row->selisih < 0 ? 'text-red-600' : ($row->selisih > 0 ? 'text-green-600' : '') ?>">
-                                            <?= ($row->selisih < 0 ? '-' : '') . e($rp(abs($row->selisih))) ?>
+                                        <span class="<?= $row->selisih < 0 ? 'text-red-600 font-semibold' : ($row->selisih > 0 ? 'text-green-600 font-semibold' : '') ?>">
+                                            <?= e($rp(abs($row->selisih))) ?>
                                         </span>
                                     <?php endif; ?>
                                 </td>
@@ -170,7 +172,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
+                            <td colspan="9" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

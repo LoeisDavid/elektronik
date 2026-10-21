@@ -30,6 +30,7 @@
 @extends('layouts.app') {{-- sesuaikan nama layout kalau bukan 'layouts.app' --}}
 
 @section('title', 'Cek Stok')
+@section('header_title', 'Cek Stok')
 
 @push('styles')
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,8 +173,8 @@
     {{-- ================= SEARCH & FILTER (murni JS) ================= --}}
     <div class="flex items-center gap-3 px-6 pt-3 shrink-0">
         <div class="relative w-64 md:w-80">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#0D1C43]">
-                <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-black">
+                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
             </span>
@@ -182,14 +183,14 @@
                 id="inputCari"
                 autocomplete="off"
                 placeholder="Cari kode / nama barang"
-                class="w-full bg-white border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs text-[#0D1C43] placeholder-[#6B7280] transition-all duration-200 hover:border-[#22396F] hover:bg-[#0D1C43]/5 focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F]"
+                class="w-full h-10.5 bg-white border border-gray-400 rounded-xl pl-11 pr-4 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
             >
         </div>
 
-        <div class="w-48">
+        <div class="relative w-48">
             <select
                 id="filterStatus"
-                class="searchable-select bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs font-medium text-[#0D1C43] transition-all duration-200 hover:border-[#22396F] hover:bg-[#0D1C43]/5 focus:outline-none focus:ring-2 focus:ring-[#22396F]/40 focus:border-[#22396F] cursor-pointer"
+                class="w-full h-10.5 bg-white border border-gray-800 rounded-xl px-3.5 text-sm font-medium text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer shadow-xs"
             >
                 <option value="semua">Status: Semua</option>
                 <option value="checking">Status: Checking</option>

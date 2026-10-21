@@ -150,8 +150,14 @@ class kasirController extends Controller
         try {
             $activeKasList = KAS::whereNull('TGLK')->get();
 
+            $nominalAkhirTunaiInput = $request->filled('nominal_akhir_tunai')
+                ? (float) preg_replace('/[^0-9]/', '', (string) $request->input('nominal_akhir_tunai'))
+                : null;
+
             foreach ($activeKasList as $kas) {
-                $saldoAkhirTunai    = ($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0);
+                $saldoAkhirTunai    = $nominalAkhirTunaiInput !== null
+                    ? $nominalAkhirTunaiInput
+                    : (($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0));
                 $saldoAkhirNonTunai = ($kas->AWLNT ?? 0) + ($kas->DBNT ?? 0) - ($kas->CRNT ?? 0);
 
                 $kas->update([
