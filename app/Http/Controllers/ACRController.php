@@ -297,20 +297,25 @@ class ACRController extends Controller
         $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
 
         // Sanitize input nominal yang memakai format titik (ribuan)
-        if ($request->has('items')) {
-            $items = $request->input('items');
-            foreach ($items as &$itm) {
-                if (isset($itm['hgj'])) {
-                    $itm['hgj'] = str_replace('.', '', (string) $itm['hgj']);
+        if ($request->has('items') && is_array($request->input('items'))) {
+            $items = [];
+            foreach ($request->input('items') as $key => $itm) {
+                if (is_array($itm)) {
+                    if (isset($itm['hgj'])) {
+                        $itm['hgj'] = str_replace('.', '', (string) $itm['hgj']);
+                    }
+                    if (isset($itm['pot_r'])) {
+                        $itm['pot_r'] = str_replace('.', '', (string) $itm['pot_r']);
+                    }
                 }
-                if (isset($itm['pot_r'])) {
-                    $itm['pot_r'] = str_replace('.', '', (string) $itm['pot_r']);
-                }
+                $items[$key] = $itm;
             }
             $request->merge(['items' => $items]);
         }
-        if ($request->has('voucher')) {
+        if ($request->filled('voucher')) {
             $request->merge(['voucher' => str_replace('.', '', (string) $request->input('voucher'))]);
+        } else {
+            $request->merge(['voucher' => null]);
         }
 
         $request->validate([
