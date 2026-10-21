@@ -145,8 +145,9 @@ class RPFactory extends Factory
                 ->whereNotExists(function ($q) {
                     $q->select(DB::raw(1))
                       ->from('rpd')
+                      ->join('rp', 'rp.RP', '=', 'rpd.RP')
                       ->whereColumn('rpd.BC_OUT', 'itmdt.BC_OUT')
-                      ->whereIn('rpd.SS', ['Ready', 'Dikirim']);
+                      ->whereIn('rp.SS', ['Request', 'Pengiriman']);
                 })
                 ->select('itmdt.BC_OUT')
                 ->inRandomOrder()
@@ -161,8 +162,9 @@ class RPFactory extends Factory
                     ->whereNotExists(function ($q) {
                         $q->select(DB::raw(1))
                           ->from('rpd')
+                          ->join('rp', 'rp.RP', '=', 'rpd.RP')
                           ->whereColumn('rpd.BC_OUT', 'itmdt.BC_OUT')
-                          ->whereIn('rpd.SS', ['Ready', 'Dikirim']);
+                          ->whereIn('rp.SS', ['Request', 'Pengiriman']);
                     })
                     ->select('itmdt.BC_OUT')
                     ->inRandomOrder()
@@ -185,26 +187,16 @@ class RPFactory extends Factory
                 $currentRpdCount++;
                 $rpdCode = 'RPD' . date('ymd') . str_pad($currentRpdCount, 4, '0', STR_PAD_LEFT);
 
-                // Tentukan status RPD berdasarkan status RP
-                $detailStatus = match ($rp->SS) {
-                    'Request'    => 'Ready',
-                    'Pengiriman' => 'Dikirim',
-                    'Ditolak'    => 'Ditolak',
-                    'Diterima'   => fake()->randomElement(['Diterima', 'Diterima', 'Diterima', 'Diterima', 'Rusak', 'Hilang']),
-                    default      => 'Ready',
-                };
-
                 RPD::create([
                     'RPD'        => $rpdCode,
                     'RP'         => $rp->RP,
                     'BC_OUT'     => $item->BC_OUT,
-                    'SS'         => $detailStatus,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
                 // Jika sudah diterima, ubah lokasi gudang di ITMDT
-                if ($rp->SS === 'Diterima' && $detailStatus === 'Diterima') {
+                if ($rp->SS === 'Diterima') {
                     ITMDT::where('BC_OUT', $item->BC_OUT)->update(['GD' => $rp->GD_TUJUAN]);
                 }
             }

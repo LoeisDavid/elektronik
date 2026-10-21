@@ -167,7 +167,9 @@ class RPController extends Controller
 
                     // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
                     $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-                        ->whereIn('SS', ['Ready', 'Dikirim', 'Request', 'Pending'])
+                        ->whereHas('rp', function ($q) {
+                            $q->whereIn('SS', ['Request', 'Pengiriman', 'Pending']);
+                        })
                         ->exists();
 
                     if ($adaPerpindahanAktif) {
@@ -193,14 +195,13 @@ class RPController extends Controller
                     'CF2'       => null,
                 ]);
 
-                // Simpan baris detail RPD (Status awal: Ready)
+                // Simpan baris detail RPD
                 foreach ($items as $bcOut) {
                     $rpdCode = $this->generateRpdCode();
                     RPD::create([
                         'RPD'    => $rpdCode,
                         'RP'     => $rpCode,
                         'BC_OUT' => $bcOut,
-                        'SS'     => 'Ready',
                     ]);
                 }
             });
@@ -288,7 +289,9 @@ class RPController extends Controller
 
         // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
         $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-            ->whereIn('SS', ['Ready', 'Dikirim', 'Request', 'Pending'])
+            ->whereHas('rp', function ($q) {
+                $q->whereIn('SS', ['Request', 'Pengiriman', 'Pending']);
+            })
             ->exists();
 
         if ($adaPerpindahanAktif) {
@@ -335,8 +338,9 @@ class RPController extends Controller
             })
             ->whereNotExists(function ($sub) {
                 $sub->select(DB::raw(1))->from('rpd')
+                    ->join('rp', 'rp.RP', '=', 'rpd.RP')
                     ->whereColumn('rpd.BC_OUT', 'itmdt.BC_OUT')
-                    ->whereIn('rpd.SS', ['Ready', 'Dikirim', 'Request', 'Pending']);
+                    ->whereIn('rp.SS', ['Request', 'Pengiriman', 'Pending']);
             })
             ->select('itmdt.BC_OUT', 'itmdt.ITM', 'itm.DES', 'gd.DES as GD_DES');
 
@@ -373,7 +377,6 @@ class RPController extends Controller
             ->select(
                 'rpd.RPD',
                 'rpd.BC_OUT',
-                'rpd.SS',
                 'rpd.updated_at',
                 'itm.DES as NAMA_BARANG',
                 'mrk.DES as NAMA_MERK',
@@ -384,8 +387,7 @@ class RPController extends Controller
             $itemsQuery->where(function ($q) use ($keyword) {
                 $q->where('rpd.BC_OUT', 'LIKE', "%{$keyword}%")
                   ->orWhere('itm.DES', 'LIKE', "%{$keyword}%")
-                  ->orWhere('ktg.DES', 'LIKE', "%{$keyword}%")
-                  ->orWhere('rpd.SS', 'LIKE', "%{$keyword}%");
+                  ->orWhere('ktg.DES', 'LIKE', "%{$keyword}%");
             });
         }
 
@@ -416,36 +418,17 @@ class RPController extends Controller
             ]);
         }
 
-        // Ambil semua item untuk scanning konfirmasi di modal
-        $allItems = DB::table('rpd')
-            ->join('itmdt', 'itmdt.BC_OUT', '=', 'rpd.BC_OUT')
-            ->leftJoin('itm', 'itm.ITM', '=', 'itmdt.ITM')
-            ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
-            ->leftJoin('ktg', 'ktg.KTG', '=', 'itm.KTG')
-            ->where('rpd.RP', $id)
-            ->select(
-                'rpd.RPD',
-                'rpd.BC_OUT',
-                'rpd.SS',
-                'rpd.updated_at',
-                'itm.DES as NAMA_BARANG',
-                'mrk.DES as NAMA_MERK',
-                'ktg.DES as NAMA_KATEGORI'
-            )
-            ->get();
-
-        $itemsPaginated = $itemsQuery->paginate(5)->withQueryString();
+        $itemsPaginated = $itemsQuery->paginate(10)->withQueryString();
 
         return view('Inventory.perpindahan-detail', [
             'rp'             => $rp,
             'itemsPaginated' => $itemsPaginated,
-            'allItems'       => $allItems,
             'keyword'        => $keyword,
         ]);
     }
 
     /**
-     * Konfirmasi 1: Barang dikonfirmasi untuk dikirim dari gudang asal (status menjadi 'Pengiriman', rpd 'Dikirim').
+     * Konfirmasi 1: Barang dikonfirmasi untuk dikirim dari gudang asal (status menjadi 'Pengiriman').
      */
     public function konfirmasi1(Request $request, string $id)
     {
@@ -465,8 +448,6 @@ class RPController extends Controller
                     'CF1'   => $currentUser,
                     'SS'    => 'Pengiriman',
                 ]);
-
-                RPD::where('RP', $rp->RP)->update(['SS' => 'Dikirim']);
             });
 
             return redirect()->back()
@@ -477,8 +458,8 @@ class RPController extends Controller
     }
 
     /**
-     * Konfirmasi 2: Penerimaan barang di gudang tujuan dengan validasi scanning.
-     * Semua barang yang dikirim harus discan (berubah jadi 'Diterima') atau jika tidak terscan diinputkan 'Rusak' atau 'Hilang'.
+     * Konfirmasi 2 / Tahap Akhir: Penerimaan barang di gudang tujuan (langsung selesai tanpa scan 1 per 1).
+     * Seluruh barang yang dikirim langsung berpindah lokasi gudang ke gudang tujuan.
      */
     public function konfirmasi2(Request $request, string $id)
     {
@@ -493,49 +474,14 @@ class RPController extends Controller
             return redirect()->back()->with('error', "Tidak ada barang dalam perpindahan {$id}.");
         }
 
-        $itemsInput = $request->input('items', []);
-        $validStatuses = ['Diterima', 'Rusak', 'Hilang'];
-        $unresolved = [];
-
-        foreach ($rpdList as $rpd) {
-            $st = $itemsInput[$rpd->BC_OUT] ?? null;
-            if (!$st || !in_array($st, $validStatuses)) {
-                $unresolved[] = $rpd->BC_OUT;
-            }
-        }
-
-        if (!empty($unresolved)) {
-            return redirect()->back()->with('error', 'Semua barang yang dikirim harus discan atau ditentukan statusnya (Rusak atau Hilang) sebelum konfirmasi kedua dapat diselesaikan. Terdapat ' . count($unresolved) . ' barang yang belum ditentukan.');
-        }
-
         try {
-            DB::transaction(function () use ($rp, $rpdList, $itemsInput) {
+            DB::transaction(function () use ($rp, $rpdList) {
                 $now = date('Y-m-d');
                 $currentUser = Auth::user()?->USERNAME ?? 'admin';
 
-                $totalDiterima = 0;
-                $totalRusak = 0;
-                $totalHilang = 0;
-
-                foreach ($rpdList as $rpd) {
-                    $newStatus = $itemsInput[$rpd->BC_OUT];
-                    $rpd->update(['SS' => $newStatus]);
-
-                    if ($newStatus === 'Diterima') {
-                        $totalDiterima++;
-                        // Pindahkan stok barang ke gudang tujuan
-                        ITMDT::where('BC_OUT', $rpd->BC_OUT)->update(['GD' => $rp->GD_TUJUAN]);
-                    } elseif (in_array($newStatus, ['Rusak', 'Hilang'])) {
-                        if ($newStatus === 'Rusak') $totalRusak++;
-                        if ($newStatus === 'Hilang') $totalHilang++;
-
-                        // Kurangi STOK di tabel ITM karena barang rusak/hilang
-                        $itmCode = ITMDT::where('BC_OUT', $rpd->BC_OUT)->value('ITM');
-                        if ($itmCode) {
-                            ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
-                        }
-                    }
-                }
+                // Pindahkan seluruh stok barang ke gudang tujuan
+                $bcOuts = $rpdList->pluck('BC_OUT')->toArray();
+                ITMDT::whereIn('BC_OUT', $bcOuts)->update(['GD' => $rp->GD_TUJUAN]);
 
                 $updateData = [
                     'DTCF2' => $now,
@@ -551,9 +497,9 @@ class RPController extends Controller
             });
 
             return redirect()->route('inventory.perpindahan.show', $rp->RP)
-                ->with('success', "Konfirmasi 2 penerimaan ({$id}) berhasil disimpan. Semua barang telah diproses.");
+                ->with('success', "Konfirmasi penerimaan ({$id}) berhasil disimpan. Seluruh barang telah berpindah ke gudang tujuan.");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memproses konfirmasi 2: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memproses konfirmasi penerimaan: ' . $e->getMessage());
         }
     }
 
@@ -573,8 +519,6 @@ class RPController extends Controller
                 $rp->update([
                     'SS' => 'Ditolak',
                 ]);
-
-                RPD::where('RP', $rp->RP)->update(['SS' => 'Ditolak']);
             });
 
             return redirect()->back()
@@ -658,7 +602,6 @@ class RPController extends Controller
             ->select(
                 'rpd.RPD',
                 'rpd.BC_OUT',
-                'rpd.SS',
                 'rpd.updated_at',
                 'itm.DES as NAMA_BARANG',
                 'mrk.DES as NAMA_MERK',
@@ -670,13 +613,7 @@ class RPController extends Controller
         $tanggalCetak = now()->locale('id')->translatedFormat('d F Y');
         $lokasi = 'Sumenep';
 
-        // Hitung ringkasan status detail
         $countTotal = $items->count();
-        $countDiterima = $items->where('SS', 'Diterima')->count();
-        $countRusak = $items->where('SS', 'Rusak')->count();
-        $countHilang = $items->where('SS', 'Hilang')->count();
-        $countDikirim = $items->where('SS', 'Dikirim')->count();
-        $countReady = $items->where('SS', 'Ready')->count();
 
         $pdf = Pdf::loadView('Inventory.perpindahan-print', compact(
             'rp',
@@ -684,12 +621,7 @@ class RPController extends Controller
             'petugas',
             'tanggalCetak',
             'lokasi',
-            'countTotal',
-            'countDiterima',
-            'countRusak',
-            'countHilang',
-            'countDikirim',
-            'countReady'
+            'countTotal'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->stream('laporan-perpindahan-' . $rp->RP . '.pdf');

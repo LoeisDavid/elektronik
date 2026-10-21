@@ -34,39 +34,8 @@ class RPDFactory extends Factory
             'RPD'        => $code,
             'RP'         => RP::factory(),
             'BC_OUT'     => fn () => ITMDT::factory()->create()->BC_OUT,
-            'SS'         => 'Ready',
             'created_at' => now(),
             'updated_at' => now(),
         ];
-    }
-
-    public function ready(): static
-    {
-        return $this->state(fn () => ['SS' => 'Ready']);
-    }
-
-    public function dikirim(): static
-    {
-        return $this->state(fn () => ['SS' => 'Dikirim']);
-    }
-
-    public function diterima(): static
-    {
-        return $this->state(fn () => ['SS' => 'Diterima']);
-    }
-
-    public function rusak(): static
-    {
-        return $this->state(fn () => ['SS' => 'Rusak']);
-    }
-
-    public function hilang(): static
-    {
-        return $this->state(fn () => ['SS' => 'Hilang']);
-    }
-
-    public function ditolak(): static
-    {
-        return $this->state(fn () => ['SS' => 'Ditolak']);
     }
 }

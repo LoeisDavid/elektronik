@@ -357,38 +357,23 @@
     <table class="detail-table">
         <thead>
             <tr>
-                <th class="text-center" style="width: 5%;">No</th>
-                <th style="width: 32%;">Kode Barcode (BC_OUT)</th>
-                <th style="width: 33%;">Nama Barang</th>
-                <th style="width: 16%;">Kategori</th>
-                <th class="text-center" style="width: 14%;">Status</th>
+                <th class="text-center" style="width: 6%;">No</th>
+                <th style="width: 34%;">Kode Barcode (BC_OUT)</th>
+                <th style="width: 40%;">Nama Barang</th>
+                <th style="width: 20%;">Kategori</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($items as $idx => $item)
-                @php
-                    $itemStClass = match($item->SS) {
-                        'Ready'    => 'item-st-ready',
-                        'Dikirim'  => 'item-st-dikirim',
-                        'Diterima' => 'item-st-diterima',
-                        'Rusak'    => 'item-st-rusak',
-                        'Hilang'   => 'item-st-hilang',
-                        'Ditolak'  => 'item-st-ditolak',
-                        default    => 'item-st-ready',
-                    };
-                @endphp
                 <tr>
                     <td class="text-center" style="color: #64748b;">{{ $idx + 1 }}</td>
                     <td class="font-mono" style="font-weight: 600;">{{ $item->BC_OUT }}</td>
                     <td>{{ $item->NAMA_BARANG ?? '-' }}</td>
                     <td style="color: #475569;">{{ $item->NAMA_KATEGORI ?? '-' }}</td>
-                    <td class="text-center">
-                        <span class="item-st {{ $itemStClass }}">{{ $item->SS }}</span>
-                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center" style="color: #94a3b8; padding: 16px;">
+                    <td colspan="4" class="text-center" style="color: #94a3b8; padding: 16px;">
                         Tidak ada data barang perpindahan
                     </td>
                 </tr>
@@ -403,15 +388,7 @@
                 Total Barang: {{ $countTotal }} Unit
             </td>
             <td style="text-align: right;">
-                @if($rp->SS === 'Diterima')
-                    Diterima: <strong>{{ $countDiterima }}</strong> | Rusak: <strong>{{ $countRusak }}</strong> | Hilang: <strong>{{ $countHilang }}</strong>
-                @elseif($rp->SS === 'Pengiriman')
-                    Dalam Pengiriman: <strong>{{ $countDikirim }}</strong> Unit
-                @elseif($rp->SS === 'Request')
-                    Siap Dikirim: <strong>{{ $countReady }}</strong> Unit
-                @else
-                    Status: <strong>{{ $rp->SS }}</strong>
-                @endif
+                Status Dokumen: <strong>{{ $rp->SS }}</strong>
             </td>
         </tr>
     </table>

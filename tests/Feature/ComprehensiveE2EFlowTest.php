@@ -213,32 +213,22 @@ class ComprehensiveE2EFlowTest extends TestCase
 
         $rpd = RPD::where('RP', $rp->RP)->where('BC_OUT', $bcOut)->first();
         $this->assertNotNull($rpd);
-        $this->assertEquals('Ready', $rpd->SS);
 
         // 3B. Konfirmasi 1 (Barang dikirim)
         $responseKonf1 = $this->actingAs($this->user)->post(route('inventory.perpindahan.konfirmasi1', $rp->RP));
         $responseKonf1->assertSessionHasNoErrors();
 
         $rp->refresh();
-        $rpd->refresh();
         $this->assertEquals('Pengiriman', $rp->SS);
-        $this->assertEquals('Dikirim', $rpd->SS);
 
-        // 3C. Konfirmasi 2 (Barang diterima di Gudang Tujuan)
-        $konf2Data = [
-            'items' => [
-                $bcOut => 'Diterima',
-            ],
-        ];
-        $responseKonf2 = $this->actingAs($this->user)->post(route('inventory.perpindahan.konfirmasi2', $rp->RP), $konf2Data);
+        // 3C. Konfirmasi 2 (Barang diterima di Gudang Tujuan - langsung selesai tanpa scan 1 per 1)
+        $responseKonf2 = $this->actingAs($this->user)->post(route('inventory.perpindahan.konfirmasi2', $rp->RP));
         $responseKonf2->assertSessionHasNoErrors();
 
         $rp->refresh();
-        $rpd->refresh();
         $itmdt->refresh();
 
         $this->assertEquals('Diterima', $rp->SS);
-        $this->assertEquals('Diterima', $rpd->SS);
         $this->assertEquals($gdTujuan->GD, $itmdt->GD, 'Lokasi gudang barang di ITMDT harus berpindah ke Gudang Tujuan');
     }
 

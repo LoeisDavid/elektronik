@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('RPD', 15)->primary();
             $table->string('RP', 15);
             $table->string('BC_OUT', 20);
-            $table->string('SS', 15);
             $table->timestamps();
         });
     }

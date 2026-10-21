@@ -169,13 +169,13 @@
                                             </div>
                                         @elseif($rp->SS === 'Pengiriman' || $rp->SS === 'Pending')
                                             <div class="py-1">
-                                                <a
-                                                    href="{{ route('inventory.perpindahan.show', $rp->RP) }}"
-                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors flex items-center gap-2 cursor-pointer"
-                                                >
-                                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                    <span>Konfirmasi 2 (Scan)</span>
-                                                </a>
+                                                <form action="{{ route('inventory.perpindahan.konfirmasi2', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Konfirmasi penerimaan barang untuk perpindahan {{ $rp->RP }}? Seluruh barang akan otomatis berpindah ke gudang tujuan.')">
+                                                    @csrf
+                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors flex items-center gap-2 cursor-pointer">
+                                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        <span>Konfirmasi Penerimaan</span>
+                                                    </button>
+                                                </form>
                                             </div>
                                         @endif
                                     </div>

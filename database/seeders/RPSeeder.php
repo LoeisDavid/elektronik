@@ -36,8 +36,9 @@ class RPSeeder extends Seeder
             ->whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
                   ->from('rpd')
+                  ->join('rp', 'rp.RP', '=', 'rpd.RP')
                   ->whereColumn('rpd.BC_OUT', 'itmdt.BC_OUT')
-                  ->whereIn('rpd.SS', ['Ready', 'Dikirim']);
+                  ->whereIn('rp.SS', ['Request', 'Pengiriman']);
             })
             ->select('itmdt.BC_OUT', 'itmdt.GD')
             ->get()
@@ -45,12 +46,11 @@ class RPSeeder extends Seeder
 
         // Konfigurasi dokumen perpindahan yang akan dibuat
         $scenarios = [
-            // status RP, status RPD, isi DTCF1, isi DTCF2
-            ['ss' => 'Request',    'rpd_ss' => 'Ready',   'cf1' => false, 'cf2' => false],
-            ['ss' => 'Pengiriman', 'rpd_ss' => 'Dikirim', 'cf1' => true,  'cf2' => false],
-            ['ss' => 'Pengiriman', 'rpd_ss' => 'Dikirim', 'cf1' => true,  'cf2' => false],
-            ['ss' => 'Diterima',   'rpd_ss' => 'mixed',   'cf1' => true,  'cf2' => true],
-            ['ss' => 'Ditolak',    'rpd_ss' => 'Ditolak', 'cf1' => false, 'cf2' => false],
+            ['ss' => 'Request',    'cf1' => false, 'cf2' => false],
+            ['ss' => 'Pengiriman', 'cf1' => true,  'cf2' => false],
+            ['ss' => 'Pengiriman', 'cf1' => true,  'cf2' => false],
+            ['ss' => 'Diterima',   'cf1' => true,  'cf2' => true],
+            ['ss' => 'Ditolak',    'cf1' => false, 'cf2' => false],
         ];
 
         $rpCounter  = RP::count();
@@ -110,29 +110,14 @@ class RPSeeder extends Seeder
                     $rpdCounter++;
                     $rpdCode = 'RPD' . date('ymd') . str_pad($rpdCounter, 4, '0', STR_PAD_LEFT);
 
-                    // Tentukan status detail
-                    $rpdStatus = $scenario['rpd_ss'];
-                    if ($rpdStatus === 'mixed') {
-                        // Untuk skenario Diterima: mayoritas Diterima, beberapa Rusak/Hilang
-                        $roll = rand(1, 10);
-                        if ($roll <= 7) {
-                            $rpdStatus = 'Diterima';
-                        } elseif ($roll <= 9) {
-                            $rpdStatus = 'Rusak';
-                        } else {
-                            $rpdStatus = 'Hilang';
-                        }
-                    }
-
                     RPD::create([
                         'RPD'    => $rpdCode,
                         'RP'     => $rpCode,
                         'BC_OUT' => $item->BC_OUT,
-                        'SS'     => $rpdStatus,
                     ]);
 
                     // Jika status Diterima pada skenario selesai, pindahkan ITMDT.GD
-                    if ($scenario['ss'] === 'Diterima' && $rpdStatus === 'Diterima') {
+                    if ($scenario['ss'] === 'Diterima') {
                         ITMDT::where('BC_OUT', $item->BC_OUT)->update(['GD' => $gdTujuan]);
                     }
                 }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 #[Table('rpd', key: 'RPD', keyType: 'string', incrementing: false)]
-#[Fillable(['RPD', 'RP', 'BC_OUT', 'SS'])]
+#[Fillable(['RPD', 'RP', 'BC_OUT'])]
 class RPD extends Model
 {
     use HasFactory;
@@ -22,7 +22,6 @@ class RPD extends Model
         'RPD',
         'RP',
         'BC_OUT',
-        'SS',
     ];
 
     public function rp()
