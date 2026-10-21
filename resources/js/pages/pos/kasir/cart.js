@@ -202,9 +202,37 @@ export function hitungRingkasan() {
     updateTombolMetode();
 }
 
+let ppnWarningTimeout = null;
+
+export function showPpnWarningKasir(msg = 'Tidak boleh pakai koma ( , )') {
+    const w = document.getElementById('ppnWarningKasir');
+    if (w) {
+        w.innerText = msg;
+        w.classList.remove('hidden');
+        clearTimeout(ppnWarningTimeout);
+        ppnWarningTimeout = setTimeout(() => {
+            w.classList.add('hidden');
+        }, 3000);
+    }
+}
+
+export function handlePpnKeydown(e) {
+    if (e.key === ',' || e.key === '.') {
+        e.preventDefault();
+        showPpnWarningKasir('Tidak boleh pakai koma ( , )');
+    }
+}
+
 // Handler input PPN langsung dari UI
 export function handlePpnInput(el) {
-    let val = el.value.trim();
+    let rawVal = el.value;
+    if (rawVal.includes(',') || rawVal.includes('.')) {
+        showPpnWarningKasir('Tidak boleh pakai koma ( , )');
+        rawVal = rawVal.replace(/[,.]/g, '');
+        el.value = rawVal;
+    }
+
+    let val = rawVal.trim();
     if (val !== '') {
         let num = parseInt(val);
         if (isNaN(num) || num < 0) num = 0;

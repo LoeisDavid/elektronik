@@ -42,20 +42,23 @@
             </form>
 
             {{-- SORT DROPDOWN --}}
+            {{-- SORT DROPDOWN --}}
             <details id="sortDropdown" class="relative group">
                 <summary class="list-none [&::-webkit-details-marker]:hidden h-9.5 px-3.5 bg-white border border-gray-800 rounded-xl flex items-center justify-between gap-2.5 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 cursor-pointer shadow-xs min-w-[200px]">
                     <span>Urutkan: {{ $opsiSort[$sort] ?? 'Terbaru' }}</span>
-                    <svg class="w-4 h-4 text-gray-600 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    <svg class="w-4 h-4 text-gray-600 group-open:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="absolute left-0 mt-2 w-52 bg-secondary-bw rounded-2xl p-2 shadow-2xl border border-gray-300 z-50 space-y-1.5">
                     @foreach ($opsiSort as $k => $v)
                         <a
                             href="{{ route('inventory.perpindahan', array_merge(request()->query(), ['sort' => $k, 'page' => 1])) }}"
-                            class="w-full bg-white border border-gray-200 text-black rounded-xl px-3.5 py-2.5 text-left text-sm flex items-center justify-between hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 shadow-xs cursor-pointer"
+                            class="w-full bg-white border text-black rounded-xl px-3.5 py-2.5 text-left font-medium text-sm flex items-center justify-between hover:bg-primary-db/5 hover:border-primary-db active:bg-primary-db/10 transition-all duration-200 shadow-xs cursor-pointer"
                         >
                             <span>{{ $v }}</span>
                             @if($sort === $k)
-                                <span class="font-bold text-primary-db">✓</span>
+                                <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
                             @endif
                         </a>
                     @endforeach
@@ -97,16 +100,16 @@
                             $tujuan  = $rp->gudangTujuan?->DES ?? $rp->GD_TUJUAN;
                         @endphp
                         <tr class="perpindahan-row hover:bg-gray-50/80 transition-colors">
-                            <td class="py-3.5 px-4 font-mono font-semibold text-primary-db">{{ $rp->RP }}</td>
+                            <td class="py-3.5 px-4 font-mono text-gray-700">{{ $rp->RP }}</td>
                             <td class="py-3.5 px-4">{{ $tglRq }}</td>
-                            <td class="py-3.5 px-4 font-medium">{{ $asal }}</td>
-                            <td class="py-3.5 px-4 font-medium">{{ $tujuan }}</td>
+                            <td class="py-3.5 px-4 text-black">{{ $asal }}</td>
+                            <td class="py-3.5 px-4 text-black">{{ $tujuan }}</td>
                             <td class="py-3.5 px-4 text-center">
                                 <span class="inline-block min-w-[110px] px-3.5 py-1 text-xs font-semibold rounded-full border {{ $stClass }}">
                                     {{ $rp->SS }}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 text-center font-bold text-gray-800">{{ (int) $rp->rpd_count }}</td>
+                            <td class="py-3.5 px-4 text-center text-gray-800">{{ (int) $rp->rpd_count }}</td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="relative inline-block text-left">
                                     <button
@@ -115,7 +118,9 @@
                                         class="btn-aksi h-8 w-8 border border-gray-400 bg-white hover:bg-gray-200 hover:border-gray-900 rounded-md inline-flex items-center justify-center transition-all duration-200 shadow-2xs cursor-pointer"
                                         title="Aksi Perpindahan"
                                     >
-                                        <svg class="w-4 h-4 text-primary-db" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6.75a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6.75a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" /></svg>
+                                        <svg class="w-4 h-4 text-primary-db" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                        </svg>
                                     </button>
                                     <div class="action-menu absolute right-0 top-full mt-1 w-44 bg-white border border-gray-300 rounded-xl shadow-xl py-1.5 z-50 text-left hidden divide-y divide-gray-100">
                                         <div class="py-1">
@@ -243,7 +248,8 @@
                             id="selectGdTujuan"
                             required
                             onchange="onGudangTujuanChange()"
-                            class="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                            class="searchable-select w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
+                            data-placeholder="Pilih gudang tujuan"
                         >
                             <option value="" disabled selected>Pilih gudang tujuan</option>
                             @foreach ($gudangs as $g)
@@ -464,6 +470,19 @@
 
     function bukaModalPindahBarang() {
         bukaModal('pindahBarangModal');
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            const $select = $('#selectGdTujuan');
+            if (!$select.hasClass('select2-hidden-accessible')) {
+                $select.select2({
+                    width: '100%',
+                    dropdownParent: $('#pindahBarangModal'),
+                    placeholder: 'Pilih gudang tujuan',
+                    allowClear: false
+                }).on('change', function() {
+                    onGudangTujuanChange();
+                });
+            }
+        }
         setTimeout(() => {
             document.getElementById('inputScanBC')?.focus();
         }, 150);

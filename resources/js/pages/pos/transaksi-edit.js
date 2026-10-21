@@ -70,8 +70,12 @@ export function recalculateTotals() {
     const voucher = parseCurrency(voucherInput ? voucherInput.value : 0);
 
     let ppnRate = 0;
-    if (ppnInput && ppnInput.value !== '' && !isNaN(ppnInput.value)) {
-        ppnRate = Math.min(100, Math.max(0, parseFloat(ppnInput.value) || 0));
+    if (ppnInput && ppnInput.value.trim() !== '') {
+        const cleanVal = ppnInput.value.replace(/[,.]/g, '').trim();
+        const parsed = parseInt(cleanVal, 10);
+        if (!isNaN(parsed)) {
+            ppnRate = Math.min(100, Math.max(0, parsed));
+        }
     }
 
     const subtotalAfterItemDisc = Math.max(0, rawSubtotal - totalItemDiscount);
@@ -108,8 +112,38 @@ export function recalculateTotals() {
     if (elGrandTotal) elGrandTotal.innerText = formatRupiah(grandTotal);
 }
 
+let ppnWarningEditTimeout = null;
+function showPpnWarningEdit() {
+    const w = document.getElementById('ppnWarningEdit');
+    if (w) {
+        w.classList.remove('hidden');
+        clearTimeout(ppnWarningEditTimeout);
+        ppnWarningEditTimeout = setTimeout(() => {
+            w.classList.add('hidden');
+        }, 3000);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const editForm = document.getElementById('formEditTransaksi');
+    const ppnInput = document.getElementById('inputPpn');
+
+    if (ppnInput) {
+        ppnInput.addEventListener('keydown', function (e) {
+            if (e.key === ',' || e.key === '.') {
+                e.preventDefault();
+                showPpnWarningEdit();
+            }
+        });
+
+        ppnInput.addEventListener('input', function () {
+            if (this.value.includes(',') || this.value.includes('.')) {
+                showPpnWarningEdit();
+                this.value = this.value.replace(/[,.]/g, '');
+            }
+        });
+    }
+
     if (editForm) {
         editForm.addEventListener('input', function (e) {
             if (e.target.matches('.input-currency')) {
@@ -130,6 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
             editForm.querySelectorAll('.input-currency').forEach(input => {
                 input.value = input.value.replace(/\./g, '');
             });
+            if (ppnInput) {
+                ppnInput.value = ppnInput.value.replace(/[,.]/g, '').trim();
+            }
         });
     }
 

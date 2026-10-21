@@ -282,10 +282,8 @@
                             </label>
                             <div class="relative">
                                 <input
-                                    type="number"
-                                    step="1"
-                                    min="0"
-                                    max="100"
+                                    type="text"
+                                    inputmode="numeric"
                                     id="inputPpn"
                                     name="ppn"
                                     value="{{ $ppnPercent !== null && $ppnPercent > 0 ? $ppnPercent : '' }}"
@@ -296,6 +294,9 @@
                                     %
                                 </span>
                             </div>
+                            <p id="ppnWarningEdit" class="hidden text-[11px] text-red-500 font-semibold mt-1">
+                                PPN tidak boleh menggunakan koma (,). Gunakan angka bulat.
+                            </p>
                         </div>
                     </div>
                 </div>

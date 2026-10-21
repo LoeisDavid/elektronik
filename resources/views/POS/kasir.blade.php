@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Toko - Elektronik')
 
@@ -174,20 +174,23 @@
             {{-- Kanan: Tombol aksi (vertikal center / floating sesuai referensi) --}}
             <div class="flex items-end gap-2.5 shrink-0">
                 <!-- PPN -->
-                <div class="w-18 flex flex-col items-start">
+                <div class="relative w-18 flex flex-col items-start">
                     <label for="ppnInput" class="text-xs font-bold text-black mb-1">PPN</label>
                     <div class="relative w-full">
                         <input
                             id="ppnInput"
-                            type="number"
-                            min="0"
-                            max="100"
+                            type="text"
+                            inputmode="numeric"
                             placeholder="0"
                             title="PPN (%)"
                             value="{{ $ppn ?? '' }}"
+                            onkeydown="handlePpnKeydown(event)"
                             oninput="handlePpnInput(this)"
-                            class="w-full h-11 bg-white border border-black rounded-lg pl-2 pr-6 text-sm font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            class="w-full h-11 bg-white border border-black rounded-lg pl-2 pr-6 text-sm font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black" />
                         <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
+                    </div>
+                    <div id="ppnWarningKasir" class="hidden absolute top-full left-0 mt-1 z-50 whitespace-nowrap bg-red-600 text-white text-[10px] font-semibold px-2 py-1 rounded shadow-md">
+                        Tidak boleh pakai koma ( , )
                     </div>
                 </div>
                 {{-- Kosongkan Keranjang (trash) --}}
