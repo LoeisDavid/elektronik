@@ -85,8 +85,21 @@
                     </div>
                 </div>
 
-                {{-- ROLE (Hidden, default 1) --}}
-                <input type="hidden" name="ROLE" value="1">
+                {{-- ROLE --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Role</label>
+                    <select
+                        name="ROLE"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                        <option value="1" {{ old('ROLE', 1) == 1 ? 'selected' : '' }}>Admin</option>
+                        <option value="2" {{ old('ROLE') == 2 ? 'selected' : '' }}>Kasir</option>
+                    </select>
+                    @error('ROLE')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             {{-- GROUP 3: Alamat --}}
@@ -219,8 +232,22 @@
                     </div>
                 </div>
 
-                {{-- ROLE (Hidden, default 1) --}}
-                <input type="hidden" id="editROLE" name="ROLE" value="1">
+                {{-- ROLE --}}
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Role</label>
+                    <select
+                        id="editROLE"
+                        name="ROLE"
+                        required
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                        <option value="1">Admin</option>
+                        <option value="2">Kasir</option>
+                    </select>
+                    @error('ROLE', 'editUser')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             {{-- GROUP 3: Alamat --}}

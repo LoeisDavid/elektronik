@@ -227,6 +227,7 @@
                                         <button
                                             type="button"
                                             data-usr="{{ $user->USERNAME }}"
+                                            data-username="{{ $user->USERNAME }}"
                                             data-al="{{ $user->AL }}"
                                             data-hp="{{ $user->HP }}"
                                             data-des="{{ $user->DES }}"

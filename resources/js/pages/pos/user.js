@@ -36,11 +36,12 @@ export function openEditModal(button) {
     const passInput = document.getElementById('editPASS');
     const form = document.getElementById('editUserForm');
 
-    if (usernameInput) usernameInput.value = button.dataset.username || '';
+    const username = button.dataset.username || button.dataset.usr || '';
+    if (usernameInput) usernameInput.value = username;
     if (desInput) desInput.value = button.dataset.des || '';
     if (hpInput) hpInput.value = button.dataset.hp || '';
     if (alInput) alInput.value = button.dataset.al || '';
-    if (roleInput) roleInput.value = button.dataset.role || '1';
+    if (roleInput) roleInput.value = String(button.dataset.role || '1');
     if (passInput) passInput.value = '';
     if (form && button.dataset.action) form.action = button.dataset.action;
 
