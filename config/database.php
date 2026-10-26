@@ -21,6 +21,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Selectable Databases (Multi-Database Support)
+    |--------------------------------------------------------------------------
+    |
+    | List of available databases configured in .env for multi-database selection.
+    |
+    */
+    'databases' => array_values(array_unique(array_filter([
+        env('DB_DATABASE', 'elektronik'),
+        env('DB_DATABASE2'),
+        env('DB_DATABASE3'),
+    ]))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
     |
