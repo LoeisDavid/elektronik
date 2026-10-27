@@ -1,2 +1,2 @@
 @echo off
-start "" "http://NAMA-HOSTNAME:8000"
+start "" "http://desktop-er3c665:8000"
