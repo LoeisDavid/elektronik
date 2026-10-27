@@ -259,15 +259,15 @@
 
     <div class="divider-line"></div>
 
-    <!-- Section: Desa Terlaris (2 Cards) -->
-    <div class="section-title">Desa Terlaris</div>
+    <!-- Section: Desa Pembelian Terdikit (2 Cards) -->
+    <div class="section-title">Desa Pembelian Terdikit</div>
     <table class="cards-table">
         <tr>
-            <!-- Top 5 Nominal -->
+            <!-- Top 5 Nominal Terdikit -->
             <td class="card-cell">
                 <table class="card-header-table">
                     <tr>
-                        <td>Top 5 Total Pembelian</td>
+                        <td>Top 5 Total Pembelian Terendah</td>
                         <td class="card-unit">Rp</td>
                     </tr>
                 </table>
@@ -294,11 +294,11 @@
                 @endforelse
             </td>
 
-            <!-- Top 5 Frekuensi -->
+            <!-- Top 5 Frekuensi Terdikit -->
             <td class="card-cell">
                 <table class="card-header-table">
                     <tr>
-                        <td>Top 5 Total Transaksi</td>
+                        <td>Top 5 Total Transaksi Terendah</td>
                         <td class="card-unit">Kali</td>
                     </tr>
                 </table>
@@ -325,7 +325,7 @@
     </table>
 
     <!-- Section: Rincian Desa -->
-    <div class="section-title">Rincian Desa</div>
+    <div class="section-title">Rincian Penjualan Seluruh Desa</div>
     <table class="detail-table">
         <thead>
             <tr>
@@ -338,18 +338,18 @@
         <tbody>
             @forelse ($desaList as $index => $desa)
                 @php
-                    $isTopNominal = ($desa->DS === $desaNominalTertinggi && $desa->total_nominal > 0);
-                    $isTopFrekuensi = ($desa->DS === $desaFrekuensiTertinggi && $desa->total_transaksi > 0);
+                    $isTerdikitNominal = ($desa->DS === $desaNominalTerdikit);
+                    $isTerdikitFrekuensi = ($desa->DS === $desaFrekuensiTerdikit);
                 @endphp
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>
                         <span>{{ $desa->DES }}</span>
-                        @if ($isTopNominal)
-                            <span class="badge-nominal">Nominal tertinggi</span>
+                        @if ($isTerdikitNominal)
+                            <span class="badge-nominal" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;">Nominal terendah</span>
                         @endif
-                        @if ($isTopFrekuensi && !$isTopNominal)
-                            <span class="badge-frekuensi">Frekuensi tertinggi</span>
+                        @if ($isTerdikitFrekuensi && !$isTerdikitNominal)
+                            <span class="badge-frekuensi" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">Transaksi terendah</span>
                         @endif
                     </td>
                     <td class="text-center">{{ $desa->total_transaksi }}</td>

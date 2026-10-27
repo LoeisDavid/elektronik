@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\CST;
-use App\Models\DS;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +15,7 @@ class CSTFactory extends Factory
 
     protected static array $customers = [
         'Budi Santoso',
-        'Toko Terang Jaya',
+        'Toko Terang Jaya Elektronik',
         'Agus Setiawan',
         'Dewi Lestari',
         'Hendra Wijaya',
@@ -24,12 +23,17 @@ class CSTFactory extends Factory
         'Bambang Susilo',
         'Rina Wijaya',
         'Siti Aminah',
-        'Joko Widodo',
+        'H. Achmad Zaini',
         'Toko Abadi Elektronik',
         'CV Cahaya Mandiri',
         'Eko Prasetyo',
         'Indah Permata',
         'Rahmat Hidayat',
+        'Warung Kopi & Elektronik Berkah',
+        'Nurul Hidayati',
+        'Drs. H. Mulyadi',
+        'Toko Sahabat Listrik',
+        'Suryadi Pratama',
     ];
 
     public static function resetSequence(int $start = 1): void
@@ -38,7 +42,7 @@ class CSTFactory extends Factory
     }
 
     /**
-     * Define the model's default state.
+     * Define the model's default state (Customer).
      *
      * @return array<string, mixed>
      */
@@ -51,15 +55,36 @@ class CSTFactory extends Factory
             $cstName .= ' (' . $num . ')';
         }
 
+        // Relasi ke desa (DS0000001 s/d DS0000020)
+        $desaCode = sprintf('DS%07d', (($num - 1) % 20) + 1);
+
         return [
-            'CST' => sprintf('CST%07d', $num), // 10 chars, fits string(10) PK
-            'DES' => substr($cstName, 0, 150), // fits string(150) unique
-            'AL' => substr(fake('id_ID')->address(), 0, 100), // fits string(100)
-            'TLP' => sprintf('0812%08d', $num), // fits string(20) unique & numeric
-            'DS' => DS::factory(), // references string(15) DS PK
+            'CST'        => sprintf('CST%07d', $num), // 10 chars PK
+            'DES'        => substr($cstName, 0, 150),
+            'AL'         => substr(fake('id_ID')->address(), 0, 100),
+            'TLP'        => sprintf('0812%08d', $num),
+            'DS'         => $desaCode, // Kode desa di tabel cst
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
-}
 
+    /**
+     * State untuk membuat data desa (AL=null, TLP=null, DS=null).
+     */
+    public function desa(string $namaDesa = null): static
+    {
+        return $this->state(function (array $attributes) use ($namaDesa) {
+            $num = static::$sequence++;
+            return [
+                'CST'        => sprintf('DS%07d', $num),
+                'DES'        => $namaDesa ?? ('Desa ' . fake('id_ID')->city()),
+                'AL'         => null,
+                'TLP'        => null,
+                'DS'         => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        });
+    }
+}

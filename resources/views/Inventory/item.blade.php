@@ -743,36 +743,79 @@
         const input = document.getElementById('stokBarcode');
         const cam   = document.getElementById('bcam-stok');
 
-        // Bersihkan karakter kontrol & spasi (sebagian scanner menambah prefix/suffix)
+        let lastKeyTime = 0;
+        let fastCount = 0;
+        let isScanner = false;
+
+        // Bersihkan karakter kontrol & spasi
         function bersihkan(v) {
-            return String(v).replace(/[\u0000-\u001F\u007F]/g, '').trim();
+            return String(v ?? '').replace(/[\u0000-\u001F\u007F]/g, '').trim();
         }
 
-        // Scanner fisik mengetik cepat lalu Enter -> form submit biasa.
-        // Value dibersihkan dulu tepat sebelum terkirim.
+        // Hapus char paling depan dan belakang (khusus scanner)
+        function stripEdge(v) {
+            let s = bersihkan(v);
+            return s.length >= 3 ? s.slice(1, -1) : s;
+        }
+
+        if (input) {
+            input.addEventListener('keydown', function (e) {
+                const now = Date.now();
+                const diff = now - lastKeyTime;
+                lastKeyTime = now;
+
+                if (e.key === 'Enter') {
+                    // Jika scanner: mengetik cepat berturut-turut (< 50ms)
+                    if (fastCount >= 2) {
+                        isScanner = true;
+                    }
+                    return;
+                }
+
+                if (e.key.length === 1) {
+                    if (diff < 50) {
+                        fastCount++;
+                    } else {
+                        fastCount = 0;
+                        isScanner = false;
+                    }
+                }
+            });
+        }
+
         form.addEventListener('submit', function () {
-            input.value = bersihkan(input.value);
+            let val = bersihkan(input.value);
+            // Hanya potong char depan & belakang jika terdeteksi dari scanner fisik
+            if (isScanner && val.length >= 3) {
+                val = stripEdge(val);
+            }
+            input.value = val;
+            isScanner = false;
+            fastCount = 0;
         });
 
-        // Hasil dari kamera (live maupun foto)
-        cam.addEventListener('barcode:scan', function (e) {
-            const kode = bersihkan(e.detail.code);
+        // Hasil dari kamera (live maupun foto) -> selalu berasal dari scan
+        if (cam) {
+            cam.addEventListener('barcode:scan', function (e) {
+                const kode = stripEdge(e.detail.code);
 
-            if (input.maxLength > 0 && kode.length > input.maxLength) {
-                alert('Kode "' + kode + '" terlalu panjang (maks ' + input.maxLength + ' karakter).');
-                return;
-            }
+                if (input.maxLength > 0 && kode.length > input.maxLength) {
+                    alert('Kode "' + kode + '" terlalu panjang (maks ' + input.maxLength + ' karakter).');
+                    return;
+                }
 
-            input.value = kode;
+                input.value = kode;
+                isScanner = false; // Sudah dibersihkan
 
-            // Nama barang & gudang harus sudah dipilih; kalau belum, browser
-            // menampilkan pesan validasi dan kode tetap terisi di kolom.
-            if (form.checkValidity()) {
-                // keepResume: setelah halaman reload, kamera live menyala lagi
-                BarcodeCamera.stop('stok', { keepResume: true });
-            }
-            form.requestSubmit();
-        });
+                // Nama barang & gudang harus sudah dipilih; kalau belum, browser
+                // menampilkan pesan validasi dan kode tetap terisi di kolom.
+                if (form.checkValidity()) {
+                    // keepResume: setelah halaman reload, kamera live menyala lagi
+                    if (window.BarcodeCamera) BarcodeCamera.stop('stok', { keepResume: true });
+                }
+                form.requestSubmit();
+            });
+        }
     })();
 
     // ---------- Cegah double submit ----------

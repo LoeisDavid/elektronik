@@ -47,10 +47,10 @@ class ComprehensiveE2EFlowTest extends TestCase
      */
     public function test_customer_and_supplier_crud_flow(): void
     {
-        // Setup Desa pendukung
-        $desa = DS::firstOrCreate(
-            ['DS' => 'DS_TEST01'],
-            ['DES' => 'Desa Sukamaju Test']
+        // Setup Desa pendukung (desa disimpan di cst dengan DS null)
+        $desa = CST::firstOrCreate(
+            ['CST' => 'DS_TEST01'],
+            ['DES' => 'Desa Sukamaju Test', 'AL' => null, 'TLP' => null, 'DS' => null]
         );
 
         // 1A. Tambah Customer
@@ -58,7 +58,7 @@ class ComprehensiveE2EFlowTest extends TestCase
             'DES' => 'Budi Santoso ' . rand(1000, 9999),
             'TLP' => '0812' . rand(10000000, 99999999),
             'AL'  => 'Jl. Merdeka No. 45',
-            'DS'  => $desa->DS,
+            'DS'  => $desa->CST,
         ];
 
         $responseCst = $this->actingAs($this->user)->post(route('POS.customer.store'), $customerData);
@@ -77,7 +77,7 @@ class ComprehensiveE2EFlowTest extends TestCase
             'DES' => 'Budi Santoso Updated ' . rand(1000, 9999),
             'TLP' => '0813' . rand(10000000, 99999999),
             'AL'  => 'Jl. Sudirman No. 10',
-            'DS'  => $desa->DS,
+            'DS'  => $desa->CST,
         ];
         $responseCstUpdate = $this->actingAs($this->user)->put(route('POS.customer.update', $cst->CST), $updateData);
         $responseCstUpdate->assertSessionHasNoErrors();

@@ -246,6 +246,7 @@
 
     {{-- MODALS HALAMAN KASIR (BARCODE, DRAFT, SHIFT, DISKON, PEMBAYARAN) --}}
     @include('POS.modals.kasir-modal')
+    @include('POS.modals.customer-modal')
 
 
     <!-- Modal Struk Pembayaran -->
@@ -306,5 +307,5 @@
 @endsection
 
 @section('js')
-    @vite(['resources/js/pages/pos/kasir/index.js'])
+    @vite(['resources/js/pages/pos/kasir/index.js', 'resources/js/pages/pos/customer.js'])
 @endsection

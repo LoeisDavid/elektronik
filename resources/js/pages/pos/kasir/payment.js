@@ -135,7 +135,8 @@ export function prosesPembayaran() {
 
         if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
             jQuery(modal).find('select.searchable-select').each(function() {
-                jQuery(this).select2({
+                const $select = jQuery(this);
+                $select.select2({
                     width: '100%',
                     dropdownParent: jQuery(modal),
                     matcher: function(params, data) {
@@ -153,6 +154,31 @@ export function prosesPembayaran() {
                             return data;
                         }
                         return null;
+                    },
+                    language: {
+                        noResults: function() {
+                            if ($select.attr('id') === 'inputPelangganKonfirmasi') {
+                                return jQuery(`
+                                    <div class="py-2.5 px-2 text-center text-xs">
+                                        <p class="text-gray-600 mb-1.5 font-medium">Customer / Desa tidak ditemukan</p>
+                                        <button type="button" class="btn-tambah-cst w-full py-1.5 px-3 bg-[#101D36] hover:bg-[#1C325B] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                                            + Tambah Data Baru
+                                        </button>
+                                    </div>
+                                `).on('click', '.btn-tambah-cst', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    $select.select2('close');
+                                    if (typeof window.openTambahModal === 'function') {
+                                        window.openTambahModal();
+                                    }
+                                });
+                            }
+                            return 'Data tidak ditemukan';
+                        }
+                    },
+                    escapeMarkup: function(m) {
+                        return m;
                     }
                 });
             });

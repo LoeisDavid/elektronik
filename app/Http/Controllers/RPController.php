@@ -253,6 +253,16 @@ class RPController extends Controller
 
         $itmdt = ITMDT::where('BC_OUT', $bcOut)->first();
 
+        // Jika data tidak ketemu, coba hapus char paling depan dan paling belakang
+        if (!$itmdt && strlen($bcOut) >= 3) {
+            $candidate = substr($bcOut, 1, -1);
+            $candidateItmdt = ITMDT::where('BC_OUT', $candidate)->first();
+            if ($candidateItmdt) {
+                $bcOut = $candidate;
+                $itmdt = $candidateItmdt;
+            }
+        }
+
         if (!$itmdt) {
             return response()->json([
                 'success' => false,
@@ -585,9 +595,9 @@ class RPController extends Controller
     }
 
     /**
-     * Halaman cetak laporan perpindahan stok (bisa dicetak saat status Request, Pengiriman, atau Diterima).
+     * Halaman cetak laporan perpindahan stok (3 surat berbeda sesuai 3 tahap: Request, Pengiriman/Surat Jalan, dan Konfirmasi/Penerimaan).
      */
-    public function cetak(string $id)
+    public function cetak(Request $request, string $id)
     {
         $rp = RP::with(['gudangAsal', 'gudangTujuan', 'userRequest', 'userConfirm1', 'userConfirm2'])
             ->where('RP', $id)
@@ -612,10 +622,37 @@ class RPController extends Controller
         $petugas = auth()->user()?->USERNAME ?? 'admin';
         $tanggalCetak = now()->locale('id')->translatedFormat('d F Y');
         $lokasi = 'Sumenep';
-
         $countTotal = $items->count();
 
-        $pdf = Pdf::loadView('Inventory.perpindahan-print', compact(
+        // Dokumen yang dicetak disesuaikan secara ketat dengan status perpindahan:
+        // - Status 'Request' -> Hanya Surat Permintaan (1 TTD Pemohon)
+        // - Status 'Pengiriman'/'Pending' -> Hanya Surat Jalan (Pengirim & Penerima manual)
+        // - Status 'Diterima' -> Hanya Surat Bukti Penerimaan (1 TTD Penerima yang mengkonfirmasi)
+        $tahapReq = strtolower(trim((string) $request->query('tahap', '')));
+
+        if ($rp->SS === 'Request') {
+            if ($tahapReq && !in_array($tahapReq, ['1', 'request', 'permintaan', 'rq'])) {
+                return redirect()->back()->with('error', 'Perpindahan berstatus Request, hanya dapat mencetak Surat Permintaan.');
+            }
+            $viewName = 'Inventory.perpindahan-print-request';
+            $fileName = 'surat-permintaan-' . $rp->RP . '.pdf';
+        } elseif (in_array($rp->SS, ['Pengiriman', 'Pending'])) {
+            if ($tahapReq && !in_array($tahapReq, ['2', 'pengiriman', 'surat-jalan', 'jalan', 'kirim'])) {
+                return redirect()->back()->with('error', 'Perpindahan berstatus Pengiriman, hanya dapat mencetak Surat Jalan.');
+            }
+            $viewName = 'Inventory.perpindahan-print-surat-jalan';
+            $fileName = 'surat-jalan-' . $rp->RP . '.pdf';
+        } elseif ($rp->SS === 'Diterima') {
+            if ($tahapReq && !in_array($tahapReq, ['3', 'konfirmasi', 'diterima', 'selesai', 'penerimaan'])) {
+                return redirect()->back()->with('error', 'Perpindahan sudah Diterima, hanya dapat mencetak Surat Bukti Penerimaan.');
+            }
+            $viewName = 'Inventory.perpindahan-print-penerimaan';
+            $fileName = 'bukti-penerimaan-' . $rp->RP . '.pdf';
+        } else {
+            return redirect()->back()->with('error', "Dokumen tidak dapat dicetak untuk perpindahan berstatus '{$rp->SS}'.");
+        }
+
+        $pdf = Pdf::loadView($viewName, compact(
             'rp',
             'items',
             'petugas',
@@ -624,7 +661,7 @@ class RPController extends Controller
             'countTotal'
         ))->setPaper('a4', 'portrait');
 
-        return $pdf->stream('laporan-perpindahan-' . $rp->RP . '.pdf');
+        return $pdf->stream($fileName);
     }
 }
 

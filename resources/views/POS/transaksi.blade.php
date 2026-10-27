@@ -302,7 +302,7 @@
 
                                     @php
                                         $cstModel = $item->cst();
-                                        $dsModel = $cstModel ? \App\Models\DS::where('DS', $cstModel->DS)->first() : null;
+                                        $dsModel = ($cstModel && $cstModel->DS) ? \App\Models\CST::where('CST', $cstModel->DS)->first() : null;
                                         $cstNama = $cstModel?->DES ?? '';
                                         $cstAlamat = $cstModel?->AL ?? '';
                                         $cstDesa = $dsModel?->DES ?? '';

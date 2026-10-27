@@ -50,10 +50,11 @@ class kasirController extends Controller
         }
 
         // Ambil daftar customer dan sales untuk autocomplete / pencarian
-        $customers = CST::select('CST', 'DES', 'TLP')->get();
+        $customers = CST::select('CST', 'DES', 'TLP', 'DS')->orderBy('DES', 'asc')->get();
+        $desaList = CST::whereNull('DS')->select('CST', 'DES')->orderBy('DES', 'asc')->get();
         $salesList = SLS::select('SLS', 'DES', 'HP')->get();
 
-        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'ppn', 'isKasirOpen', 'activeKas', 'customers', 'salesList'));
+        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'ppn', 'isKasirOpen', 'activeKas', 'customers', 'desaList', 'salesList'));
     }
 
     /**
@@ -258,18 +259,28 @@ class kasirController extends Controller
 
         $cart = session()->get('cart', []);
 
-        // 1. Cek apakah barcode BC_OUT sudah ada di keranjang
+        // 1. Cek di tabel ITMDT khusus berdasarkan BC_OUT apa adanya
+        $itmdt = ITMDT::where('BC_OUT', $code)->first();
+
+        // Jika datanya tidak ketemu, coba hapus char paling depan dan paling belakang
+        if (!$itmdt && strlen($code) >= 3) {
+            $candidate = substr($code, 1, -1);
+            $candidateItmdt = ITMDT::where('BC_OUT', $candidate)->first();
+            if ($candidateItmdt) {
+                $code = $candidate;
+                $itmdt = $candidateItmdt;
+            }
+        }
+
+        // 2. Cek apakah barcode BC_OUT sudah ada di keranjang
         if (isset($cart[$code])) {
             return redirect()->route('POS.kasir')->with('warning', 'Barcode "' . $code . '" sudah ada di keranjang!');
         }
 
-        // 2. Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
+        // 3. Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
         if (STS::where('BC_OUT', $code)->exists()) {
             return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" sudah terjual dan tidak dapat digunakan lagi!');
         }
-
-        // 3. Cek di tabel ITMDT khusus berdasarkan BC_OUT
-        $itmdt = ITMDT::where('BC_OUT', $code)->first();
 
         if (!$itmdt) {
             return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" tidak ditemukan!');
@@ -461,10 +472,10 @@ class kasirController extends Controller
 
             $kembalian = max(0, $nominalBayar - $grandTotal);
 
-            $dsObj = $cstObj ? DS::where('DS', $cstObj->DS)->first() : null;
-            $customerNama = $cstObj?->DES ?? '-';
+            $dsObj = ($cstObj && $cstObj->DS) ? CST::where('CST', $cstObj->DS)->first() : null;
+            $customerNama = $cstObj?->DES ?? ($pelangganInput ?: '-');
             $customerAlamat = $cstObj?->AL ?? '-';
-            $customerDesa = $dsObj?->DES ?? '-';
+            $customerDesa = $dsObj?->DES ?? ($cstObj && empty($cstObj->DS) ? $cstObj->DES : '-');
 
             return response()->json([
                 'success'          => true,

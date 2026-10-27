@@ -18,7 +18,32 @@ class CST extends Model
 
     function ds()
     {
-        return DS::where('DS', $this->DS)->get();
+        return CST::where('CST', $this->DS)->get();
+    }
+
+    function desa()
+    {
+        return $this->DS ? CST::where('CST', $this->DS)->first() : null;
+    }
+
+    public function isDesa(): bool
+    {
+        return empty($this->DS);
+    }
+
+    public function isCustomer(): bool
+    {
+        return !empty($this->DS);
+    }
+
+    public function scopeDesa($query)
+    {
+        return $query->whereNull('DS');
+    }
+
+    public function scopeCustomer($query)
+    {
+        return $query->whereNotNull('DS');
     }
 
     use HasFactory;
