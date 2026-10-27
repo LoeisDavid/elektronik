@@ -222,25 +222,50 @@
             width: 100%;
             margin-top: 28px;
             page-break-inside: avoid;
+            clear: both;
         }
 
         .signature-table td {
             width: 50%;
             text-align: center;
             vertical-align: top;
-            padding: 0 40px;
+            padding: 0 20px;
         }
 
-        .signature-line {
-            border-bottom: 1px solid #94a3b8;
-            height: 50px;
-            margin-bottom: 6px;
+        .sig-box {
+            width: 220px;
+            margin: 0 auto;
+            text-align: center;
         }
 
-        .signature-name {
+        .sig-date {
+            font-size: 8.5px;
+            color: #475569;
+            margin-bottom: 4px;
+            min-height: 12px;
+        }
+
+        .sig-title {
             font-size: 9px;
-            color: #334155;
-            font-weight: 500;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .sig-space {
+            height: 55px;
+        }
+
+        .sig-line {
+            width: 180px;
+            margin: 0 auto 5px auto;
+            border-bottom: 1px solid #64748b;
+        }
+
+        .sig-name {
+            font-size: 9px;
+            color: #0f172a;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -284,19 +309,20 @@
     <table class="detail-table">
         <thead>
             <tr>
-                <th class="text-left" style="width: 17%;">Kode Barang</th>
-                <th class="text-left" style="width: 35%;">Nama Barang</th>
+                <th class="text-left" style="width: 15%;">Kode Barang</th>
+                <th class="text-left" style="width: 29%;">Nama Barang</th>
                 <th class="text-right" style="width: 12%;">Harga Satuan</th>
-                <th class="text-center" style="width: 11%;">Diskon</th>
+                <th class="text-center" style="width: 9%;">Diskon</th>
                 <th class="text-right" style="width: 11%;">Voucher</th>
-                <th class="text-right" style="width: 14%;">Sub Total</th>
+                <th class="text-right" style="width: 12%;">Sub Total</th>
+                <th class="text-right" style="width: 12%;">Margin (%)</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($reportData as $inv)
                 <!-- Header Per Transaksi / Invoice -->
                 <tr class="invoice-header-row">
-                    <td colspan="6">
+                    <td colspan="7">
                         <table class="inv-head-table">
                             <tr>
                                 <td style="text-align: left;">
@@ -324,32 +350,35 @@
                         <td class="text-center">{{ $item['diskon_persen'] > 0 ? $item['diskon_persen'] . '%' : '-' }}</td>
                         <td class="text-right">{{ $item['voucher_satuan'] > 0 ? '-' . number_format($item['voucher_satuan'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right" style="font-weight: 600;">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                        <td class="text-right" style="font-weight: 600; color: {{ $item['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }};">
+                            {{ number_format($item['margin_pct'], 1, ',', '.') }}%
+                        </td>
                     </tr>
                 @endforeach
 
                 <!-- Breakdown Invoice -->
                 <tr class="summary-row">
-                    <td colspan="4"></td>
+                    <td colspan="5"></td>
                     <td class="sub-label">Sub Total</td>
                     <td class="sub-val">{{ number_format($inv['subtotal'], 0, ',', '.') }}</td>
                 </tr>
                 @if($inv['diskon_global'] > 0)
                 <tr class="summary-row">
-                    <td colspan="4"></td>
+                    <td colspan="5"></td>
                     <td class="sub-label">Diskon Global</td>
                     <td class="sub-val">-{{ number_format($inv['diskon_global'], 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($inv['voucher_global'] > 0)
                 <tr class="summary-row">
-                    <td colspan="4"></td>
+                    <td colspan="5"></td>
                     <td class="sub-label">Voucher Global</td>
                     <td class="sub-val">-{{ number_format($inv['voucher_global'], 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($inv['ppn_nominal'] > 0)
                 <tr class="summary-row">
-                    <td colspan="4"></td>
+                    <td colspan="5"></td>
                     <td class="sub-label">PPN ({{ $inv['ppn_pct'] }}%)</td>
                     <td class="sub-val">{{ number_format($inv['ppn_nominal'], 0, ',', '.') }}</td>
                 </tr>
@@ -357,12 +386,15 @@
 
                 <!-- Total Row -->
                 <tr class="invoice-total-row">
-                    <td colspan="5" class="tot-label">Total {{ $inv['ref_no'] }}</td>
+                    <td colspan="3" style="text-align: left; font-size: 8.5px; color: #475569; padding-left: 8px;">
+                        Margin Transaksi: <strong style="color: {{ $inv['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }}; font-size: 9px;">{{ number_format($inv['margin_pct'], 1, ',', '.') }}%</strong>
+                    </td>
+                    <td colspan="3" class="tot-label">Total {{ $inv['ref_no'] }}</td>
                     <td class="tot-val">Rp {{ number_format($inv['total'], 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center" style="padding: 20px; color: #94a3b8;">
+                    <td colspan="7" class="text-center" style="padding: 20px; color: #94a3b8;">
                         Tidak ada data transaksi pada rentang tanggal yang dipilih.
                     </td>
                 </tr>
@@ -374,10 +406,13 @@
     <table class="grand-total-table">
         <tr>
             <td></td>
-            <td style="width: 250px;">
+            <td style="width: 280px;">
                 <div class="grand-total-box">
                     <div class="grand-total-label">Grand Total Keseluruhan</div>
                     <div class="grand-total-val">Rp {{ number_format($grandTotalKeseluruhan, 0, ',', '.') }}</div>
+                    <div style="font-size: 9px; color: #cbd5e1; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 4px;">
+                        Margin Keseluruhan: <strong style="color: #ffffff; font-size: 11px;">{{ number_format($grandTotalMarginPct, 1, ',', '.') }}%</strong>
+                    </div>
                 </div>
             </td>
         </tr>
@@ -387,12 +422,22 @@
     <table class="signature-table">
         <tr>
             <td>
-                <div class="signature-line"></div>
-                <div class="signature-name">Dibuat oleh ({{ $petugas }})</div>
+                <div class="sig-box">
+                    <div class="sig-date">&nbsp;</div>
+                    <div class="sig-title">Dibuat oleh,</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">( {{ $petugas }} )</div>
+                </div>
             </td>
             <td>
-                <div class="signature-line"></div>
-                <div class="signature-name">Diperiksa oleh</div>
+                <div class="sig-box">
+                    <div class="sig-date">{{ $lokasi }}, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</div>
+                    <div class="sig-title">Diperiksa oleh,</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">( .................................................... )</div>
+                </div>
             </td>
         </tr>
     </table>
