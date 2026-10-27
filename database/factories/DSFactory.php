@@ -14,26 +14,26 @@ class DSFactory extends Factory
     protected static int $sequence = 1;
 
     protected static array $villages = [
-        'Sukamaju',
-        'Cisauk',
-        'Mekarwangi',
-        'Bojonggede',
-        'Ciputat',
-        'Margahayu',
-        'Sedayu',
-        'Gondanglegi',
-        'Babakan',
-        'Sumberarum',
-        'Kalirejo',
-        'Wonosobo',
-        'Karanganyar',
-        'Ngaglik',
-        'Singosari',
-        'Pagedangan',
-        'Cibadak',
-        'Tambun',
-        'Cikarang',
-        'Pondok Gede',
+        'Kolor',
+        'Pabian',
+        'Bangselok',
+        'Pamolokan',
+        'Marengan Daya',
+        'Marengan Laok',
+        'Kalianget Timur',
+        'Kalianget Barat',
+        'Guluk-Guluk',
+        'Saronggi',
+        'Batuan',
+        'Lenteng Barat',
+        'Ambunten Timur',
+        'Gapura Tengah',
+        'Bluto',
+        'Manding Laok',
+        'Dungkek',
+        'Talango',
+        'Pasongsongan',
+        'Rubaru',
     ];
 
     public static function resetSequence(int $start = 1): void
@@ -56,8 +56,11 @@ class DSFactory extends Factory
         }
 
         return [
-            'DS' => sprintf('DS%07d', $num), // fits string(15) PK
-            'DES' => substr($villageName, 0, 50), // fits string(50) unique
+            'CST' => sprintf('DS%07d', $num), // Primary key di tabel cst
+            'DES' => substr($villageName, 0, 50),
+            'AL' => null,
+            'TLP' => null,
+            'DS' => null, // Desa di tabel cst ditandai dengan DS = null
             'created_at' => now(),
             'updated_at' => now(),
         ];

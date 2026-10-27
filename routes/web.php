@@ -14,7 +14,6 @@ use App\Http\Controllers\SPPController;
 use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
 use App\Http\Controllers\OpnameStokController;
-use App\Http\Controllers\DSController;
 use App\Http\Controllers\RPController;
 
 // Redirect root to Kasir for preview
@@ -46,6 +45,7 @@ Route::middleware('auth')->group(function () {
 
         // customer
         Route::get('customer', [CSTController::class, 'index'])->name('customer');
+        Route::get('customer/desa/cetak', [CSTController::class, 'cetakLaporanDesa'])->name('customer.desa.cetak');
         Route::post('customer', [CSTController::class, 'store'])->name('customer.store');
         Route::put('customer/{id}', [CSTController::class, 'update'])->name('customer.update');
         Route::delete('customer/{id}', [CSTController::class, 'destroy'])->name('customer.destroy');
@@ -61,13 +61,6 @@ Route::middleware('auth')->group(function () {
         Route::post('user', [UserController::class, 'store'])->name('user.store');
         Route::put('user/{id}', [UserController::class, 'update'])->name('user.update');
         Route::delete('user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
-
-        // Desa
-        Route::get('desa', [DSController::class, 'index'])->name('desa');
-        Route::get('desa/cetak', [DSController::class, 'cetak'])->name('desa.cetak');
-        Route::post('desa', [DSController::class, 'store'])->name('desa.store');
-        Route::put('desa/{id}', [DSController::class, 'update'])->name('desa.update');
-        Route::delete('desa/{id}', [DSController::class, 'destroy'])->name('desa.destroy');
 
         // Riwayat Transaksi View, Edit, & Update
         Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');

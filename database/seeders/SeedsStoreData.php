@@ -32,48 +32,77 @@ use Database\Factories\SPPFactory;
 use Database\Factories\STSFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 trait SeedsStoreData
 {
     /**
-     * Helper seeding data master, produk, transaksi, dan shift kasir.
+     * Helper seeding data master produk elektronik, customer, desa, transaksi kasir, dan perpindahan gudang.
      */
     public function seedData(int $totalRecords, int $kasCount, bool $openCashierToday = false): void
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        $tables = ['rpd', 'rp', 'sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'ds', 'users', 'kas'];
+        $tables = ['rpd', 'rp', 'sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'users', 'kas'];
         foreach ($tables as $table) {
-            DB::table($table)->truncate();
+            if (Schema::hasTable($table)) {
+                DB::table($table)->truncate();
+            }
+        }
+        if (Schema::hasTable('ds')) {
+            DB::table('ds')->truncate();
         }
 
         $chunkSize = min(500, max(50, $totalRecords));
 
-        // 1. Users (1 user admin)
-        $this->command?->info("Seeding Users (1 user admin: admin / admin123)...");
+        // 1. Users (1 user admin: admin / admin123)
+        $this->command?->info("1. Seeding Users (admin: admin / admin123)...");
         User::create([
             'USERNAME' => 'admin',
             'PASS'     => Hash::make('admin123'),
-            'AL'       => 'Jl. Raya Elektronik No. 88, Jakarta Pusat',
+            'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
             'HP'       => '081234567890',
             'DES'      => 'Administrator Toko',
             'ROLE'     => 1,
         ]);
 
-        // 2. CST (Customer) & DS (Desa)
-        $this->command?->info("Seeding CST & DS ($totalRecords records)...");
-        DSFactory::resetSequence(1);
+        // 2. CST & Desa (di tabel cst: desa memiliki DS=null, customer memiliki DS=kode_desa)
+        $this->command?->info("2. Seeding Desa & Customer di tabel CST ($totalRecords records)...");
+        $desas = [
+            'Kolor', 'Pabian', 'Bangselok', 'Pamolokan', 'Marengan Daya',
+            'Marengan Laok', 'Kalianget Timur', 'Kalianget Barat', 'Guluk-Guluk', 'Saronggi',
+            'Batuan', 'Lenteng Barat', 'Ambunten Timur', 'Gapura Tengah', 'Bluto',
+            'Manding Laok', 'Dungkek', 'Talango', 'Pasongsongan', 'Rubaru',
+        ];
+        $desaCount = min(count($desas), max(10, (int)($totalRecords / 2)));
+        $desaData = [];
+        for ($d = 1; $d <= $desaCount; $d++) {
+            $desaData[] = [
+                'CST'        => sprintf('DS%07d', $d),
+                'DES'        => $desas[($d - 1) % count($desas)],
+                'AL'         => null,
+                'TLP'        => null,
+                'DS'         => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        DB::table('cst')->insert($desaData);
+
+        // Seeding Customer
         CSTFactory::resetSequence(1);
         $cstData = [];
-        for ($i = 0; $i < $totalRecords; $i++) {
-            $cstData[] = CST::factory()->make()->getAttributes();
+        for ($i = 1; $i <= $totalRecords; $i++) {
+            $desaRef = sprintf('DS%07d', (($i - 1) % $desaCount) + 1);
+            $cstObj = CST::factory()->make(['DS' => $desaRef])->getAttributes();
+            $cstData[] = $cstObj;
         }
         foreach (array_chunk($cstData, $chunkSize) as $chunk) {
             DB::table('cst')->insert($chunk);
         }
 
-        // 3. SPP (Supplier)
-        $this->command?->info("Seeding SPP ($totalRecords records)...");
+        // 3. SPP (Supplier Elektronik Resmi)
+        $this->command?->info("3. Seeding Supplier Elektronik ($totalRecords records)...");
         SPPFactory::resetSequence(1);
         $sppData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -83,8 +112,8 @@ trait SeedsStoreData
             DB::table('spp')->insert($chunk);
         }
 
-        // 4. MRK (Merek)
-        $this->command?->info("Seeding MRK ($totalRecords records)...");
+        // 4. MRK (Merk Elektronik Terkenal)
+        $this->command?->info("4. Seeding Merk Elektronik ($totalRecords records)...");
         MRKFactory::resetSequence(1);
         $mrkData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -94,8 +123,8 @@ trait SeedsStoreData
             DB::table('mrk')->insert($chunk);
         }
 
-        // 5. KTG (Kategori)
-        $this->command?->info("Seeding KTG ($totalRecords records)...");
+        // 5. KTG (Kategori Alat Elektronik)
+        $this->command?->info("5. Seeding Kategori Elektronik ($totalRecords records)...");
         KTGFactory::resetSequence(1);
         $ktgData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -105,8 +134,8 @@ trait SeedsStoreData
             DB::table('ktg')->insert($chunk);
         }
 
-        // 6. GD (Gudang)
-        $this->command?->info("Seeding GD ($totalRecords records)...");
+        // 6. GD (Gudang Toko Elektronik)
+        $this->command?->info("6. Seeding Gudang ($totalRecords records)...");
         GDFactory::resetSequence(1);
         $gdData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -116,8 +145,8 @@ trait SeedsStoreData
             DB::table('gd')->insert($chunk);
         }
 
-        // 7. SLS (Sales)
-        $this->command?->info("Seeding SLS ($totalRecords records)...");
+        // 7. SLS (Salesperson)
+        $this->command?->info("7. Seeding Salesperson ($totalRecords records)...");
         SLSFactory::resetSequence(1);
         $slsData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
@@ -127,8 +156,8 @@ trait SeedsStoreData
             DB::table('sls')->insert($chunk);
         }
 
-        // 8. ITM, 9. ITMDT, 10. ACR & 11. STS
-        $this->command?->info("Seeding ITM, ITMDT, ACR & STS ($totalRecords items)...");
+        // 8. ITM (Barang Elektronik) & 9. ITMDT (Detail Unit & Barcode)
+        $this->command?->info("8. Seeding Barang & Barcode ITMDT ($totalRecords items)...");
         ITMFactory::resetSequence(1);
         ITMDTFactory::resetSequence(1);
         ACRFactory::resetSequence(1);
@@ -147,7 +176,7 @@ trait SeedsStoreData
 
             $mod = $i % 10;
             if ($mod === 0 || $mod === 5) {
-                // 1. STOK HABIS (~20%)
+                // STOK HABIS (~20%)
                 if ($mod === 0) {
                     $soldUnits = (($i % 4) + 2);
                     $numItmdt  = $soldUnits;
@@ -158,12 +187,12 @@ trait SeedsStoreData
                     $finalStok = 0;
                 }
             } elseif ($mod === 1 || $mod === 3 || $mod === 7 || $mod === 9) {
-                // 2. STOK MENIPIS (~40% -> STOK 1..5 unit)
+                // STOK MENIPIS (~40% -> STOK 1..5 unit)
                 $finalStok = (($i % 5) + 1);
                 $soldUnits = (($i % 4) + 1);
                 $numItmdt  = $finalStok + $soldUnits;
             } else {
-                // 3. STOK BANYAK (~40% -> STOK 6..20 unit)
+                // STOK BANYAK (~40% -> STOK 6..20 unit)
                 $finalStok = (($i % 15) + 6);
                 $soldUnits = ($i % 6);
                 $numItmdt  = $finalStok + $soldUnits;
@@ -211,9 +240,9 @@ trait SeedsStoreData
             DB::table('itmdt')->insert($chunk);
         }
 
-        // ACR & STS
+        // 10. ACR & 11. STS (Riwayat Transaksi Penjualan Elektronik)
         $totalSoldUnits = count($unitsToSell);
-        $this->command?->info("Seeding ACR & STS ($totalSoldUnits unit terjual)...");
+        $this->command?->info("9. Seeding Transaksi Kasir ACR & STS ($totalSoldUnits unit terjual)...");
 
         $acrData = [];
         $stsData = [];
@@ -296,13 +325,13 @@ trait SeedsStoreData
         ");
 
         if (count($mismatches) > 0) {
-            $this->command?->error("Peringatan: Terdapat " . count($mismatches) . " item dengan stok tidak sinkron!");
+            $this->command?->warn("Peringatan: Terdapat " . count($mismatches) . " item dengan stok tidak sinkron!");
         } else {
-            $this->command?->info("Verifikasi Sukses: 100% item memiliki STOK = jumlah ITMDT - jumlah STS.");
+            $this->command?->info("Verifikasi Stok: 100% item memiliki STOK = jumlah ITMDT - jumlah STS.");
         }
 
         // 12. KAS (Riwayat shift kasir)
-        $this->command?->info("Seeding KAS ($kasCount riwayat shift)...");
+        $this->command?->info("10. Seeding KAS ($kasCount riwayat shift)...");
         KASFactory::resetSequence(1);
         KAS::factory()->count($kasCount)->create();
 
@@ -315,22 +344,28 @@ trait SeedsStoreData
             ]);
         }
 
-        // 13. RP & RPD (Perpindahan Gudang: 5-20 barang per dokumen)
-        $this->command?->info("Seeding Perpindahan Gudang (RP & RPD)...");
+        // 13. RP & RPD (Perpindahan Gudang: Request, Pengiriman, Diterima)
+        $this->command?->info("11. Seeding Perpindahan Gudang (RP & RPD)...");
         RPFactory::resetSequence(1);
         RPDFactory::resetSequence(1);
 
         $rpScenarios = [
             'request',
             'pengiriman',
-            'pengiriman',
             'diterima',
-            'ditolak',
         ];
 
-        foreach ($rpScenarios as $state) {
-            $itemCount = rand(5, 20);
-            RP::factory()->$state()->withItems($itemCount)->create();
+        // Buat perpindahan barang
+        $rpLoop = max(1, (int)($totalRecords / 6));
+        for ($r = 0; $r < $rpLoop; $r++) {
+            foreach ($rpScenarios as $state) {
+                $itemCount = rand(3, min(10, max(3, (int)($totalRecords / 2))));
+                try {
+                    RP::factory()->$state()->withItems($itemCount)->create();
+                } catch (\Exception $e) {
+                    // Fallback jika tidak ada item tersedia
+                }
+            }
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

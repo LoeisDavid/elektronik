@@ -122,7 +122,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                                         </svg>
                                     </button>
-                                    <div class="action-menu absolute right-0 top-full mt-1 w-44 bg-white border border-gray-300 rounded-xl shadow-xl py-1.5 z-50 text-left hidden divide-y divide-gray-100">
+                                    <div class="action-menu absolute right-0 top-full mt-1 w-52 bg-white border border-gray-300 rounded-xl shadow-xl py-1.5 z-50 text-left hidden divide-y divide-gray-100">
                                         <div class="py-1">
                                             <a
                                                 href="{{ route('inventory.perpindahan.show', $rp->RP) }}"
@@ -131,14 +131,39 @@
                                                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                                 <span>Lihat Detail</span>
                                             </a>
-                                            <a
-                                                href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
-                                                target="_blank"
-                                                class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                                            >
-                                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.03-.42-2.109-.52-3.21a20.08 20.08 0 010-1.238c.1-1.101.28-2.18.52-3.21m8.56 0c.24 1.03.42 2.109.52 3.21a20.08 20.08 0 010 1.238c-.1 1.101-.28 2.18-.52 3.21M17 17v4.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 21.5V17m10 0H7m10 0a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v6a2 2 0 002 2m0-12.5V3a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 3v1.5" /></svg>
-                                                <span>Cetak Laporan</span>
-                                            </a>
+                                        </div>
+                                        <div class="py-1">
+                                            @if($rp->SS === 'Request')
+                                                <a
+                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
+                                                    target="_blank"
+                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-amber-50 hover:text-amber-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                                                    title="Cetak Surat Permintaan (1 TTD Pemohon)"
+                                                >
+                                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                                                    <span>Cetak Surat Permintaan</span>
+                                                </a>
+                                            @elseif($rp->SS === 'Pengiriman' || $rp->SS === 'Pending')
+                                                <a
+                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
+                                                    target="_blank"
+                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-blue-50 hover:text-blue-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                                                    title="Cetak Surat Jalan (Pengirim & Penerima Manual)"
+                                                >
+                                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25V4.5A2.25 2.25 0 0012 2.25H6.75A2.25 2.25 0 004.5 4.5v9.75" /></svg>
+                                                    <span>Cetak Surat Jalan</span>
+                                                </a>
+                                            @elseif($rp->SS === 'Diterima')
+                                                <a
+                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
+                                                    target="_blank"
+                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-green-50 hover:text-green-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                                                    title="Cetak Bukti Penerimaan (1 TTD Penerima)"
+                                                >
+                                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    <span>Cetak Bukti Penerimaan</span>
+                                                </a>
+                                            @endif
                                         </div>
 
                                         {{-- AKSI KONFIRMASI --}}

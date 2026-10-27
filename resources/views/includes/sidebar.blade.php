@@ -55,16 +55,14 @@
                         ['name' => 'User', 'route' => 'POS.user'],
                         ['name' => 'Sales', 'route' => 'POS.sales'],
                         ['name' => 'Customer', 'route' => 'POS.customer'],
-                        ['name' => 'Laporan', 'route' => 'POS.laporan'],
-                        ['name' => 'Desa', 'route' => 'POS.desa']
+                        ['name' => 'Laporan', 'route' => 'POS.laporan']
                     ];
                 @endphp
 
                 @foreach ($posMenus as $menu)
                     @php
                         $isActive = request()->routeIs($menu['route']) ||
-                                    ($menu['route'] === 'POS.transaksi' && request()->routeIs('POS.transaksi.*')) ||
-                                    ($menu['route'] === 'POS.desa' && request()->routeIs('POS.desa.*'));
+                                    ($menu['route'] === 'POS.transaksi' && request()->routeIs('POS.transaksi.*'));
                     @endphp
                     <a 
                         href="{{ Route::has($menu['route']) ? route($menu['route']) : '#' }}"

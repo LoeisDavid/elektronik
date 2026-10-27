@@ -225,6 +225,9 @@
     </div>
 </div>
 
+{{-- Floating Toast untuk Feedback Scan Langsung (tanpa modal) --}}
+<div id="opnameToast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-xl border-2 shadow-2xl font-mont text-xs md:text-sm font-semibold flex items-center gap-2 transition-all duration-200"></div>
+
 {{-- ================= MODAL: SCAN / INPUT KODE ================= --}}
 <div id="modalScan" class="font-mont hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
     <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 max-h-[92vh] overflow-y-auto border border-gray-200 space-y-4">
@@ -591,6 +594,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.BarcodeCamera) BarcodeCamera.stop('opname');
     }
 
+    let toastTimer = null;
     function showFeedback(type, message) {
         const styles = {
             success: 'bg-[#327437]/10 text-[#327437] border border-[#327437]',
@@ -598,19 +602,53 @@ document.addEventListener('DOMContentLoaded', function () {
             info:    'bg-[#22396F]/10 text-[#22396F] border border-[#22396F]',
             error:   'bg-gray-100 text-[#6B7280] border border-[#6B7280]',
         };
-        scanFeedback.className = 'mt-4 text-xs rounded-md px-4 py-3 ' + styles[type];
-        scanFeedback.textContent = message;
-        scanFeedback.classList.remove('hidden');
+        const toastStyles = {
+            success: 'bg-white text-[#327437] border-[#327437]',
+            warning: 'bg-white text-[#D02231] border-[#D02231]',
+            info:    'bg-white text-[#22396F] border-[#22396F]',
+            error:   'bg-white text-[#6B7280] border-[#6B7280]',
+        };
+
+        if (scanFeedback) {
+            scanFeedback.className = 'mt-4 text-xs rounded-md px-4 py-3 ' + styles[type];
+            scanFeedback.textContent = message;
+            scanFeedback.classList.remove('hidden');
+        }
+
+        // Tampilkan feedback mengambang (toast) di halaman utama
+        const toast = document.getElementById('opnameToast');
+        if (toast) {
+            toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-xl border-2 shadow-2xl font-mont text-xs md:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ' + toastStyles[type];
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
     }
 
     function prosesKode(kodeInput) {
-        const kode = bersihkan(kodeInput);
+        let kode = bersihkan(kodeInput);
         if (!kode) return;
 
-        // Perbandingan murni string (tanpa konversi angka)
-        const item = stokData.find(
+        // 1. Cek langsung dengan kode apa adanya (seperti input manual)
+        let item = stokData.find(
             d => d.kode_barcode.toLowerCase() === kode.toLowerCase()
         );
+
+        // 2. Jika datanya gak ketemu, coba hapus char paling depan dan paling belakang
+        if (!item && kode.length >= 3) {
+            const stripped = kode.slice(1, -1);
+            const itemCandidate = stokData.find(
+                d => d.kode_barcode.toLowerCase() === stripped.toLowerCase()
+            );
+            if (itemCandidate) {
+                item = itemCandidate;
+                kode = stripped;
+            }
+        }
 
         if (!item) {
             showFeedback('error', `❌ Kode "${kode}" tidak ditemukan dalam daftar cek stok.`);
@@ -641,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnCloseScan').addEventListener('click', closeScanModal);
     modalScan.addEventListener('click', (e) => { if (e.target === modalScan) closeScanModal(); });
 
-    // Scanner fisik / ketik manual
+    // Scanner fisik / ketik manual di modal
     formScan.addEventListener('submit', function (e) {
         e.preventDefault();
         e.stopPropagation(); // Cegah bubble ke global anti-double-submit di app.blade.php
@@ -665,23 +703,63 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('Elemen #bcam-opname tidak ditemukan; scan lewat kamera dinonaktifkan. Cek partial barcode-camera.');
     }
 
-    // Scanner fisik tetap bisa dipakai walau fokus sedang di tombol kamera
-    // atau fokus tercuri oleh scroll tabel di belakang modal:
-    // ketikan pertama otomatis dialihkan ke kolom kode.
-    function redirectKeystrokeToInput(e) {
-        if (modalScan.classList.contains('hidden')) return;
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        const tag = (e.target.tagName || '').toLowerCase();
-        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-        if (e.key.length === 1) {
-            inputKode.focus();
-        }
-    }
-    modalScan.addEventListener('keydown', redirectKeystrokeToInput);
-    document.addEventListener('keydown', redirectKeystrokeToInput);
+    // =========================================================================
+    // SCAN LANGSUNG DARI HALAMAN UTAMA (tanpa perlu klik tombol scan / buka modal)
+    // =========================================================================
+    let directScanBuffer = '';
+    let directScanTimer = null;
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !modalScan.classList.contains('hidden')) closeScanModal();
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+        // Jika modal scan sedang terbuka, biarkan input modal yang menangani
+        if (!modalScan.classList.contains('hidden')) {
+            if (e.key === 'Escape') closeScanModal();
+            return;
+        }
+
+        // Jika sedang fokus di input pencarian tabel (inputCari)
+        if (document.activeElement === inputCari) {
+            if (e.key === 'Enter') {
+                const val = inputCari.value.trim();
+                if (val) {
+                    const matchDirect = stokData.some(d => d.kode_barcode.toLowerCase() === val.toLowerCase());
+                    const matchStripped = val.length >= 3 && stokData.some(d => d.kode_barcode.toLowerCase() === val.slice(1, -1).toLowerCase());
+                    if (matchDirect || matchStripped) {
+                        e.preventDefault();
+                        inputCari.value = '';
+                        terapkanFilter();
+                        prosesKode(val);
+                        return;
+                    }
+                }
+            }
+            return;
+        }
+
+        // Abaikan jika fokus sedang berada di input/select/textarea lain
+        const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+        if (activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea') {
+            return;
+        }
+
+        // Tangkap input dari barcode scanner fisik (mengetik cepat lalu Enter)
+        if (e.key === 'Enter') {
+            if (directScanBuffer.length > 0) {
+                e.preventDefault();
+                const scanned = directScanBuffer;
+                directScanBuffer = '';
+                clearTimeout(directScanTimer);
+                prosesKode(scanned);
+            }
+        } else if (e.key.length === 1) {
+            directScanBuffer += e.key;
+            clearTimeout(directScanTimer);
+            // Scanner barcode mengetik sangat cepat. Jika jeda > 250ms, reset buffer (bukan scanner)
+            directScanTimer = setTimeout(() => {
+                directScanBuffer = '';
+            }, 250);
+        }
     });
 
     /* =====================================================================

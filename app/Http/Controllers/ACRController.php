@@ -188,7 +188,7 @@ class ACRController extends Controller
             if (empty($customerNama) && empty($customerDesa)) {
                 $acrObj = ACR::where('REF_NO', $request->input('ref_no'))->first();
                 $cstObj = $acrObj?->cst();
-                $dsObj = $cstObj ? \App\Models\DS::where('DS', $cstObj->DS)->first() : null;
+                $dsObj = ($cstObj && $cstObj->DS) ? \App\Models\CST::where('CST', $cstObj->DS)->first() : null;
 
                 $customerNama = $cstObj?->DES ?? '';
                 $customerAlamat = $cstObj?->AL ?? '';
