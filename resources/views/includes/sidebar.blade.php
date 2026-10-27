@@ -149,6 +149,19 @@
 
     </div>
 
+    {{-- Active Database Indicator --}}
+    @if(session('selected_database'))
+        <div class="border-t border-white/10 px-4 py-2 shrink-0 flex items-center gap-2.5 bg-black/15" title="Database Aktif: {{ session('selected_database') }}">
+            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7M4 7c0-2 1.5-3 3.5-3h9c2 0 3.5 1 3.5 3M4 7c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3m0 5c0 2-1.5 3-3.5 3h-9C5.5 15 4 14 4 12" />
+            </svg>
+            <div class="sidebar-text flex flex-col min-w-0">
+                <span class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold leading-tight">Database</span>
+                <span class="text-xs font-semibold text-emerald-300 truncate leading-tight">{{ session('selected_database') }}</span>
+            </div>
+        </div>
+    @endif
+
     {{-- Logout Section - full-bleed square red hover --}}
     <div class="border-t border-white/10 shrink-0">
         <form action="{{ route('logout', [], false) }}" method="POST" id="formSidebarLogout">
