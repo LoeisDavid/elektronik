@@ -520,6 +520,9 @@ class kasirController extends Controller
 
         if (is_array($cart)) {
             foreach ($cart as $k => $item) {
+                if (isset($item['price'])) {
+                    $cart[$k]['price'] = max(0, (float) $item['price']);
+                }
                 if (isset($item['discount'])) {
                     $cart[$k]['discount'] = min(100, max(0, (float) $item['discount']));
                 }

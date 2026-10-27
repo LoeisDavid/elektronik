@@ -532,9 +532,8 @@ class ACRController extends Controller
                     $hrb = (float) ($hrbMap[$st->BC_OUT] ?? ($st->itmdt()?->HRB ?? 0));
                     $invTotalHrb += $hrb;
 
-                    // Margin per barang: dihitung dari harga beli dan harga jual
-                    // Margin (%) = ((Harga Jual - Harga Beli) / Harga Jual) * 100
-                    $itemMarginPct = $subtotalItem > 0 ? ((($subtotalItem - $hrb) / $subtotalItem) * 100) : 0;
+                    // Margin per barang: dihitung dari (harga jual - harga beli) / harga beli * 100%
+                    $itemMarginPct = $hrb > 0 ? ((($subtotalItem - $hrb) / $hrb) * 100) : 0;
 
                     $items[] = [
                         'kode'           => $kodeBarang,
@@ -564,9 +563,9 @@ class ACRController extends Controller
                 $grandTotalHrb += $invTotalHrb;
 
                 // Margin per transaksi:
-                // Dihitung dari total harga jual transaksi dan total harga beli transaksi
+                // Dihitung dari (total harga jual - total harga beli) / total harga beli * 100%
                 $invSelling = $invGrandTotal > 0 ? $invGrandTotal : ($totalSetelahDiskon > 0 ? $totalSetelahDiskon : $rawSubtotal);
-                $invMarginPct = $invSelling > 0 ? ((($invSelling - $invTotalHrb) / $invSelling) * 100) : 0;
+                $invMarginPct = $invTotalHrb > 0 ? ((($invSelling - $invTotalHrb) / $invTotalHrb) * 100) : 0;
 
                 $reportData[] = [
                     'ref_no'         => $acr->REF_NO,
@@ -586,8 +585,9 @@ class ACRController extends Controller
                 ];
             }
 
-            // Margin keseluruhan
-            $grandTotalMarginPct = $grandTotalKeseluruhan > 0 ? ((($grandTotalKeseluruhan - $grandTotalHrb) / $grandTotalKeseluruhan) * 100) : 0;
+            // Margin keseluruhan:
+            // Dihitung dari (grand total jual - grand total beli) / grand total beli * 100%
+            $grandTotalMarginPct = $grandTotalHrb > 0 ? ((($grandTotalKeseluruhan - $grandTotalHrb) / $grandTotalHrb) * 100) : 0;
 
             $petugas = auth()->user()?->USERNAME ?? 'admin';
             $lokasi  = 'Sumenep';

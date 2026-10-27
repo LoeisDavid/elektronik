@@ -74,7 +74,20 @@ export function renderCart() {
                     </div>
                 </div>
 
-                <span class="text-sm text-gray-600">${formatRupiah(itemPrice)}</span>
+                <div class="relative w-28">
+                    <input
+                        type="text"
+                        inputmode="numeric"
+                        id="hargaItem-${key}"
+                        value="${formatRupiah(itemPrice)}"
+                        placeholder="Rp 0"
+                        title="Harga Jual (Rp)"
+                        onfocus="tahanHasilDiskonItem(this)"
+                        onkeydown="if(event.key==='Enter'){this.blur();}"
+                        onblur="commitHargaItemLangsung('${key}', this)"
+                        oninput="formatInputRupiah(this); ubahHargaItemLangsung('${key}', this.value)"
+                        class="input-rupiah w-full h-8 bg-white border border-black rounded-lg px-2 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black" />
+                </div>
 
                 <div class="w-24 flex flex-col items-center">
                     <div class="relative w-full">
@@ -91,7 +104,7 @@ export function renderCart() {
                             class="w-full h-8 bg-white border border-black rounded-lg px-2.5 pr-6 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">%</span>
                     </div>
-                    ${discFromPct > 0 ? `<span class="mt-1 text-[13px] font-semibold text-gray-500 whitespace-nowrap">Rp ${Number(discFromPct * qty).toLocaleString('id-ID')}</span>` : ``}
+                    <span id="discNominalItem-${key}" class="${discFromPct > 0 ? '' : 'hidden '}mt-1 text-[13px] font-semibold text-gray-500 whitespace-nowrap">${discFromPct > 0 ? 'Rp ' + Number(discFromPct * qty).toLocaleString('id-ID') : ''}</span>
                 </div>
                 
                 <div class="relative w-28">
@@ -347,6 +360,32 @@ export function ubahVoucherItemLangsung(key, rawVal) {
     triggerSyncCartDebounced();
 }
 
+export function ubahHargaItemLangsung(key, rawVal) {
+    if (!state.cartData[key]) return;
+    let cleaned = typeof rawVal === 'string' ? rawVal.replace(/\D/g, '') : rawVal;
+    let val = parseFloat(cleaned) || 0;
+    val = Math.max(0, val);
+    state.cartData[key].price = val;
+
+    updateSubtotalBarisItem(key);
+    hitungRingkasan();
+    triggerSyncCartDebounced();
+}
+
+export function commitHargaItemLangsung(key, inputEl) {
+    if (!state.cartData[key]) return;
+    if (inputEl) {
+        let rawVal = inputEl.value.replace(/\D/g, '');
+        let val = parseFloat(rawVal) || 0;
+        val = Math.max(0, val);
+        inputEl.value = formatRupiah(val);
+        state.cartData[key].price = val;
+    }
+    updateSubtotalBarisItem(key);
+    hitungRingkasan();
+    triggerSyncCartDebounced();
+}
+
 export function updateSubtotalBarisItem(key) {
     const item = state.cartData[key];
     if (!item) return;
@@ -363,6 +402,16 @@ export function updateSubtotalBarisItem(key) {
     const el = document.getElementById('subtotalItem-' + key);
     if (el) {
         el.innerText = formatRupiah(itemTotal);
+    }
+
+    const discNomEl = document.getElementById('discNominalItem-' + key);
+    if (discNomEl) {
+        if (discFromPct > 0) {
+            discNomEl.innerText = 'Rp ' + Number(discFromPct * qty).toLocaleString('id-ID');
+            discNomEl.classList.remove('hidden');
+        } else {
+            discNomEl.classList.add('hidden');
+        }
     }
 }
 
