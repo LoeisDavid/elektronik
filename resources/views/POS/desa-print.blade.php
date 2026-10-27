@@ -204,25 +204,50 @@
             width: 100%;
             margin-top: 28px;
             page-break-inside: avoid;
+            clear: both;
         }
 
         .signature-table td {
             width: 50%;
             text-align: center;
             vertical-align: top;
-            padding: 0 40px;
+            padding: 0 20px;
         }
 
-        .signature-line {
-            border-bottom: 1px solid #94a3b8;
-            height: 50px;
-            margin-bottom: 6px;
+        .sig-box {
+            width: 220px;
+            margin: 0 auto;
+            text-align: center;
         }
 
-        .signature-name {
+        .sig-date {
+            font-size: 8.5px;
+            color: #475569;
+            margin-bottom: 4px;
+            min-height: 12px;
+        }
+
+        .sig-title {
             font-size: 9px;
-            color: #334155;
-            font-weight: 500;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .sig-space {
+            height: 55px;
+        }
+
+        .sig-line {
+            width: 180px;
+            margin: 0 auto 5px auto;
+            border-bottom: 1px solid #64748b;
+        }
+
+        .sig-name {
+            font-size: 9px;
+            color: #0f172a;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -369,12 +394,22 @@
     <table class="signature-table">
         <tr>
             <td>
-                <div class="signature-line"></div>
-                <div class="signature-name">Dibuat oleh ({{ $petugas }})</div>
+                <div class="sig-box">
+                    <div class="sig-date">&nbsp;</div>
+                    <div class="sig-title">Dibuat oleh,</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">( {{ $petugas }} )</div>
+                </div>
             </td>
             <td>
-                <div class="signature-line"></div>
-                <div class="signature-name">Diperiksa oleh</div>
+                <div class="sig-box">
+                    <div class="sig-date">{{ $lokasi ?? 'Sumenep' }}, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</div>
+                    <div class="sig-title">Diperiksa oleh,</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">( .................................................... )</div>
+                </div>
             </td>
         </tr>
     </table>

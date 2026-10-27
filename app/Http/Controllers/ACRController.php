@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ACR;
 use App\Models\STS;
 use App\Models\KAS;
+use App\Models\CST;
+use App\Models\ITMDT;
 use App\Models\DS;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -474,8 +476,15 @@ class ACRController extends Controller
 
             $transactions = $query->orderBy('DT', 'asc')->orderBy('created_at', 'asc')->orderBy('REF_NO', 'asc')->get();
 
+            // Pre-fetch HRB for all items in these transactions
+            $refNos = $transactions->pluck('REF_NO');
+            $allSts = STS::whereIn('REF_NO', $refNos)->get();
+            $bcOuts = $allSts->pluck('BC_OUT')->filter()->unique();
+            $hrbMap = ITMDT::whereIn('BC_OUT', $bcOuts)->pluck('HRB', 'BC_OUT');
+
             $reportData = [];
             $grandTotalKeseluruhan = 0;
+            $grandTotalHrb = 0;
 
             foreach ($transactions as $acr) {
                 $cst = $acr->cst();
@@ -484,7 +493,7 @@ class ACRController extends Controller
                 // Ambil nama desa customer
                 $cstDesa = '-';
                 if ($cst && $cst->DS) {
-                    $ds = DS::where('DS', $cst->DS)->first();
+                    $ds = CST::where('CST', $cst->DS)->first();
                     $cstDesa = $ds ? $ds->DES : '-';
                 }
 
@@ -498,6 +507,7 @@ class ACRController extends Controller
                 $rawSubtotal = 0;
                 $totalItemDiscount = 0;
                 $ppnPercent = null;
+                $invTotalHrb = 0;
 
                 foreach ($acr->sts() as $st) {
                     $itmModel = $st->itm();
@@ -519,6 +529,13 @@ class ACRController extends Controller
                         $ppnPercent = (int) $st->PPN;
                     }
 
+                    $hrb = (float) ($hrbMap[$st->BC_OUT] ?? ($st->itmdt()?->HRB ?? 0));
+                    $invTotalHrb += $hrb;
+
+                    // Margin per barang: dihitung dari harga beli dan harga jual
+                    // Margin (%) = ((Harga Jual - Harga Beli) / Harga Jual) * 100
+                    $itemMarginPct = $subtotalItem > 0 ? ((($subtotalItem - $hrb) / $subtotalItem) * 100) : 0;
+
                     $items[] = [
                         'kode'           => $kodeBarang,
                         'nama'           => $namaBarang,
@@ -526,6 +543,8 @@ class ACRController extends Controller
                         'diskon_persen'  => $pot1,
                         'voucher_satuan' => $potR,
                         'subtotal'       => $subtotalItem,
+                        'harga_beli'     => $hrb,
+                        'margin_pct'     => $itemMarginPct,
                     ];
                 }
 
@@ -542,6 +561,12 @@ class ACRController extends Controller
                 $invGrandTotal = (float) ($acr->BRT ?? ($totalSetelahDiskon + $ppnNominal));
 
                 $grandTotalKeseluruhan += $invGrandTotal;
+                $grandTotalHrb += $invTotalHrb;
+
+                // Margin per transaksi:
+                // Dihitung dari total harga jual transaksi dan total harga beli transaksi
+                $invSelling = $invGrandTotal > 0 ? $invGrandTotal : ($totalSetelahDiskon > 0 ? $totalSetelahDiskon : $rawSubtotal);
+                $invMarginPct = $invSelling > 0 ? ((($invSelling - $invTotalHrb) / $invSelling) * 100) : 0;
 
                 $reportData[] = [
                     'ref_no'         => $acr->REF_NO,
@@ -556,8 +581,13 @@ class ACRController extends Controller
                     'ppn_pct'        => $ppnPercent ?? 0,
                     'ppn_nominal'    => $ppnNominal,
                     'total'          => $invGrandTotal,
+                    'total_hrb'      => $invTotalHrb,
+                    'margin_pct'     => $invMarginPct,
                 ];
             }
+
+            // Margin keseluruhan
+            $grandTotalMarginPct = $grandTotalKeseluruhan > 0 ? ((($grandTotalKeseluruhan - $grandTotalHrb) / $grandTotalKeseluruhan) * 100) : 0;
 
             $petugas = auth()->user()?->USERNAME ?? 'admin';
             $lokasi  = 'Sumenep';
@@ -574,6 +604,8 @@ class ACRController extends Controller
             $pdf = Pdf::loadView('POS.transaksi-print', compact(
                 'reportData',
                 'grandTotalKeseluruhan',
+                'grandTotalHrb',
+                'grandTotalMarginPct',
                 'petugas',
                 'lokasi',
                 'tanggalDisplay',
