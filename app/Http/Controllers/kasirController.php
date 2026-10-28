@@ -423,7 +423,18 @@ class kasirController extends Controller
                 'USER'    => substr($user, 0, 10),
             ]);
 
+            // Validasi: pastikan tidak ada barcode dalam keranjang yang sudah tercatat di tabel STS
+            $incomingBcOuts = [];
+            foreach ($cart as $key => $item) {
+                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 20);
+            }
+            $alreadySold = STS::whereIn('BC_OUT', $incomingBcOuts)->pluck('BC_OUT')->toArray();
+            if (!empty($alreadySold)) {
+                throw new \Exception('Barang dengan barcode ' . implode(', ', $alreadySold) . ' sudah terjual di STS!');
+            }
+
             // 3. Simpan Rincian Barang ke Tabel STS (Setiap unit barang memiliki BC_OUT berbeda)
+            $soldBcOuts = [];
             foreach ($cart as $key => $item) {
                 $bcOut = substr($item['code'] ?? $key, 0, 20);
                 $itmCode = substr($item['id'] ?? $bcOut, 0, 20);
@@ -450,6 +461,8 @@ class kasirController extends Controller
                     'PPN'    => ($ppnPercent !== null && $ppnPercent > 0) ? $ppnPercent : null,
                     'BRT'    => $brtItem,
                 ]);
+
+                $soldBcOuts[] = $bcOut;
 
                 // Kurangi STOK di tabel ITM agar tetap sinkron (jumlah ITMDT - jumlah STS)
                 ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
@@ -495,6 +508,7 @@ class kasirController extends Controller
                 'customer_nama'    => $customerNama,
                 'customer_alamat'  => $customerAlamat,
                 'customer_desa'    => $customerDesa,
+                'sold_bc_outs'     => $soldBcOuts,
                 'tanggal'          => now()->translatedFormat('d M Y'),
                 'waktu'            => now()->format('H.i'),
             ]);
@@ -505,6 +519,34 @@ class kasirController extends Controller
                 'message' => 'Gagal memproses pembayaran: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Memeriksa barcode (BC_OUT) di tabel STS untuk validasi / sinkronisasi draft kasir.
+     * Mengembalikan daftar BC_OUT yang sudah ada di tabel STS (sudah terjual).
+     */
+    public function checkDraftSts(Request $request)
+    {
+        $barcodes = $request->input('barcodes', []);
+        if (empty($barcodes) || !is_array($barcodes)) {
+            return response()->json([
+                'success'       => true,
+                'sold_barcodes' => []
+            ]);
+        }
+
+        $cleanBarcodes = array_values(array_unique(array_filter(array_map('trim', $barcodes))));
+
+        $sold = STS::whereIn('BC_OUT', $cleanBarcodes)
+            ->pluck('BC_OUT')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'success'       => true,
+            'sold_barcodes' => $sold
+        ]);
     }
 
     /**
