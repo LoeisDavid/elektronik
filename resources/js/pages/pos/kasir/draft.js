@@ -101,6 +101,119 @@ export function simpanDraftTransaksi() {
     alert('Draft transaksi berhasil disimpan!');
 }
 
+// Ekstrak seluruh barcode unik (BC_OUT) yang dipilih di dalam sebuah draft
+export function ambilBarcodeDariDraft(draft) {
+    if (!draft || !draft.cart || typeof draft.cart !== 'object') return [];
+    const barcodes = new Set();
+    const items = Array.isArray(draft.cart) ? draft.cart : Object.entries(draft.cart);
+
+    items.forEach(entry => {
+        const item = Array.isArray(draft.cart) ? entry : entry[1];
+        const key = Array.isArray(draft.cart) ? '' : entry[0];
+
+        if (item && typeof item === 'object') {
+            if (item.code) barcodes.add(String(item.code).trim());
+            if (item.BC_OUT) barcodes.add(String(item.BC_OUT).trim());
+            if (item.bc_out) barcodes.add(String(item.bc_out).trim());
+        }
+        if (key && typeof key === 'string' && key.trim() !== '') {
+            barcodes.add(key.trim());
+        }
+    });
+
+    return Array.from(barcodes).filter(Boolean);
+}
+
+/**
+ * Menghapus otomatis draft transaksi yang memilih barang dengan barcode (BC_OUT) yang telah terjual / ada di STS.
+ * @param {Array<string>} soldBarcodes - Daftar barcode BC_OUT yang sudah terjual
+ * @param {Object} options - Opsi { render: boolean }
+ * @returns {number} Jumlah draft yang otomatis terhapus
+ */
+export function hapusDraftDenganBarcodes(soldBarcodes, options = { render: true }) {
+    if (!Array.isArray(soldBarcodes) || soldBarcodes.length === 0) return 0;
+
+    const soldSet = new Set(soldBarcodes.map(b => String(b).trim().toLowerCase()));
+    let drafts = [];
+    try {
+        drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+    } catch (e) {
+        drafts = [];
+    }
+
+    if (!Array.isArray(drafts) || drafts.length === 0) {
+        updateDraftBadgeHeader(0);
+        return 0;
+    }
+
+    const initialLength = drafts.length;
+    const filteredDrafts = drafts.filter(draft => {
+        const barcodes = ambilBarcodeDariDraft(draft);
+        const hasSoldItem = barcodes.some(bc => soldSet.has(bc.toLowerCase()));
+        return !hasSoldItem;
+    });
+
+    const deletedCount = initialLength - filteredDrafts.length;
+    if (deletedCount > 0) {
+        localStorage.setItem('pos_drafts', JSON.stringify(filteredDrafts));
+        updateDraftBadgeHeader(filteredDrafts.length);
+        if (options.render) {
+            renderDraftList();
+        }
+        console.info(`[POS Draft] ${deletedCount} draft otomatis terhapus karena unit barang (BC_OUT: ${soldBarcodes.join(', ')}) telah terjual di STS.`);
+    }
+
+    return deletedCount;
+}
+
+/**
+ * Memeriksa seluruh barcode yang ada di semua draft ke tabel STS di database.
+ * Jika ditemukan barang yang sudah ada di STS, draft yang memilih barang tersebut otomatis terhapus.
+ */
+export async function sinkronkanDraftDenganSTS() {
+    let drafts = [];
+    try {
+        drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+    } catch (e) {
+        drafts = [];
+    }
+
+    if (!Array.isArray(drafts) || drafts.length === 0) {
+        updateDraftBadgeHeader(0);
+        return [];
+    }
+
+    const allBarcodes = new Set();
+    drafts.forEach(d => {
+        ambilBarcodeDariDraft(d).forEach(bc => allBarcodes.add(bc));
+    });
+
+    if (allBarcodes.size === 0) return [];
+
+    try {
+        const checkUrl = state.routes?.draftsCheckSts || '/POS/drafts/check-sts';
+        const res = await fetch(checkUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': state.csrfToken
+            },
+            body: JSON.stringify({
+                barcodes: Array.from(allBarcodes)
+            })
+        });
+
+        const data = await res.json();
+        if (data.success && Array.isArray(data.sold_barcodes) && data.sold_barcodes.length > 0) {
+            hapusDraftDenganBarcodes(data.sold_barcodes, { render: true });
+            return data.sold_barcodes;
+        }
+    } catch (err) {
+        console.error('Error saat sinkronisasi draft dengan STS:', err);
+    }
+    return [];
+}
+
 export function modalDraftTransaksi() {
     renderDraftList();
     const modal = document.getElementById('modalDraftTransaksi');
@@ -108,6 +221,8 @@ export function modalDraftTransaksi() {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+    // Cek dan sinkronkan dengan database STS secara otomatis saat modal dibuka
+    sinkronkanDraftDenganSTS();
 }
 
 export function tutupModalDraftTransaksi() {
@@ -206,29 +321,61 @@ export function renderDraftList() {
     container.innerHTML = html;
 }
 
-export function muatDraft(index) {
+export async function muatDraft(index) {
     let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
-    if (drafts[index]) {
-        const draft = drafts[index];
-        state.cartData = draft.cart || {};
-        state.voucherAmount = draft.voucher || 0;
-        state.discountPercent = draft.discount_percent || 0;
-        state.ppnPercent = draft.ppn !== undefined ? draft.ppn : null;
-        const inputPpnEl = document.getElementById('ppnInput');
-        if (inputPpnEl) inputPpnEl.value = (state.ppnPercent !== null && state.ppnPercent !== '') ? state.ppnPercent : '';
+    const draft = drafts[index];
+    if (!draft) return;
 
-        state.isLoadedFromDraft = true;
-        state.currentDraftPelanggan = draft.pelanggan || '';
-        state.currentDraftSales = draft.sales || '';
-
-        drafts.splice(index, 1);
-        localStorage.setItem('pos_drafts', JSON.stringify(drafts));
-        updateDraftBadgeHeader(drafts.length);
-
-        renderCart();
-        simpanKeSession();
-        tutupModalDraftTransaksi();
+    // Cek apakah ada unit barang dalam draft yang sudah tercatat di STS
+    const barcodes = ambilBarcodeDariDraft(draft);
+    if (barcodes.length > 0) {
+        try {
+            const checkUrl = state.routes?.draftsCheckSts || '/POS/drafts/check-sts';
+            const res = await fetch(checkUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': state.csrfToken
+                },
+                body: JSON.stringify({ barcodes: barcodes })
+            });
+            const data = await res.json();
+            if (data.success && Array.isArray(data.sold_barcodes) && data.sold_barcodes.length > 0) {
+                hapusDraftDenganBarcodes(data.sold_barcodes, { render: true });
+                alert(`Draft tidak dapat dilanjutkan karena barang dengan barcode "${data.sold_barcodes.join(', ')}" sudah terjual (ada di STS). Draft otomatis terhapus.`);
+                return;
+            }
+        } catch (e) {
+            console.error('Error saat validasi STS di muatDraft:', e);
+        }
     }
+
+    // Ambil ulang draft yang masih valid
+    drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
+    const targetDraft = drafts[index];
+    if (!targetDraft) {
+        renderDraftList();
+        return;
+    }
+
+    state.cartData = targetDraft.cart || {};
+    state.voucherAmount = targetDraft.voucher || 0;
+    state.discountPercent = targetDraft.discount_percent || 0;
+    state.ppnPercent = targetDraft.ppn !== undefined ? targetDraft.ppn : null;
+    const inputPpnEl = document.getElementById('ppnInput');
+    if (inputPpnEl) inputPpnEl.value = (state.ppnPercent !== null && state.ppnPercent !== '') ? state.ppnPercent : '';
+
+    state.isLoadedFromDraft = true;
+    state.currentDraftPelanggan = targetDraft.pelanggan || '';
+    state.currentDraftSales = targetDraft.sales || '';
+
+    drafts.splice(index, 1);
+    localStorage.setItem('pos_drafts', JSON.stringify(drafts));
+    updateDraftBadgeHeader(drafts.length);
+
+    renderCart();
+    simpanKeSession();
+    tutupModalDraftTransaksi();
 }
 
 export function hapusDraft(index) {

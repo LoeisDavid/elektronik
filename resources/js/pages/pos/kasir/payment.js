@@ -7,7 +7,7 @@
 import { state, formatRupiah } from './config.js';
 import { hitungTotalQty, resetKeranjang, renderCart } from './cart.js';
 import { tampilModalStruk } from './struk.js';
-import { hapusDraftSetelahBayar } from './draft.js';
+import { hapusDraftSetelahBayar, hapusDraftDenganBarcodes, sinkronkanDraftDenganSTS } from './draft.js';
 
 export function modalMetodePembayaran() {
     const modal = document.getElementById('modalMetodePembayaran');
@@ -268,9 +268,19 @@ export function eksekusiPembayaranFinal() {
         }
 
         if (data.success) {
+            // Hapus otomatis draft yang memilih unit barang (BC_OUT) yang sudah tercatat di STS
+            const soldBcOuts = Array.isArray(data.sold_bc_outs) && data.sold_bc_outs.length > 0
+                ? data.sold_bc_outs
+                : Object.keys(state.cartData).map(k => state.cartData[k]?.code || k);
+
+            hapusDraftDenganBarcodes(soldBcOuts);
+            sinkronkanDraftDenganSTS();
+
             if (state.isLoadedFromDraft && state.activeDraftIndex !== null) {
                 hapusDraftSetelahBayar(state.activeDraftIndex);
             }
+            state.isLoadedFromDraft = false;
+            state.activeDraftIndex = null;
             tutupModalKonfirmasiPembayaran();
 
             // Tampilkan Struk Pembayaran

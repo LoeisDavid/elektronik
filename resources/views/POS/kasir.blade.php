@@ -299,6 +299,7 @@
             tutupKasir: '{{ route('POS.tutup-kasir', [], false) }}',
             cartSync: '{{ route('POS.cart.sync') }}',
             bayar: '{{ route('POS.bayar') }}',
+            draftsCheckSts: '{{ route('POS.drafts.check-sts') }}',
             searchItems: '{{ route('POS.search-items') }}'
         }
     };

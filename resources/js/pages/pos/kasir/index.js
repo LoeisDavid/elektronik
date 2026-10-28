@@ -65,7 +65,10 @@ import {
     muatDraft,
     hapusDraft,
     hapusDraftSetelahBayar,
-    updateDraftBadgeHeader
+    updateDraftBadgeHeader,
+    ambilBarcodeDariDraft,
+    hapusDraftDenganBarcodes,
+    sinkronkanDraftDenganSTS
 } from './draft.js';
 import {
     bukaModalBarcode,
@@ -150,6 +153,9 @@ Object.assign(window, {
     hapusDraft,
     hapusDraftSetelahBayar,
     updateDraftBadgeHeader,
+    ambilBarcodeDariDraft,
+    hapusDraftDenganBarcodes,
+    sinkronkanDraftDenganSTS,
 
     // Search & Scan
     bukaModalBarcode,
@@ -199,6 +205,7 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     initBarcodeCameraListener();
     updateDraftBadgeHeader();
+    sinkronkanDraftDenganSTS();
 
     if (state.isKasirOpen) {
         renderCart();

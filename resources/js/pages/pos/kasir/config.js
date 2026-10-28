@@ -30,13 +30,14 @@ export const state = {
 
     // CSRF & Routes
     csrfToken: initialConfig.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-    routes: initialConfig.routes || {
-        bukaKasir: '/POS/buka-kasir',
-        kasStatus: '/POS/kas-status',
-        tutupKasir: '/POS/tutup-kasir',
-        cartSync: '/POS/cart/sync',
-        bayar: '/POS/bayar',
-        searchItems: '/POS/search-items',
+    routes: {
+        bukaKasir: initialConfig.routes?.bukaKasir || '/POS/buka-kasir',
+        kasStatus: initialConfig.routes?.kasStatus || '/POS/kas-status',
+        tutupKasir: initialConfig.routes?.tutupKasir || '/POS/tutup-kasir',
+        cartSync: initialConfig.routes?.cartSync || '/POS/cart/sync',
+        bayar: initialConfig.routes?.bayar || '/POS/bayar',
+        searchItems: initialConfig.routes?.searchItems || '/POS/search-items',
+        draftsCheckSts: initialConfig.routes?.draftsCheckSts || '/POS/drafts/check-sts',
     }
 };
 
