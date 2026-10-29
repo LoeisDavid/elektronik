@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NamaToko - Login</title>
+    <title>perusahaan.nama - Login</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#f3f5f9] min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-900">
 
     <!-- Store Title -->
     <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-black mb-10">
-        NamaToko
+        perusahaan.nama
     </h1>
 
     <!-- Login Card -->

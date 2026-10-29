@@ -167,6 +167,11 @@ export function initDoubleSubmitProtection() {
         const form = e.target;
         if (!form.matches('form')) return;
 
+        // Jangan kunci form yang membuka tab baru (seperti Print Laporan / Struk PDF dengan target="_blank")
+        if ((form.getAttribute('target') || '').toLowerCase() === '_blank' || form.hasAttribute('data-no-lock')) {
+            return;
+        }
+
         if (form.dataset.submitting === 'true') {
             e.preventDefault();
             return;

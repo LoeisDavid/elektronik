@@ -12,11 +12,33 @@ class OpnameStokController extends Controller
     /**
      * Halaman pembukaan (memilih barang yang mau dicek).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $daftarItem = ITM::orderBy('DES')->get(['ITM', 'DES']);
+        $keyword = trim((string) $request->query('keyword', ''));
 
-        return view('inventory.opname-stok', compact('daftarItem'));
+        $daftarItem = DB::table('itm as i')
+            ->leftJoin('ktg as k', 'k.KTG', '=', 'i.KTG')
+            ->leftJoin('mrk as m', 'm.MRK', '=', 'i.MRK')
+            ->when($keyword !== '', function ($q) use ($keyword) {
+                $like = '%' . $keyword . '%';
+                $q->where(function ($sub) use ($like) {
+                    $sub->where('i.ITM', 'like', $like)
+                        ->orWhere('i.DES', 'like', $like)
+                        ->orWhere('k.DES', 'like', $like)
+                        ->orWhere('m.DES', 'like', $like);
+                });
+            })
+            ->orderBy('i.DES')
+            ->select(
+                'i.ITM',
+                'i.DES',
+                'i.STOK',
+                DB::raw("COALESCE(k.DES, '-') as ktg_nama"),
+                DB::raw("COALESCE(m.DES, '-') as mrk_nama")
+            )
+            ->get();
+
+        return view('inventory.opname-stok', compact('daftarItem', 'keyword'));
     }
 
     /**

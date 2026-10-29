@@ -60,45 +60,122 @@
 @section('content')
 @if (!isset($items))
 
-{{-- ================= LAYAR PEMBUKAAN (belum ada data) ================= --}}
-<div class="font-mont flex-1 flex flex-col items-center justify-center h-full min-h-0 bg-[#F7F8FD] p-4">
+{{-- ================= LAYAR PEMBUKAAN: TABEL PILIH BARANG ================= --}}
+<div class="font-mont flex-1 flex flex-col h-full min-h-0 bg-secondary-bw p-4 md:p-6 space-y-4 overflow-hidden">
 
     @if (session('error'))
-        <div class="mb-4 px-4 py-2 rounded-md border border-[#D02231] bg-[#D02231]/10 text-[#D02231] text-sm font-medium">
+        <div class="px-4 py-2.5 rounded-xl border border-[#D02231] bg-[#D02231]/10 text-[#D02231] text-sm font-medium shrink-0">
             {{ session('error') }}
         </div>
     @endif
 
-    {{-- Judul --}}
-    <h1 class="text-2xl font-bold text-black tracking-tight mb-1 text-center">
-        Cek Stok (Opname Stok)
-    </h1>
-
-    {{-- Sub Judul --}}
-    <p class="text-sm text-[#6B7280] mb-6 max-w-sm text-center">
-        Pilih barang yang ingin dicek stoknya, lalu klik tombol "Mulai".
-    </p>
-
-    <form id="formMulaiOpname" action="{{ route('inventory.opname.pull') }}" method="GET" class="w-full max-w-md bg-white border border-gray-300 rounded-2xl p-6 shadow-sm flex flex-col space-y-5">
-        <div class="w-full text-left">
-            <label for="selectItm" class="block text-xs font-semibold text-black mb-1.5">Pilih Barang yang Mau Dicek</label>
-            <select name="itm" id="selectItm" class="searchable-select w-full" required data-placeholder="Cari & pilih barang...">
-                <option value="" disabled selected>Pilih Barang...</option>
-                @if(isset($daftarItem))
-                    @foreach ($daftarItem as $it)
-                        <option value="{{ $it->ITM }}" @selected(request('itm') == $it->ITM)>
-                            {{ $it->DES }} ({{ $it->ITM }})
-                        </option>
-                    @endforeach
-                @endif
-            </select>
+    {{-- Header & Search Bar --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div>
+            <h1 class="text-lg font-bold text-black tracking-tight">
+                Pilih Barang Cek Stok (Opname Stok)
+            </h1>
+            <p class="text-xs text-[#6B7280]">
+                Cari dan pilih barang pada tabel di bawah, lalu klik tombol aksi <strong>Mulai Opname</strong>.
+            </p>
         </div>
 
-        <button type="submit" id="btnMulai"
-           class="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] active:bg-dark-navy transition shadow-sm cursor-pointer">
-            Mulai
-        </button>
-    </form>
+        <div class="flex items-center gap-2">
+            <form action="{{ route('inventory.opname') }}" method="GET" id="formCariBarangOpname" class="relative w-64 md:w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                    <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </span>
+                <input
+                    type="text"
+                    name="keyword"
+                    id="inputCariBarangOpname"
+                    value="{{ $keyword ?? request('keyword') }}"
+                    autocomplete="off"
+                    placeholder="Cari kode, nama barang, merk..."
+                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
+                >
+            </form>
+
+            <a
+                href="{{ route('inventory.gudang') }}"
+                class="h-9.5 px-3.5 bg-white border border-gray-400 hover:bg-gray-200 text-black rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-xs"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                <span>Kembali ke Gudang</span>
+            </a>
+        </div>
+    </div>
+
+    {{-- Tabel Daftar Barang --}}
+    <div class="flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col overflow-hidden">
+        <div id="opnameScroll" class="flex-1 min-h-0 overflow-y-auto">
+            <table class="w-full text-center border-collapse">
+                <thead class="sticky top-0 z-10">
+                    <tr class="bg-primary-db text-white text-xs font-semibold">
+                        <th class="py-3 px-4 text-left">Kode Barang</th>
+                        <th class="py-3 px-4 text-left">Nama Barang</th>
+                        <th class="py-3 px-4">Kategori</th>
+                        <th class="py-3 px-4">Merk</th>
+                        <th class="py-3 px-4">Stok</th>
+                        <th class="py-3 px-4 w-40 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyPilihBarangOpname" class="divide-y divide-gray-200 text-xs text-black">
+                    @forelse ($daftarItem ?? [] as $it)
+                        <tr
+                            class="row-pilih-opname hover:bg-gray-50/80 transition-colors"
+                            data-search="{{ strtolower(($it->ITM ?? '') . ' ' . ($it->DES ?? '') . ' ' . ($it->ktg_nama ?? '') . ' ' . ($it->mrk_nama ?? '')) }}"
+                        >
+                            <td class="py-3 px-4 text-left font-mono font-semibold text-[#0D1C43]">
+                                {{ $it->ITM }}
+                            </td>
+                            <td class="py-3 px-4 text-left font-medium text-black">
+                                {{ $it->DES }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-700">
+                                {{ $it->ktg_nama ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-700">
+                                {{ $it->mrk_nama ?? '-' }}
+                            </td>
+                            <td class="py-3 px-4 font-semibold">
+                                {{ (int) ($it->STOK ?? 0) }} Unit
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <a
+                                    href="{{ route('inventory.opname.pull', ['itm' => $it->ITM]) }}"
+                                    class="btn-mulai-opname-row inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] active:bg-dark-navy transition shadow-xs cursor-pointer"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                    <span>Mulai Opname</span>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr id="rowEmptyServerOpname">
+                            <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
+                                Tidak ada data barang ditemukan.
+                            </td>
+                        </tr>
+                    @endforelse
+                    <tr id="rowEmptySearchOpname" class="hidden">
+                        <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
+                            Tidak ada barang yang cocok dengan pencarian.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-4 py-2.5 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] shrink-0">
+            <span>Menampilkan <strong id="countTampilBarangOpname">{{ count($daftarItem ?? []) }}</strong> dari <strong>{{ count($daftarItem ?? []) }}</strong> barang</span>
+        </div>
+    </div>
 </div>
 
 @else
@@ -348,30 +425,54 @@
 @push('scripts')
 @if (!isset($items))
 <script>
-$(document).ready(function () {
-    if (typeof $.fn.select2 !== 'undefined') {
-        $('#selectItm').select2({
-            width: '100%',
-            placeholder: 'Cari & pilih barang...'
+document.addEventListener('DOMContentLoaded', function () {
+    const inputCari = document.getElementById('inputCariBarangOpname');
+    const formCari = document.getElementById('formCariBarangOpname');
+    const rows = Array.from(document.querySelectorAll('.row-pilih-opname'));
+    const rowEmptySearch = document.getElementById('rowEmptySearchOpname');
+    const countEl = document.getElementById('countTampilBarangOpname');
+
+    function filterRows() {
+        const kw = (inputCari?.value || '').trim().toLowerCase();
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const hay = row.dataset.search || '';
+            const match = !kw || hay.includes(kw);
+            row.classList.toggle('hidden', !match);
+            if (match) visibleCount++;
+        });
+
+        if (rowEmptySearch && rows.length > 0) {
+            rowEmptySearch.classList.toggle('hidden', visibleCount > 0);
+        }
+        if (countEl) {
+            countEl.textContent = String(visibleCount);
+        }
+    }
+
+    if (inputCari) {
+        inputCari.addEventListener('input', filterRows);
+        filterRows();
+    }
+
+    if (formCari) {
+        formCari.addEventListener('submit', function (e) {
+            e.preventDefault();
+            filterRows();
         });
     }
 
-    $('#formMulaiOpname').on('submit', function (e) {
-        const val = $('#selectItm').val();
-        if (!val) {
-            e.preventDefault();
-            alert('Silakan pilih barang terlebih dahulu!');
-            return false;
-        }
-
-        const btn = document.getElementById('btnMulai');
-        if (btn.dataset.loading) {
-            e.preventDefault();
-            return false;
-        }
-        btn.dataset.loading = '1';
-        btn.textContent = 'Memuat data...';
-        btn.classList.add('opacity-70', 'cursor-wait');
+    document.querySelectorAll('.btn-mulai-opname-row').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            if (this.dataset.loading) {
+                e.preventDefault();
+                return;
+            }
+            this.dataset.loading = '1';
+            this.innerHTML = '<span>Memuat...</span>';
+            this.classList.add('opacity-70', 'cursor-wait');
+        });
     });
 });
 </script>

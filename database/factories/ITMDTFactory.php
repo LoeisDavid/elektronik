@@ -34,7 +34,7 @@ class ITMDTFactory extends Factory
             'BC_IN' => sprintf('BCI%017d', $num), // 20 chars, fits string(20)
             'BC_OUT' => sprintf('BCO%017d', $num), // 20 chars, fits string(20) PK
             'TM' => fake()->date(),
-            'HRB' => fake()->numberBetween(100, 12000) * 1000,
+            'HRB' => fake()->numberBetween(10, 65) * 5000,
             'GD' => fn () => GD::factory(),
             'SPP' => fn () => SPP::factory(),
             'created_at' => now(),
