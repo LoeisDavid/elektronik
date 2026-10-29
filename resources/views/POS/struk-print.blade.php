@@ -39,10 +39,17 @@
             margin: 0 0 2px 0;
         }
 
+        .info-toko {
+            font-size: 8px;
+            color: #4b5563;
+            margin: 1px 0;
+            line-height: 1.3;
+        }
+
         .no-transaksi-label {
             font-size: 8px;
             color: #6b7280;
-            margin: 2px 0 1px 0;
+            margin: 4px 0 1px 0;
         }
 
         .no-transaksi-val {
@@ -82,7 +89,13 @@
 
     {{-- HEADER TOKO --}}
     <div class="center">
-        <p class="nama-toko">Pomelo.</p>
+        <p class="nama-toko">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }}</p>
+        @if(config('perusahaan.alamat') || config('perusahaan.kota'))
+            <p class="info-toko">{{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}</p>
+        @endif
+        @if(config('perusahaan.no_telp'))
+            <p class="info-toko">Telp: {{ config('perusahaan.no_telp') }}</p>
+        @endif
         <p class="no-transaksi-label">No. Transaksi</p>
         <p class="no-transaksi-val">{{ $struk['ref_no'] }}</p>
     </div>

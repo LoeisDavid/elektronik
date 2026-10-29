@@ -70,17 +70,36 @@ public function index(Request $request)
 
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:45',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:45|unique:gd,DES',
+        ], [
+            'DES.required' => 'Nama gudang wajib diisi.',
+            'DES.string'   => 'Nama gudang harus berupa teks.',
+            'DES.max'      => 'Nama gudang maksimal 45 karakter.',
+            'DES.unique'   => 'Nama gudang sudah terdaftar.',
+        ]);
 
+        try {
             $validated['GD'] = $this->generateCode($validated['DES'], 'GD');
 
-            GD::create($validated);
+            $gd = GD::create($validated);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data gudang berhasil ditambahkan.',
+                    'data'    => $gd,
+                ]);
+            }
 
             return redirect()->route('inventory.gudang')->with('success', 'Data gudang berhasil ditambahkan.');
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan ketika menambahkan data gudang.',
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan data gudang');
         }
     }

@@ -257,8 +257,16 @@
     <table class="header-table">
         <tr>
             <td>
-                <div class="sub-title">Laporan</div>
+                <div class="sub-title">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }} &bull; Laporan</div>
                 <div class="main-title">Penjualan Per Desa</div>
+                @if(config('perusahaan.alamat') || config('perusahaan.no_telp'))
+                    <div style="font-size: 8.5px; color: #64748b; margin-top: 2px;">
+                        {{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}
+                        @if(config('perusahaan.no_telp'))
+                            &bull; Telp: {{ config('perusahaan.no_telp') }}
+                        @endif
+                    </div>
+                @endif
             </td>
             <td>
                 <table class="meta-table">
@@ -275,7 +283,7 @@
                     <tr>
                         <td class="meta-label">Lokasi</td>
                         <td class="meta-colon">:</td>
-                        <td class="meta-val">{{ $lokasi }}</td>
+                        <td class="meta-val">{{ $lokasi ?? config('perusahaan.kota', 'Sumenep') }}</td>
                     </tr>
                 </table>
             </td>
@@ -404,7 +412,7 @@
             </td>
             <td>
                 <div class="sig-box">
-                    <div class="sig-date">{{ $lokasi ?? 'Sumenep' }}, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</div>
+                    <div class="sig-date">{{ $lokasi ?? config('perusahaan.kota', 'Sumenep') }}, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</div>
                     <div class="sig-title">Diperiksa oleh,</div>
                     <div class="sig-space"></div>
                     <div class="sig-line"></div>

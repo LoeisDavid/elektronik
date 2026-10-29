@@ -810,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const sortedItems = [...stokData].sort((a, b) => a.idx - b.idx);
             const payload = {
                 petugas: @json(auth()->user()->USERNAME ?? 'admin'),
-                lokasi: 'Sumenep',
+                lokasi: @json(config('perusahaan.kota', 'Sumenep')),
                 summary: {
                     total: stokData.length,
                     sudah_terjual: h.sudah_terjual,

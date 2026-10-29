@@ -7,7 +7,11 @@
     <!-- WAJIB: CSRF Token untuk keamanan Form/AJAX Laravel -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', 'Point Of Sales') - Elektronik</title>
+    <title>@yield('title', 'Point Of Sales') - {{ config('perusahaan.nama_perusahaan', 'Elektronik') }}</title>
+
+    <script>
+        window.PERUSAHAAN_CONFIG = @json(config('perusahaan'));
+    </script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

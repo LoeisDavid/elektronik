@@ -226,8 +226,16 @@
     <table class="header-table">
         <tr>
             <td>
-                <div class="sub-title">Laporan</div>
+                <div class="sub-title">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }} &bull; Laporan</div>
                 <div class="main-title">Cek Stok</div>
+                @if(config('perusahaan.alamat') || config('perusahaan.no_telp'))
+                    <div style="font-size: 8.5px; color: #64748b; margin-top: 2px;">
+                        {{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}
+                        @if(config('perusahaan.no_telp'))
+                            &bull; Telp: {{ config('perusahaan.no_telp') }}
+                        @endif
+                    </div>
+                @endif
             </td>
             <td>
                 <table class="meta-table">
@@ -238,6 +246,10 @@
                     <tr>
                         <td class="meta-label">Petugas :</td>
                         <td class="meta-val">{{ $petugas }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Lokasi :</td>
+                        <td class="meta-val">{{ $lokasi ?? config('perusahaan.kota', 'Sumenep') }}</td>
                     </tr>
                 </table>
             </td>

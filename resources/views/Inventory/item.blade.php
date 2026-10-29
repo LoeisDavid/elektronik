@@ -472,7 +472,7 @@
     {{-- ========================================================= --}}
     <div
         id="tambahITMModal"
-        class="fixed inset-0 z-50 <?= $bukaTambah ? 'flex' : 'hidden' ?> items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        class="fixed inset-0 z-60 <?= $bukaTambah ? 'flex' : 'hidden' ?> items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
     >
         <div class="absolute inset-0" onclick="tutupModal('tambahITMModal')"></div>
 
@@ -642,6 +642,55 @@
         </div>
     </div>
 
+    {{-- ========================================================= --}}
+    {{-- MODAL TAMBAH GUDANG (DARI PENAMBAHAN STOK)                --}}
+    {{-- ========================================================= --}}
+    <div
+        id="tambahGudangStokModal"
+        class="fixed inset-0 z-60 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    >
+        <div class="absolute inset-0" onclick="tutupModal('tambahGudangStokModal')"></div>
+
+        <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto">
+
+            <h2 class="text-xl font-bold mb-4">Tambah Gudang</h2>
+
+            <form method="POST" id="formTambahGudangStok" action="<?= e(route('inventory.gudang.store')) ?>" class="space-y-4">
+                <?= csrf_field() ?>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Nama Gudang</label>
+                    <input
+                        type="text"
+                        id="inputNamaGudangStok"
+                        name="DES"
+                        maxlength="45"
+                        required
+                        placeholder="Contoh: Gudang Utama"
+                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                    >
+                </div>
+
+                <div class="pt-2 flex items-center gap-3">
+                    <button
+                        type="button"
+                        onclick="tutupModal('tambahGudangStokModal')"
+                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 cursor-pointer"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="submit"
+                        id="btnSimpanGudangStok"
+                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
+                    >
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 
@@ -649,18 +698,91 @@
 {{-- JAVASCRIPT: modal, menu aksi, dan sambungan ke scanner kamera --}}
 {{-- ============================================================= --}}
 <script>
+    function initSelect2InModal(id) {
+        if (typeof jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') return;
+        const $modal = $('#' + id);
+        $modal.find('select.searchable-select').each(function () {
+            const $select = $(this);
+            const selectName = $select.attr('name') || '';
+
+            const config = {
+                width: '100%',
+                dropdownParent: $modal,
+                escapeMarkup: function (m) {
+                    return m;
+                }
+            };
+
+            if (selectName === 'stok_itm') {
+                config.language = {
+                    noResults: function () {
+                        return $(`
+                            <div class="py-2.5 px-2 text-center text-xs">
+                                <p class="text-gray-600 mb-1.5 font-medium">Barang tidak ditemukan</p>
+                                <button type="button" class="btn-tambah-itm-inline w-full py-1.5 px-3 bg-[#101D36] hover:bg-[#1C325B] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                                    + Tambah Barang Baru
+                                </button>
+                            </div>
+                        `).on('click', '.btn-tambah-itm-inline', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const searchField = document.querySelector('.select2-container--open .select2-search__field');
+                            const typedName = searchField ? searchField.value.trim() : '';
+                            $select.select2('close');
+                            bukaTambahBarangDariStok(typedName);
+                        });
+                    }
+                };
+            } else if (selectName === 'stok_gd') {
+                config.language = {
+                    noResults: function () {
+                        return $(`
+                            <div class="py-2.5 px-2 text-center text-xs">
+                                <p class="text-gray-600 mb-1.5 font-medium">Gudang tidak ditemukan</p>
+                                <button type="button" class="btn-tambah-gd-inline w-full py-1.5 px-3 bg-[#101D36] hover:bg-[#1C325B] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                                    + Tambah Gudang Baru
+                                </button>
+                            </div>
+                        `).on('click', '.btn-tambah-gd-inline', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const searchField = document.querySelector('.select2-container--open .select2-search__field');
+                            const typedName = searchField ? searchField.value.trim() : '';
+                            $select.select2('close');
+                            bukaTambahGudangDariStok(typedName);
+                        });
+                    }
+                };
+            }
+
+            $select.select2(config);
+        });
+    }
+
+    function bukaTambahBarangDariStok(initialName = '') {
+        const form = document.getElementById('formTambah');
+        if (form) {
+            const desInput = form.querySelector('input[name="DES"]');
+            if (desInput) desInput.value = initialName || '';
+        }
+        bukaModal('tambahITMModal');
+    }
+
+    function bukaTambahGudangDariStok(initialName = '') {
+        const input = document.getElementById('inputNamaGudangStok');
+        if (input) input.value = initialName || '';
+        bukaModal('tambahGudangStokModal');
+        setTimeout(function () {
+            if (input) input.focus();
+        }, 50);
+    }
+
     function bukaModal(id) {
         const m = document.getElementById(id);
+        if (!m) return;
         m.classList.remove('hidden');
         m.classList.add('flex');
-        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-            $('#' + id).find('select.searchable-select').each(function () {
-                $(this).select2({
-                    width: '100%',
-                    dropdownParent: $('#' + id)
-                });
-            });
-        }
+        initSelect2InModal(id);
     }
 
     function tutupModal(id) {
@@ -732,7 +854,7 @@
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            ['tambahStokModal', 'tambahITMModal', 'editITMModal'].forEach(tutupModal);
+            ['tambahGudangStokModal', 'tambahITMModal', 'editITMModal', 'tambahStokModal'].forEach(tutupModal);
             tutupSemuaMenu();
         }
     });
@@ -818,9 +940,81 @@
         }
     })();
 
-    // ---------- Cegah double submit ----------
+    // ---------- Submit Tambah Barang (AJAX bila dibuka dari modal Tambah Stok) ----------
     document.getElementById('formTambah').addEventListener('submit', function (event) {
+        const form = this;
         const btn = document.getElementById('btnTambahITM');
+        const isStokOpen = !document.getElementById('tambahStokModal')?.classList.contains('hidden');
+
+        if (isStokOpen) {
+            event.preventDefault();
+            if (btn && btn.disabled) return;
+
+            const formData = new FormData(form);
+            if (formData.has('HRG')) {
+                formData.set('HRG', String(formData.get('HRG') || '').replace(/\D/g, ''));
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btn.innerText = 'Menyimpan...';
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': form.querySelector('input[name="_token"]')?.value || ''
+                },
+                body: formData
+            })
+            .then(async function (res) {
+                const data = await res.json();
+                return { status: res.status, data: data };
+            })
+            .then(function (result) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btn.innerText = 'Simpan';
+                }
+                const data = result.data;
+                if (result.status >= 200 && result.status < 300 && data.success && data.data) {
+                    const selectItm = document.querySelector('#tambahStokModal select[name="stok_itm"]');
+                    if (selectItm) {
+                        const newOpt = new Option(data.data.DES, data.data.ITM, true, true);
+                        if (typeof jQuery !== 'undefined') {
+                            $(selectItm).append(newOpt).val(data.data.ITM).trigger('change');
+                        } else {
+                            selectItm.appendChild(newOpt);
+                            selectItm.value = data.data.ITM;
+                        }
+                    }
+                    form.reset();
+                    if (typeof jQuery !== 'undefined') {
+                        $(form).find('select.searchable-select').val('').trigger('change');
+                    }
+                    tutupModal('tambahITMModal');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(data.message || 'Barang berhasil ditambahkan.', 'success');
+                    }
+                } else {
+                    const errMsg = data?.errors ? Object.values(data.errors).flat()[0] : (data?.message || 'Gagal menambahkan barang.');
+                    alert(errMsg);
+                }
+            })
+            .catch(function (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btn.innerText = 'Simpan';
+                }
+                console.error(err);
+                alert('Terjadi kesalahan saat menyimpan barang.');
+            });
+            return;
+        }
 
         if (btn.disabled) {
             event.preventDefault();
@@ -832,7 +1026,78 @@
         btn.innerText = 'Menyimpan...';
     });
 
+    // ---------- Submit Tambah Gudang dari Modal Tambah Stok (AJAX) ----------
+    const formTambahGudangStok = document.getElementById('formTambahGudangStok');
+    if (formTambahGudangStok) {
+        formTambahGudangStok.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const form = this;
+            const btn = document.getElementById('btnSimpanGudangStok');
+            if (btn && btn.disabled) return;
+
+            const formData = new FormData(form);
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btn.innerText = 'Menyimpan...';
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': form.querySelector('input[name="_token"]')?.value || ''
+                },
+                body: formData
+            })
+            .then(async function (res) {
+                const data = await res.json();
+                return { status: res.status, data: data };
+            })
+            .then(function (result) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btn.innerText = 'Simpan';
+                }
+                const data = result.data;
+                if (result.status >= 200 && result.status < 300 && data.success && data.data) {
+                    const selectGd = document.querySelector('#tambahStokModal select[name="stok_gd"]');
+                    if (selectGd) {
+                        const newOpt = new Option(data.data.DES, data.data.GD, true, true);
+                        if (typeof jQuery !== 'undefined') {
+                            $(selectGd).append(newOpt).val(data.data.GD).trigger('change');
+                        } else {
+                            selectGd.appendChild(newOpt);
+                            selectGd.value = data.data.GD;
+                        }
+                    }
+                    form.reset();
+                    tutupModal('tambahGudangStokModal');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(data.message || 'Data gudang berhasil ditambahkan.', 'success');
+                    }
+                } else {
+                    const errMsg = data?.errors ? Object.values(data.errors).flat()[0] : (data?.message || 'Gagal menambahkan gudang.');
+                    alert(errMsg);
+                }
+            })
+            .catch(function (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btn.innerText = 'Simpan';
+                }
+                console.error(err);
+                alert('Terjadi kesalahan saat menyimpan gudang.');
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        @if ($bukaStok)
+            initSelect2InModal('tambahStokModal');
+        @endif
         @if ($bukaTambah)
             bukaModal('tambahITMModal');
         @elseif ($bukaEdit)

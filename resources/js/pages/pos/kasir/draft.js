@@ -41,16 +41,53 @@ export function modalTambahArsip() {
         modal.classList.add('flex');
 
         if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
-            ['#inputPelangganDraft', '#inputSalesDraft'].forEach(function(sel) {
-                const $el = jQuery(sel);
-                if ($el.length && !$el.hasClass('select2-hidden-accessible')) {
-                    $el.select2({
-                        width: '100%',
-                        placeholder: $el.find('option:first').text() || 'Cari...',
-                        allowClear: true,
-                        dropdownParent: jQuery(modal)
-                    });
-                }
+            jQuery(modal).find('select.searchable-select').each(function() {
+                const $select = jQuery(this);
+                $select.select2({
+                    width: '100%',
+                    dropdownParent: jQuery(modal),
+                    matcher: function(params, data) {
+                        if (jQuery.trim(params.term) === '') {
+                            return data;
+                        }
+                        if (!data.element) {
+                            return null;
+                        }
+                        var term = params.term.toLowerCase();
+                        var text = (data.text || '').toLowerCase();
+                        var phone = (jQuery(data.element).data('phone') || '').toString().toLowerCase();
+
+                        if (text.indexOf(term) > -1 || phone.indexOf(term) > -1) {
+                            return data;
+                        }
+                        return null;
+                    },
+                    language: {
+                        noResults: function() {
+                            if ($select.attr('id') === 'inputPelangganDraft') {
+                                return jQuery(`
+                                    <div class="py-2.5 px-2 text-center text-xs">
+                                        <p class="text-gray-600 mb-1.5 font-medium">Customer / Desa tidak ditemukan</p>
+                                        <button type="button" class="btn-tambah-cst w-full py-1.5 px-3 bg-[#101D36] hover:bg-[#1C325B] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                                            + Tambah Data Baru
+                                        </button>
+                                    </div>
+                                `).on('click', '.btn-tambah-cst', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    $select.select2('close');
+                                    if (typeof window.openTambahModal === 'function') {
+                                        window.openTambahModal('inputPelangganDraft');
+                                    }
+                                });
+                            }
+                            return 'Data tidak ditemukan';
+                        }
+                    },
+                    escapeMarkup: function(m) {
+                        return m;
+                    }
+                });
             });
         }
     }
@@ -67,6 +104,17 @@ export function tutupModalTambahArsip() {
 export function simpanDraftTransaksi() {
     const pelanggan = document.getElementById('inputPelangganDraft')?.value || '';
     const sales = document.getElementById('inputSalesDraft')?.value || '';
+
+    if (!pelanggan) {
+        alert('Silakan pilih atau isi nama Pelanggan terlebih dahulu!');
+        document.getElementById('inputPelangganDraft')?.focus();
+        return;
+    }
+    if (!sales) {
+        alert('Silakan pilih atau isi nama Sales terlebih dahulu!');
+        document.getElementById('inputSalesDraft')?.focus();
+        return;
+    }
 
     let drafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
     drafts.push({

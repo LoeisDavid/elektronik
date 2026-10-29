@@ -22,7 +22,7 @@
                         <input
                             type="text"
                             name="USERNAME"
-                            placeholder="Contoh: David Loes"
+                            placeholder="Contoh: Budi Santoso"
                             required
                             class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                             value="{{ old('USERNAME') }}"
