@@ -37,10 +37,70 @@ use Illuminate\Support\Facades\Schema;
 trait SeedsStoreData
 {
     /**
-     * Helper seeding data master produk elektronik, customer, desa, transaksi kasir, dan perpindahan gudang.
+     * Daftar katalog produk Elektronik (DB 1) dengan harga beli (hrb) & harga jual (hrg) terjangkau untuk presentasi.
      */
-    public function seedData(int $totalRecords, int $kasCount, bool $openCashierToday = false): void
+    protected function getCatalogElektronik(): array
     {
+        return [
+            ['des' => 'Kipas Angin Stand Fan 16 Inch',     'hrb' => 160000, 'hrg' => 210000],
+            ['des' => 'Setrika Listrik Anti Lengket',      'hrb' => 85000,  'hrg' => 115000],
+            ['des' => 'Rice Cooker Digital 1.8L',          'hrb' => 220000, 'hrg' => 285000],
+            ['des' => 'Blender Multi-Function 2L',         'hrb' => 175000, 'hrg' => 230000],
+            ['des' => 'Set Top Box TV Digital DVB-T2',     'hrb' => 120000, 'hrg' => 165000],
+            ['des' => 'Speaker Bluetooth Portable',        'hrb' => 95000,  'hrg' => 135000],
+            ['des' => 'Teko Listrik Electric Kettle 1.5L', 'hrb' => 75000,  'hrg' => 105000],
+            ['des' => 'Dispenser Air Meja Panas Dingin',   'hrb' => 140000, 'hrg' => 185000],
+            ['des' => 'Kipas Angin Dinding 16 Inch',       'hrb' => 145000, 'hrg' => 190000],
+            ['des' => 'Kompor Induksi Portabel Low Watt',  'hrb' => 260000, 'hrg' => 335000],
+            ['des' => 'Air Fryer Digital 3.5L',            'hrb' => 320000, 'hrg' => 410000],
+            ['des' => 'Chopper Penggiling Bumbu & Daging', 'hrb' => 110000, 'hrg' => 150000],
+            ['des' => 'Toaster Pemanggang Roti 2 Slice',   'hrb' => 130000, 'hrg' => 175000],
+            ['des' => 'Exhaust Fan Dinding 10 Inch',       'hrb' => 150000, 'hrg' => 195000],
+            ['des' => 'Mixer Adonan Kue Stand Mixer',      'hrb' => 185000, 'hrg' => 245000],
+            ['des' => 'Kamera CCTV WiFi Smart 1080p',      'hrb' => 165000, 'hrg' => 220000],
+            ['des' => 'Router Wi-Fi Dual Band AC1200',     'hrb' => 155000, 'hrg' => 205000],
+            ['des' => 'Powerbank Fast Charging 10000mAh',  'hrb' => 90000,  'hrg' => 125000],
+            ['des' => 'Stabilizer Voltase Otomatis 500VA', 'hrb' => 195000, 'hrg' => 255000],
+            ['des' => 'Rice Cooker Mini Travel 0.8L',      'hrb' => 135000, 'hrg' => 180000],
+        ];
+    }
+
+    /**
+     * Daftar katalog produk Sparepart Elektronik (DB 2) dengan harga beli (hrb) & harga jual (hrg) terjangkau.
+     */
+    protected function getCatalogSparepart(): array
+    {
+        return [
+            ['des' => 'Kapasitor Kipas Angin 1.5uF 450V',      'hrb' => 8000,  'hrg' => 15000],
+            ['des' => 'Thermofuse Rice Cooker 157 Derajat',    'hrb' => 5000,  'hrg' => 10000],
+            ['des' => 'Elemen Pemanas Setrika Listrik 350W',   'hrb' => 18000, 'hrg' => 28000],
+            ['des' => 'Gearbox Mesin Cuci 2 Tabung',           'hrb' => 45000, 'hrg' => 65000],
+            ['des' => 'Dinamo Motor Kipas Angin Universal',    'hrb' => 55000, 'hrg' => 80000],
+            ['des' => 'Seal Karet Pembuangan Mesin Cuci',      'hrb' => 12000, 'hrg' => 20000],
+            ['des' => 'Baling-Baling Kipas Angin 16 Inch',     'hrb' => 22000, 'hrg' => 35000],
+            ['des' => 'Pisau Blender Mounting Set Lengkap',    'hrb' => 25000, 'hrg' => 40000],
+            ['des' => 'Kabel Power Angka 8 Panjang 1.5m',      'hrb' => 10000, 'hrg' => 18000],
+            ['des' => 'Kapasitor Mesin Cuci 10uF + 4uF',       'hrb' => 24000, 'hrg' => 38000],
+            ['des' => 'Timer Pencuci Mesin Cuci 6 Kabel',      'hrb' => 28000, 'hrg' => 45000],
+            ['des' => 'Saklar Switch Kipas Angin 4 Pin',       'hrb' => 12000, 'hrg' => 20000],
+            ['des' => 'Thermostat Otomatis Setrika & MagicCom','hrb' => 15000, 'hrg' => 25000],
+            ['des' => 'Konektor Jack Antena TV Coaxial Besi',  'hrb' => 6000,  'hrg' => 12000],
+            ['des' => 'Fuse Sekring Kaca 5A 250V (Pack)',      'hrb' => 8000,  'hrg' => 15000],
+            ['des' => 'Solder Listrik 40W Mata Lancip',        'hrb' => 32000, 'hrg' => 48000],
+            ['des' => 'Timah Solder Roll 60/40 0.8mm',         'hrb' => 20000, 'hrg' => 32000],
+            ['des' => 'Multitester Digital Avometer DT830B',   'hrb' => 42000, 'hrg' => 65000],
+            ['des' => 'IC Regulator Tegangan L7805 CV',        'hrb' => 7000,  'hrg' => 14000],
+            ['des' => 'Dinamo Spin Pengering Mesin Cuci 70W',  'hrb' => 95000, 'hrg' => 135000],
+        ];
+    }
+
+    /**
+     * Helper seeding data master produk elektronik / sparepart, customer, desa, transaksi kasir, dan perpindahan gudang.
+     */
+    public function seedData(int $totalRecords, int $kasCount, bool $openCashierToday = false, string $mode = 'elektronik'): void
+    {
+        $isSparepart = (strtolower($mode) === 'sparepart');
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         $tables = ['rpd', 'rp', 'sts', 'acr', 'itmdt', 'itm', 'sls', 'gd', 'ktg', 'mrk', 'spp', 'cst', 'users', 'kas'];
@@ -62,7 +122,7 @@ trait SeedsStoreData
             'PASS'     => Hash::make('admin123'),
             'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
             'HP'       => '081234567890',
-            'DES'      => 'Administrator Toko',
+            'DES'      => $isSparepart ? 'Admin Sparepart Elektronik' : 'Administrator Toko Elektronik',
             'ROLE'     => 1,
         ]);
 
@@ -101,40 +161,99 @@ trait SeedsStoreData
             DB::table('cst')->insert($chunk);
         }
 
-        // 3. SPP (Supplier Elektronik Resmi)
-        $this->command?->info("3. Seeding Supplier Elektronik ($totalRecords records)...");
+        // 3. SPP (Supplier)
+        $labelMode = $isSparepart ? 'Sparepart Elektronik' : 'Elektronik';
+        $this->command?->info("3. Seeding Supplier {$labelMode} ($totalRecords records)...");
+        $sparepartSuppliers = [
+            'CV Jaya Sparepart Elektronik',
+            'PT Indo Komponen Utama',
+            'UD Sumber Teknik Part',
+            'CV Sentral Dinamo & Part',
+            'PT Multi Suku Cadang',
+            'UD Makmur Jaya Komponen',
+            'CV Mitra Servis Elektronik',
+            'PT Global Part Nusantara',
+            'UD Sinar Teknik Sparepart',
+            'CV Bintang Komponen',
+        ];
         SPPFactory::resetSequence(1);
         $sppData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
-            $sppData[] = SPP::factory()->make()->getAttributes();
+            $attr = SPP::factory()->make()->getAttributes();
+            if ($isSparepart) {
+                $baseName = $sparepartSuppliers[$i % count($sparepartSuppliers)];
+                if ($i >= count($sparepartSuppliers)) {
+                    $baseName .= ' ' . (intval($i / count($sparepartSuppliers)) + 1);
+                }
+                $attr['DES'] = substr($baseName, 0, 150);
+            }
+            $sppData[] = $attr;
         }
         foreach (array_chunk($sppData, $chunkSize) as $chunk) {
             DB::table('spp')->insert($chunk);
         }
 
-        // 4. MRK (Merk Elektronik Terkenal)
-        $this->command?->info("4. Seeding Merk Elektronik ($totalRecords records)...");
+        // 4. MRK (Merk)
+        $this->command?->info("4. Seeding Merk {$labelMode} ($totalRecords records)...");
+        $sparepartBrands = [
+            'San-Ei', 'Matsugi', 'Dekko', 'Nikkai', 'Visero',
+            'Toyosaki', 'Goot', 'Omron', 'Miyako Part', 'Cosmos Part',
+            'Panasonic Part', 'Sharp Part', 'Polytron Part', 'Maspion Part', 'Sanken Part',
+        ];
         MRKFactory::resetSequence(1);
         $mrkData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
-            $mrkData[] = MRK::factory()->make()->getAttributes();
+            $attr = MRK::factory()->make()->getAttributes();
+            if ($isSparepart) {
+                $baseBrand = $sparepartBrands[$i % count($sparepartBrands)];
+                if ($i >= count($sparepartBrands)) {
+                    $baseBrand .= ' ' . (intval($i / count($sparepartBrands)) + 1);
+                }
+                $attr['DES'] = substr($baseBrand, 0, 45);
+            }
+            $mrkData[] = $attr;
         }
         foreach (array_chunk($mrkData, $chunkSize) as $chunk) {
             DB::table('mrk')->insert($chunk);
         }
 
-        // 5. KTG (Kategori Alat Elektronik)
-        $this->command?->info("5. Seeding Kategori Elektronik ($totalRecords records)...");
+        // 5. KTG (Kategori)
+        $this->command?->info("5. Seeding Kategori {$labelMode} ($totalRecords records)...");
+        $sparepartCategories = [
+            'Suku Cadang Kipas Angin',
+            'Suku Cadang Mesin Cuci',
+            'Suku Cadang Rice Cooker',
+            'Suku Cadang Blender',
+            'Suku Cadang Setrika',
+            'Kapasitor & Komponen',
+            'Kabel & Konektor',
+            'Alat Servis & Solder',
+            'IC & Semikonduktor',
+            'Saklar & Thermostat',
+            'Dinamo & Motor Listrik',
+            'Fuse & Proteksi Arus',
+            'Aksesoris Antena & TV',
+            'Elemen Pemanas',
+            'Modul & PCB Elektronik',
+        ];
         KTGFactory::resetSequence(1);
         $ktgData = [];
         for ($i = 0; $i < $totalRecords; $i++) {
-            $ktgData[] = KTG::factory()->make()->getAttributes();
+            $attr = KTG::factory()->make()->getAttributes();
+            if ($isSparepart) {
+                $baseCat = $sparepartCategories[$i % count($sparepartCategories)];
+                if ($i >= count($sparepartCategories)) {
+                    $baseCat .= ' ' . (intval($i / count($sparepartCategories)) + 1);
+                }
+                $attr['DES'] = substr($baseCat, 0, 45);
+            }
+            $ktgData[] = $attr;
         }
         foreach (array_chunk($ktgData, $chunkSize) as $chunk) {
             DB::table('ktg')->insert($chunk);
         }
 
-        // 6. GD (Gudang Toko Elektronik)
+        // 6. GD (Gudang)
         $this->command?->info("6. Seeding Gudang ($totalRecords records)...");
         GDFactory::resetSequence(1);
         $gdData = [];
@@ -156,12 +275,14 @@ trait SeedsStoreData
             DB::table('sls')->insert($chunk);
         }
 
-        // 8. ITM (Barang Elektronik) & 9. ITMDT (Detail Unit & Barcode)
-        $this->command?->info("8. Seeding Barang & Barcode ITMDT ($totalRecords items)...");
+        // 8. ITM (Barang) & 9. ITMDT (Detail Unit & Barcode)
+        $this->command?->info("8. Seeding Barang {$labelMode} & Barcode ITMDT ($totalRecords items)...");
         ITMFactory::resetSequence(1);
         ITMDTFactory::resetSequence(1);
         ACRFactory::resetSequence(1);
         STSFactory::resetSequence(0);
+
+        $catalog = $isSparepart ? $this->getCatalogSparepart() : $this->getCatalogElektronik();
 
         $itmData = [];
         $itmdtData = [];
@@ -173,6 +294,14 @@ trait SeedsStoreData
             $ktgCode = sprintf('KTG%07d', (($i - 1) % $totalRecords) + 1);
             $mrkCode = sprintf('MRK%07d', (($i - 1) % $totalRecords) + 1);
             $sppCode = sprintf('SPP%07d', (($i - 1) % $totalRecords) + 1);
+
+            $catItem = $catalog[($i - 1) % count($catalog)];
+            $prodName = $catItem['des'];
+            if ($i > count($catalog)) {
+                $prodName .= ' Seri ' . sprintf('%03d', $i);
+            }
+            $hargaBeli = (int) $catItem['hrb'];
+            $hargaJual = (int) $catItem['hrg'];
 
             $mod = $i % 10;
             if ($mod === 0 || $mod === 5) {
@@ -192,15 +321,17 @@ trait SeedsStoreData
                 $soldUnits = (($i % 4) + 1);
                 $numItmdt  = $finalStok + $soldUnits;
             } else {
-                // STOK BANYAK (~40% -> STOK 6..20 unit)
-                $finalStok = (($i % 15) + 6);
-                $soldUnits = ($i % 6);
+                // STOK BANYAK (~40% -> STOK 6..15 unit)
+                $finalStok = (($i % 10) + 6);
+                $soldUnits = ($i % 5);
                 $numItmdt  = $finalStok + $soldUnits;
             }
 
             $itmObj = ITM::factory()->make([
                 'ITM'  => $itmCode,
+                'DES'  => substr($prodName, 0, 150),
                 'STOK' => $finalStok,
+                'HRG'  => $hargaJual,
                 'KTG'  => $ktgCode,
                 'MRK'  => $mrkCode,
             ])->getAttributes();
@@ -214,6 +345,7 @@ trait SeedsStoreData
                     'ITM'    => $itmCode,
                     'BC_IN'  => sprintf('BCI%017d', $itmdtSequence),
                     'BC_OUT' => $bcOut,
+                    'HRB'    => $hargaBeli,
                     'GD'     => $gdCode,
                     'SPP'    => $sppCode,
                 ])->getAttributes();
@@ -224,7 +356,7 @@ trait SeedsStoreData
                     $unitsToSell[] = [
                         'BC_OUT' => $bcOut,
                         'ITM'    => $itmCode,
-                        'HRG'    => $itmObj['HRG'],
+                        'HRG'    => $hargaJual,
                     ];
                 }
 
@@ -240,7 +372,7 @@ trait SeedsStoreData
             DB::table('itmdt')->insert($chunk);
         }
 
-        // 10. ACR & 11. STS (Riwayat Transaksi Penjualan Elektronik)
+        // 10. ACR & 11. STS (Riwayat Transaksi Penjualan)
         $totalSoldUnits = count($unitsToSell);
         $this->command?->info("9. Seeding Transaksi Kasir ACR & STS ($totalSoldUnits unit terjual)...");
 
@@ -285,13 +417,13 @@ trait SeedsStoreData
 
             $acrData[] = [
                 'REF_NO'     => $refNo,
-                'DT'         => fake()->date(),
+                'DT'         => fake()->dateTimeBetween('-14 days', 'now')->format('Y-m-d'),
                 'CST'        => $cstCode,
                 'SLS'        => $slsCode,
                 'BRT'        => $brtTotal,
                 'PAY'        => $brtTotal,
                 'TOT_POT'    => 0,
-                'JNS'        => 1,
+                'JNS'        => ($invIndex % 3 === 0) ? 2 : 1,
                 'POT_1'      => null,
                 'POT_2'      => null,
                 'POT_R'      => null,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - NamaToko</title>
+    <title>Login - {{ config('perusahaan.nama') }}</title>
 
     <!-- Google Fonts: Inter & IBM Plex Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,7 @@
         
         {{-- Store Title --}}
         <h1 class="text-3xl md:text-4xl font-bold text-[#000000] tracking-tight mb-8">
-            NamaToko
+            {{ config('perusahaan.nama') }}
         </h1>
 
         {{-- Login Card (#dde5ee) --}}
