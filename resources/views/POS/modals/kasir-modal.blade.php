@@ -38,7 +38,7 @@
                     autocomplete="off"
                     autocapitalize="off"
                     spellcheck="false"
-                    placeholder="Atau scan / ketik kode barcode manual..."
+                    placeholder="ketik kode barcode manual..."
                     required
                     class="flex-1 bg-white border border-[#2D3748] rounded-xl px-4 py-2.5 text-sm text-black placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#101D36]" />
 
@@ -310,31 +310,33 @@
         <!-- Form Input -->
         <div class="space-y-4">
             <!-- Input Pelanggan -->
-            <div>
-                <label for="inputPelangganDraft" class="block text-sm font-semibold text-black mb-1">
+            <div class="space-y-1">
+                <label for="inputPelangganDraft" class="block text-sm font-semibold text-black">
                     Pelanggan
                 </label>
                 <select
                     id="inputPelangganDraft"
                     class="searchable-select w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
-                    <option value="">Cari Pelanggan</option>
+                    <option value="">Cari / Pilih Pelanggan</option>
                     @foreach($customers ?? [] as $cst)
-                    <option value="{{ $cst->DES }}">{{ $cst->DES }} ({{ $cst->CST }})</option>
+                        <option value="{{ $cst->DES }}" data-phone="{{ $cst->TLP ?? '' }}">
+                            {{ $cst->DES }} {{ !empty($cst->TLP) ? '- ' . $cst->TLP : '' }}
+                        </option>
                     @endforeach
                 </select>
             </div>
 
             <!-- Input Sales -->
-            <div>
-                <label for="inputSalesDraft" class="block text-sm font-semibold text-black mb-1">
+            <div class="space-y-1">
+                <label for="inputSalesDraft" class="block text-sm font-semibold text-black">
                     Sales
                 </label>
                 <select
                     id="inputSalesDraft"
                     class="searchable-select w-full bg-white border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-black outline-none font-medium">
-                    <option value="">Cari Sales</option>
+                    <option value="">Cari / Pilih Sales</option>
                     @foreach($salesList ?? [] as $sls)
-                    <option value="{{ $sls->DES }}">{{ $sls->DES }} ({{ $sls->SLS }})</option>
+                        <option value="{{ $sls->DES }}" data-phone="{{ $sls->HP ?? '' }}">{{ $sls->DES }} {{ !empty($sls->HP) ? '- ' . $sls->HP : '' }}</option>
                     @endforeach
                 </select>
             </div>

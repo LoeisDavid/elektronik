@@ -84,6 +84,7 @@ class OpnameStokController extends Controller
         ];
         $tanggal = date('j') . ' ' . $bulanIndo[(int)date('n')] . ' ' . date('Y');
         $petugas = auth()->user()->USERNAME ?? 'admin';
+        $lokasi  = config('perusahaan.kota', 'Sumenep');
 
         if ($request->isMethod('post') && $request->filled('payload')) {
             $payload = json_decode($request->input('payload'), true) ?? [];

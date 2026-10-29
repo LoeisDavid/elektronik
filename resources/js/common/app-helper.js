@@ -163,6 +163,7 @@ export function initGlobalClickOutside() {
 // 7. Double Submit & Clean Rupiah on Form Submit
 export function initDoubleSubmitProtection() {
     document.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;
         const form = e.target;
         if (!form.matches('form')) return;
 

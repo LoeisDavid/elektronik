@@ -29,9 +29,17 @@
             <div id="areaStrukPrint" class="bg-white p-5 rounded-2xl border border-dashed border-gray-300 text-xs font-sans text-gray-800 space-y-3">
                 
                 <!-- Header Toko / Brand Name -->
-                <div class="text-center space-y-1">
-                    <h2 class="text-2xl font-serif font-extrabold text-black tracking-tight" id="strukNamaToko">Pomelo.</h2>
-                    <p class="text-[11px] text-gray-400 font-medium mt-1">No. Transaksi</p>
+                <div class="text-center space-y-0.5">
+                    <h2 class="text-2xl font-serif font-extrabold text-black tracking-tight" id="strukNamaToko">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }}</h2>
+                    @if(config('perusahaan.alamat') || config('perusahaan.kota'))
+                        <p class="text-[11px] text-gray-600 font-medium leading-snug" id="strukAlamatToko">
+                            {{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}
+                        </p>
+                    @endif
+                    @if(config('perusahaan.no_telp'))
+                        <p class="text-[11px] text-gray-500 font-medium" id="strukTelpToko">Telp: {{ config('perusahaan.no_telp') }}</p>
+                    @endif
+                    <p class="text-[11px] text-gray-400 font-medium pt-1">No. Transaksi</p>
                     <p id="strukNoNota" class="text-sm font-bold text-gray-900 font-mono tracking-wider">-</p>
                 </div>
 

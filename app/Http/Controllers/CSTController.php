@@ -271,7 +271,7 @@ class CSTController extends Controller
 
             $petugas = auth()->user()?->USERNAME ?? 'admin';
             $tanggal = now()->locale('id')->translatedFormat('d F Y');
-            $lokasi  = 'Sumenep';
+            $lokasi  = config('perusahaan.kota', 'Sumenep');
 
             $pdf = Pdf::loadView('POS.desa-print', compact(
                 'desaList',

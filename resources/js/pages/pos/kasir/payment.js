@@ -170,7 +170,7 @@ export function prosesPembayaran() {
                                     e.stopPropagation();
                                     $select.select2('close');
                                     if (typeof window.openTambahModal === 'function') {
-                                        window.openTambahModal();
+                                        window.openTambahModal('inputPelangganKonfirmasi');
                                     }
                                 });
                             }

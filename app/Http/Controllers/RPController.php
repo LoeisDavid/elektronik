@@ -621,7 +621,7 @@ class RPController extends Controller
 
         $petugas = auth()->user()?->USERNAME ?? 'admin';
         $tanggalCetak = now()->locale('id')->translatedFormat('d F Y');
-        $lokasi = 'Sumenep';
+        $lokasi = config('perusahaan.kota', 'Sumenep');
         $countTotal = $items->count();
 
         // Dokumen yang dicetak disesuaikan secara ketat dengan status perpindahan:

@@ -258,9 +258,18 @@
     <table class="header-table">
         <tr>
             <td>
+                <div class="sub-title" style="margin-bottom: 2px; font-weight: bold; color: #0D1C43;">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }}</div>
                 <div class="main-title">SURAT BUKTI PENERIMAAN BARANG</div>
                 <div class="sub-title">Berita Acara Serah Terima & Pemindahan Stok Selesai</div>
                 <div class="doc-number">No. Dokumen: {{ $rp->RP }}</div>
+                @if(config('perusahaan.alamat') || config('perusahaan.no_telp'))
+                    <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
+                        {{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}
+                        @if(config('perusahaan.no_telp'))
+                            &bull; Telp: {{ config('perusahaan.no_telp') }}
+                        @endif
+                    </div>
+                @endif
             </td>
             <td>
                 <table class="meta-table">

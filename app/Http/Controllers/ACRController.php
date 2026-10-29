@@ -590,7 +590,7 @@ class ACRController extends Controller
             $grandTotalMarginPct = $grandTotalHrb > 0 ? ((($grandTotalKeseluruhan - $grandTotalHrb) / $grandTotalHrb) * 100) : 0;
 
             $petugas = auth()->user()?->USERNAME ?? 'admin';
-            $lokasi  = 'Sumenep';
+            $lokasi  = config('perusahaan.kota', 'Sumenep');
 
             $tanggalDisplay = now()->locale('id')->translatedFormat('d F Y');
             if ($dari && $sampai) {

@@ -237,12 +237,26 @@ public function index(Request $request)
                 throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.']);
             }
 
-            ITM::create($data + ['STOK' => 0]);
+            $itm = ITM::create($data + ['STOK' => 0]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Barang berhasil ditambahkan.',
+                    'data'    => $itm,
+                ]);
+            }
 
             return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan ketika menambahkan barang.',
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan barang');
         }
     }

@@ -186,35 +186,46 @@
             font-size: 9.5px;
         }
 
-        /* Grand Total Box */
+        /* Grand Total Row (Memanjang seperti Margin Transaksi dengan warna biru Grand Total) */
         .grand-total-table {
             width: 100%;
-            margin-top: 12px;
+            border-collapse: collapse;
+            margin-top: 8px;
             margin-bottom: 24px;
             page-break-inside: avoid;
-        }
-
-        .grand-total-box {
-            float: right;
             background-color: #0D1C43;
             color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-align: right;
+        }
+
+        .grand-total-table td {
+            background-color: #0D1C43;
+            color: #ffffff;
+            padding: 8px 10px;
+            border: 1px solid #0D1C43;
+            vertical-align: middle;
+        }
+
+        .grand-total-margin {
+            text-align: left;
+            font-size: 9px;
+            color: #cbd5e1;
         }
 
         .grand-total-label {
-            font-size: 9px;
+            text-align: right;
+            font-size: 9.5px;
+            font-weight: bold;
             color: #cbd5e1;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .grand-total-val {
-            font-size: 14px;
+            text-align: right;
+            font-size: 11px;
             font-weight: bold;
             color: #ffffff;
-            margin-top: 2px;
+            white-space: nowrap;
         }
 
         /* Signature */
@@ -275,8 +286,16 @@
     <table class="header-table">
         <tr>
             <td>
-                <div class="sub-title">Laporan</div>
+                <div class="sub-title">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }} &bull; Laporan</div>
                 <div class="main-title">Penjualan</div>
+                @if(config('perusahaan.alamat') || config('perusahaan.no_telp'))
+                    <div style="font-size: 8.5px; color: #64748b; margin-top: 2px;">
+                        {{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}
+                        @if(config('perusahaan.no_telp'))
+                            &bull; Telp: {{ config('perusahaan.no_telp') }}
+                        @endif
+                    </div>
+                @endif
             </td>
             <td>
                 <table class="meta-table">
@@ -293,7 +312,7 @@
                     <tr>
                         <td class="meta-label">Lokasi</td>
                         <td class="meta-colon">:</td>
-                        <td class="meta-val">{{ $lokasi }}</td>
+                        <td class="meta-val">{{ $lokasi ?? config('perusahaan.kota', 'Sumenep') }}</td>
                     </tr>
                 </table>
             </td>
@@ -405,15 +424,14 @@
     <!-- Grand Total Keseluruhan -->
     <table class="grand-total-table">
         <tr>
-            <td></td>
-            <td style="width: 280px;">
-                <div class="grand-total-box">
-                    <div class="grand-total-label">Grand Total Keseluruhan</div>
-                    <div class="grand-total-val">Rp {{ number_format($grandTotalKeseluruhan, 0, ',', '.') }}</div>
-                    <div style="font-size: 9px; color: #cbd5e1; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 4px;">
-                        Margin Keseluruhan: <strong style="color: #ffffff; font-size: 11px;">{{ number_format($grandTotalMarginPct, 1, ',', '.') }}%</strong>
-                    </div>
-                </div>
+            <td class="grand-total-margin">
+                Margin Keseluruhan: <strong style="color: #ffffff; font-size: 10px;">{{ number_format($grandTotalMarginPct, 1, ',', '.') }}%</strong>
+            </td>
+            <td class="grand-total-label">
+                Grand Total Keseluruhan
+            </td>
+            <td class="grand-total-val" style="width: 18%;">
+                Rp {{ number_format($grandTotalKeseluruhan, 0, ',', '.') }}
             </td>
         </tr>
     </table>

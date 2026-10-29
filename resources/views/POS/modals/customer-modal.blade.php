@@ -261,3 +261,52 @@
         </form>
     </div>
 </div>
+
+{{-- ========================================================= --}}
+{{-- MODAL CEPAT TAMBAH DESA (SAAT MEMILIH DESA CUSTOMER)      --}}
+{{-- ========================================================= --}}
+<div
+    id="quickTambahDesaModal"
+    class="fixed inset-0 z-60 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+>
+    <div class="absolute inset-0" onclick="closeQuickTambahDesaModal()"></div>
+
+    <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black">
+        <h2 class="text-xl font-bold mb-4">Tambah Desa Baru</h2>
+
+        <form id="formQuickTambahDesa" method="POST" action="{{ route('POS.customer.store') }}" class="space-y-4">
+            @csrf
+            <input type="hidden" name="tipe" value="desa">
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">Nama Desa</label>
+                <input
+                    type="text"
+                    id="inputQuickNamaDesa"
+                    name="DES"
+                    required
+                    maxlength="150"
+                    placeholder="Masukkan nama desa"
+                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
+                >
+            </div>
+
+            <div class="pt-2 flex items-center gap-3">
+                <button
+                    type="button"
+                    onclick="closeQuickTambahDesaModal()"
+                    class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 cursor-pointer"
+                >
+                    Batal
+                </button>
+                <button
+                    id="btnSimpanQuickDesa"
+                    type="submit"
+                    class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
+                >
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
