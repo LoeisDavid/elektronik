@@ -293,14 +293,14 @@
     <div class="divider-line"></div>
 
     <!-- Section: Desa Nominal Terbanyak & Terendah (2 Cards: 5 & 5) -->
-    <div class="section-title">Desa Nominal Pembelian Terbanyak & Terendah</div>
+    <div class="section-title">Desa Nominal Pembelian Tertinggi & Terendah</div>
     <table class="cards-table">
         <tr>
             <!-- 5 Desa Nominal Terbanyak -->
             <td class="card-cell">
                 <table class="card-header-table">
                     <tr>
-                        <td>Top 5 Nominal Pembelian Terbanyak</td>
+                        <td>Top 5 Nominal Pembelian Tertinggi</td>
                         <td class="card-unit">Rp</td>
                     </tr>
                 </table>
@@ -382,7 +382,7 @@
                     <td>
                         <span>{{ $desa->DES }}</span>
                         @if ($isTerbanyakNominal)
-                            <span class="badge-frekuensi" style="background-color: #dcfce7; color: #166534; border: 1px solid #86efac;">Nominal terbanyak</span>
+                            <span class="badge-frekuensi" style="background-color: #dcfce7; color: #166534; border: 1px solid #86efac;">Nominal tertinggi</span>
                         @endif
                         @if ($isTerendahNominal && !$isTerbanyakNominal)
                             <span class="badge-nominal" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;">Nominal terendah</span>
