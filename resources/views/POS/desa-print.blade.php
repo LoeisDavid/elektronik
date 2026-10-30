@@ -293,7 +293,7 @@
     <div class="divider-line"></div>
 
     <!-- Section: Desa Pembelian Terdikit (2 Cards) -->
-    <div class="section-title">Desa Pembelian Terdikit</div>
+    <div class="section-title">Desa Pembelian Terendah</div>
     <table class="cards-table">
         <tr>
             <!-- Top 5 Nominal Terdikit -->
