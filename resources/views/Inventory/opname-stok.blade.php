@@ -61,7 +61,7 @@
 @if (!isset($items))
 
 {{-- ================= LAYAR PEMBUKAAN: TABEL PILIH BARANG ================= --}}
-<div class="font-mont flex-1 flex flex-col h-full min-h-0 bg-secondary-bw p-4 md:p-6 space-y-4 overflow-hidden">
+<div class="font-mont flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 space-y-4">
 
     @if (session('error'))
         <div class="px-4 py-2.5 rounded-xl border border-[#D02231] bg-[#D02231]/10 text-[#D02231] text-sm font-medium shrink-0">
@@ -98,6 +98,15 @@
                 >
             </form>
 
+            @if(!empty($keyword ?? request('keyword')))
+                <a
+                    href="{{ route('inventory.opname') }}"
+                    class="h-9.5 px-3.5 bg-white border border-gray-800 hover:bg-gray-100 text-black rounded-lg flex items-center text-xs font-semibold transition-all duration-200 cursor-pointer shadow-xs"
+                >
+                    Reset
+                </a>
+            @endif
+
             <a
                 href="{{ route('inventory.gudang') }}"
                 class="h-9.5 px-3.5 bg-white border border-gray-400 hover:bg-gray-200 text-black rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-xs"
@@ -111,41 +120,38 @@
     </div>
 
     {{-- Tabel Daftar Barang --}}
-    <div class="flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col overflow-hidden">
-        <div id="opnameScroll" class="flex-1 min-h-0 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
+        <div class="overflow-x-auto">
             <table class="w-full text-center border-collapse">
-                <thead class="sticky top-0 z-10">
+                <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-3 px-4 text-left">Kode Barang</th>
+                        <th class="py-3 px-4 text-left rounded-tl-lg">Kode Barang</th>
                         <th class="py-3 px-4 text-left">Nama Barang</th>
                         <th class="py-3 px-4">Kategori</th>
                         <th class="py-3 px-4">Merk</th>
                         <th class="py-3 px-4">Stok</th>
-                        <th class="py-3 px-4 w-40 text-center">Aksi</th>
+                        <th class="py-3 px-4 w-40 text-center rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyPilihBarangOpname" class="divide-y divide-gray-200 text-xs text-black">
-                    @forelse ($daftarItem ?? [] as $it)
-                        <tr
-                            class="row-pilih-opname hover:bg-gray-50/80 transition-colors"
-                            data-search="{{ strtolower(($it->ITM ?? '') . ' ' . ($it->DES ?? '') . ' ' . ($it->ktg_nama ?? '') . ' ' . ($it->mrk_nama ?? '')) }}"
-                        >
-                            <td class="py-3 px-4 text-left font-mono font-semibold text-[#0D1C43]">
+                    @forelse ($daftarItem as $it)
+                        <tr class="row-pilih-opname hover:bg-gray-50/80 transition-colors">
+                            <td class="py-3.5 px-4 text-left font-mono font-semibold text-[#0D1C43]">
                                 {{ $it->ITM }}
                             </td>
-                            <td class="py-3 px-4 text-left font-medium text-black">
+                            <td class="py-3.5 px-4 text-left font-medium text-black">
                                 {{ $it->DES }}
                             </td>
-                            <td class="py-3 px-4 text-gray-700">
+                            <td class="py-3.5 px-4 text-gray-700">
                                 {{ $it->ktg_nama ?? '-' }}
                             </td>
-                            <td class="py-3 px-4 text-gray-700">
+                            <td class="py-3.5 px-4 text-gray-700">
                                 {{ $it->mrk_nama ?? '-' }}
                             </td>
-                            <td class="py-3 px-4 font-semibold">
+                            <td class="py-3.5 px-4 font-semibold">
                                 {{ (int) ($it->STOK ?? 0) }} Unit
                             </td>
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-3.5 px-4 text-center">
                                 <a
                                     href="{{ route('inventory.opname.pull', ['itm' => $it->ITM]) }}"
                                     class="btn-mulai-opname-row inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0D1C43] hover:bg-[#22396F] active:bg-dark-navy transition shadow-xs cursor-pointer"
@@ -164,17 +170,11 @@
                             </td>
                         </tr>
                     @endforelse
-                    <tr id="rowEmptySearchOpname" class="hidden">
-                        <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
-                            Tidak ada barang yang cocok dengan pencarian.
-                        </td>
-                    </tr>
                 </tbody>
             </table>
         </div>
-        <div class="px-4 py-2.5 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] shrink-0">
-            <span>Menampilkan <strong id="countTampilBarangOpname">{{ count($daftarItem ?? []) }}</strong> dari <strong>{{ count($daftarItem ?? []) }}</strong> barang</span>
-        </div>
+
+        <x-pagination :paginator="$daftarItem" label="barang" />
     </div>
 </div>
 
@@ -426,43 +426,6 @@
 @if (!isset($items))
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const inputCari = document.getElementById('inputCariBarangOpname');
-    const formCari = document.getElementById('formCariBarangOpname');
-    const rows = Array.from(document.querySelectorAll('.row-pilih-opname'));
-    const rowEmptySearch = document.getElementById('rowEmptySearchOpname');
-    const countEl = document.getElementById('countTampilBarangOpname');
-
-    function filterRows() {
-        const kw = (inputCari?.value || '').trim().toLowerCase();
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const hay = row.dataset.search || '';
-            const match = !kw || hay.includes(kw);
-            row.classList.toggle('hidden', !match);
-            if (match) visibleCount++;
-        });
-
-        if (rowEmptySearch && rows.length > 0) {
-            rowEmptySearch.classList.toggle('hidden', visibleCount > 0);
-        }
-        if (countEl) {
-            countEl.textContent = String(visibleCount);
-        }
-    }
-
-    if (inputCari) {
-        inputCari.addEventListener('input', filterRows);
-        filterRows();
-    }
-
-    if (formCari) {
-        formCari.addEventListener('submit', function (e) {
-            e.preventDefault();
-            filterRows();
-        });
-    }
-
     document.querySelectorAll('.btn-mulai-opname-row').forEach(btn => {
         btn.addEventListener('click', function (e) {
             if (this.dataset.loading) {

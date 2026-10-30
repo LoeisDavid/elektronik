@@ -292,22 +292,53 @@
 
     <div class="divider-line"></div>
 
-    <!-- Section: Desa Pembelian Terdikit (2 Cards) -->
-    <div class="section-title">Desa Pembelian Terendah</div>
+    <!-- Section: Desa Nominal Terbanyak & Terendah (2 Cards: 5 & 5) -->
+    <div class="section-title">Desa Nominal Pembelian Terbanyak & Terendah</div>
     <table class="cards-table">
         <tr>
-            <!-- Top 5 Nominal Terdikit -->
+            <!-- 5 Desa Nominal Terbanyak -->
             <td class="card-cell">
                 <table class="card-header-table">
                     <tr>
-                        <td>Top 5 Total Pembelian Terendah</td>
+                        <td>Top 5 Nominal Pembelian Terbanyak</td>
                         <td class="card-unit">Rp</td>
                     </tr>
                 </table>
-                @forelse ($top5Nominal as $item)
+                @forelse ($top5NominalTerbanyak as $item)
                     @php
                         $pct = $maxNominal > 0 ? round(($item->total_nominal / $maxNominal) * 100) : 0;
-                        $jt = $item->total_nominal >= 1000000 
+                        $nomFmt = $item->total_nominal >= 1000000 
+                            ? number_format($item->total_nominal / 1000000, 1, ',', '.') . ' jt'
+                            : number_format($item->total_nominal / 1000, 0, ',', '.') . ' rb';
+                    @endphp
+                    <table class="bar-table">
+                        <tr>
+                            <td style="width: 32%; font-weight: 500;">{{ $item->DES }}</td>
+                            <td style="width: 48%;">
+                                <div class="bar-track">
+                                    <div class="bar-fill-green" style="width: {{ $pct }}%;"></div>
+                                </div>
+                            </td>
+                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $nomFmt }}</td>
+                        </tr>
+                    </table>
+                @empty
+                    <div style="font-size: 8.5px; color: #94a3b8; text-align: center; padding: 10px 0;">Belum ada data</div>
+                @endforelse
+            </td>
+
+            <!-- 5 Desa Nominal Terendah -->
+            <td class="card-cell">
+                <table class="card-header-table">
+                    <tr>
+                        <td>Top 5 Nominal Pembelian Terendah</td>
+                        <td class="card-unit">Rp</td>
+                    </tr>
+                </table>
+                @forelse ($top5NominalTerendah as $item)
+                    @php
+                        $pct = $maxNominal > 0 ? round(($item->total_nominal / $maxNominal) * 100) : 0;
+                        $nomFmt = $item->total_nominal >= 1000000 
                             ? number_format($item->total_nominal / 1000000, 1, ',', '.') . ' jt'
                             : number_format($item->total_nominal / 1000, 0, ',', '.') . ' rb';
                     @endphp
@@ -319,35 +350,7 @@
                                     <div class="bar-fill-blue" style="width: {{ $pct }}%;"></div>
                                 </div>
                             </td>
-                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $jt }}</td>
-                        </tr>
-                    </table>
-                @empty
-                    <div style="font-size: 8.5px; color: #94a3b8; text-align: center; padding: 10px 0;">Belum ada data</div>
-                @endforelse
-            </td>
-
-            <!-- Top 5 Frekuensi Terdikit -->
-            <td class="card-cell">
-                <table class="card-header-table">
-                    <tr>
-                        <td>Top 5 Total Transaksi Terendah</td>
-                        <td class="card-unit">Kali</td>
-                    </tr>
-                </table>
-                @forelse ($top5Frekuensi as $item)
-                    @php
-                        $pct = $maxFrekuensi > 0 ? round(($item->total_transaksi / $maxFrekuensi) * 100) : 0;
-                    @endphp
-                    <table class="bar-table">
-                        <tr>
-                            <td style="width: 32%; font-weight: 500;">{{ $item->DES }}</td>
-                            <td style="width: 48%;">
-                                <div class="bar-track">
-                                    <div class="bar-fill-green" style="width: {{ $pct }}%;"></div>
-                                </div>
-                            </td>
-                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $item->total_transaksi }}x</td>
+                            <td style="width: 20%; text-align: right; font-weight: bold; color: #1e293b;">{{ $nomFmt }}</td>
                         </tr>
                     </table>
                 @empty
@@ -371,18 +374,18 @@
         <tbody>
             @forelse ($desaList as $index => $desa)
                 @php
-                    $isTerdikitNominal = ($desa->DS === $desaNominalTerdikit);
-                    $isTerdikitFrekuensi = ($desa->DS === $desaFrekuensiTerdikit);
+                    $isTerbanyakNominal = ($desa->DS === $desaNominalTerbanyak && $desa->total_nominal > 0);
+                    $isTerendahNominal  = ($desa->DS === $desaNominalTerendah);
                 @endphp
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>
                         <span>{{ $desa->DES }}</span>
-                        @if ($isTerdikitNominal)
-                            <span class="badge-nominal" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;">Nominal terendah</span>
+                        @if ($isTerbanyakNominal)
+                            <span class="badge-frekuensi" style="background-color: #dcfce7; color: #166534; border: 1px solid #86efac;">Nominal terbanyak</span>
                         @endif
-                        @if ($isTerdikitFrekuensi && !$isTerdikitNominal)
-                            <span class="badge-frekuensi" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">Transaksi terendah</span>
+                        @if ($isTerendahNominal && !$isTerbanyakNominal)
+                            <span class="badge-nominal" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171;">Nominal terendah</span>
                         @endif
                     </td>
                     <td class="text-center">{{ $desa->total_transaksi }}</td>

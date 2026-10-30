@@ -257,17 +257,17 @@ class CSTController extends Controller
                 ->orderBy('total_transaksi', 'asc')
                 ->get();
 
-            // 5 Desa Pembelian Terdikit (Nominal)
-            $top5Nominal = $desaList->sortBy('total_nominal')->take(5)->values();
+            // 5 Desa Nominal Pembelian Terbanyak
+            $top5NominalTerbanyak = $desaList->sortByDesc('total_nominal')->take(5)->values();
+
+            // 5 Desa Nominal Pembelian Terendah
+            $top5NominalTerendah = $desaList->sortBy('total_nominal')->take(5)->values();
+
             $maxNominal = $desaList->max('total_nominal') ?: 1;
 
-            // 5 Desa Frekuensi Terdikit (Transaksi)
-            $top5Frekuensi = $desaList->sortBy('total_transaksi')->take(5)->values();
-            $maxFrekuensi = $desaList->max('total_transaksi') ?: 1;
-
-            // Identifikasi desa dengan nominal terdikit dan frekuensi terdikit
-            $desaNominalTerdikit = $top5Nominal->first()?->DS;
-            $desaFrekuensiTerdikit = $top5Frekuensi->first()?->DS;
+            // Identifikasi desa dengan nominal terbanyak dan nominal terendah
+            $desaNominalTerbanyak = $top5NominalTerbanyak->first()?->DS;
+            $desaNominalTerendah  = $top5NominalTerendah->first()?->DS;
 
             $petugas = auth()->user()?->USERNAME ?? 'admin';
             $tanggal = now()->locale('id')->translatedFormat('d F Y');
@@ -275,12 +275,11 @@ class CSTController extends Controller
 
             $pdf = Pdf::loadView('POS.desa-print', compact(
                 'desaList',
-                'top5Nominal',
+                'top5NominalTerbanyak',
+                'top5NominalTerendah',
                 'maxNominal',
-                'top5Frekuensi',
-                'maxFrekuensi',
-                'desaNominalTerdikit',
-                'desaFrekuensiTerdikit',
+                'desaNominalTerbanyak',
+                'desaNominalTerendah',
                 'petugas',
                 'tanggal',
                 'lokasi'

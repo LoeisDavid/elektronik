@@ -36,7 +36,8 @@ class OpnameStokController extends Controller
                 DB::raw("COALESCE(k.DES, '-') as ktg_nama"),
                 DB::raw("COALESCE(m.DES, '-') as mrk_nama")
             )
-            ->get();
+            ->paginate(5)
+            ->withQueryString();
 
         return view('inventory.opname-stok', compact('daftarItem', 'keyword'));
     }
