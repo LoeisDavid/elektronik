@@ -16,12 +16,21 @@ use Illuminate\Support\Facades\DB;
 class kasirController extends Controller
 {
     /**
-     * Shift kasir yang sedang aktif (TGLK masih kosong), yang terbaru.
-     * Tidak memakai filter tanggal karena tiap kas berdiri sendiri.
+     * Ambil username user yang sedang login (maksimal 10 karakter sesuai kolom USER di tabel KAS).
+     */
+    private function currentUsername(): string
+    {
+        return substr(auth()->user()?->USERNAME ?? 'admin', 0, 10);
+    }
+
+    /**
+     * Shift kasir yang sedang aktif (TGLK masih kosong) khusus untuk user yang sedang login.
+     * Tidak memakai filter tanggal karena tiap kas berdiri sendiri per user.
      */
     private function kasAktif(): ?KAS
     {
-        return KAS::whereNull('TGLK')
+        return KAS::where('USER', $this->currentUsername())
+            ->whereNull('TGLK')
             ->orderBy('TGLM', 'desc')
             ->first();
     }
@@ -65,10 +74,10 @@ class kasirController extends Controller
         $rawOpening = (string) ($request->input('kas_opening') ?? 0);
         $nominalOpening = (int) (preg_replace('/[^\d]/', '', $rawOpening) ?: 0);
         $today = now()->toDateString();
-        $user = auth()->user()?->USERNAME ?? 'admin';
+        $user = $this->currentUsername();
 
         try {
-            // Jika sudah ada shift aktif, jangan buat baris baru
+            // Jika user ini sudah memiliki shift aktif (TGLK kosong), lanjutkan kasir tersebut
             $kas = $this->kasAktif();
 
             if (!$kas) {
@@ -80,7 +89,7 @@ class kasirController extends Controller
                 $kas = KAS::create([
                     'CD'    => $cd,
                     'TGL'   => $today,
-                    'USER'  => substr($user, 0, 10),
+                    'USER'  => $user,
                     'AWLT'  => $nominalOpening,
                     'AWLNT' => 0,
                     'DBT'   => 0,
@@ -95,7 +104,7 @@ class kasirController extends Controller
             }
 
             session()->put('kas_open', true);
-            session()->put('kas_opening', $nominalOpening);
+            session()->put('kas_opening', (int) $kas->AWLT);
 
             return response()->json([
                 'success' => true,
@@ -149,7 +158,9 @@ class kasirController extends Controller
     public function tutupKasir(Request $request)
     {
         try {
-            $activeKasList = KAS::whereNull('TGLK')->get();
+            $activeKasList = KAS::where('USER', $this->currentUsername())
+                ->whereNull('TGLK')
+                ->get();
 
             $nominalAkhirTunaiInput = $request->filled('nominal_akhir_tunai')
                 ? (float) preg_replace('/[^0-9]/', '', (string) $request->input('nominal_akhir_tunai'))

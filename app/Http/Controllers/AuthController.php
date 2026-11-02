@@ -60,6 +60,20 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $request->session()->put('selected_database', $selectedDb);
 
+            // Cek apakah user yang login masih memiliki kasir yang terbuka (TGLK kosong)
+            $username = substr(Auth::user()?->USERNAME ?? 'admin', 0, 10);
+            $activeKas = \App\Models\KAS::where('USER', $username)
+                ->whereNull('TGLK')
+                ->orderBy('TGLM', 'desc')
+                ->first();
+
+            if ($activeKas) {
+                $request->session()->put('kas_open', true);
+                $request->session()->put('kas_opening', (int) $activeKas->AWLT);
+            } else {
+                $request->session()->forget(['kas_open', 'kas_opening', 'catatan_opening']);
+            }
+
             return redirect()->intended(route('POS.kasir'));
         }
 
@@ -70,11 +84,6 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        // Cek apakah ada shift kasir yang masih aktif / belum ditutup
-        if (\App\Models\KAS::whereNull('TGLK')->exists()) {
-            return redirect()->route('POS.kasir', ['action' => 'tutup_kasir'])->with('error', 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.');
-        }
-
         $lastDatabase = $request->session()->get('selected_database');
 
         Auth::logout();
