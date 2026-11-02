@@ -19,9 +19,50 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public const ROLE_ADMIN = 1;
+    public const ROLE_KASIR = 2;
+    public const ROLE_STORAGE = 3;
+    public const ROLE_MANAGER = 4;
+
     protected $primaryKey = 'USERNAME';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    public function getRoleNameAttribute(): string
+    {
+        return match ((int) $this->ROLE) {
+            self::ROLE_MANAGER => 'Manager',
+            self::ROLE_ADMIN   => 'Admin',
+            self::ROLE_STORAGE => 'Storage',
+            self::ROLE_KASIR   => 'Kasir',
+            default            => 'User',
+        };
+    }
+
+    public function isManager(): bool
+    {
+        return (int) $this->ROLE === self::ROLE_MANAGER;
+    }
+
+    public function isAdmin(): bool
+    {
+        return (int) $this->ROLE === self::ROLE_ADMIN;
+    }
+
+    public function isStorage(): bool
+    {
+        return (int) $this->ROLE === self::ROLE_STORAGE;
+    }
+
+    public function isKasir(): bool
+    {
+        return (int) $this->ROLE === self::ROLE_KASIR;
+    }
+
+    public function isManagerOrAdmin(): bool
+    {
+        return $this->isManager() || $this->isAdmin();
+    }
 
     public function getAuthPasswordName(): string
     {

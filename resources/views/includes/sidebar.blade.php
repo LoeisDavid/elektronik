@@ -22,11 +22,15 @@
     <div class="flex-1 overflow-y-auto overflow-x-hidden">
         
         @php
+            $authU = auth()->user();
+            $canSeePos = !$authU || !$authU->isStorage(); // Storage hanya bisa akses inventory
+            $canSeeInv = !$authU || !$authU->isKasir();   // Kasir hanya bisa akses POS
             $isPosActive = request()->is('pos*') || request()->is('POS*') || request()->routeIs('POS.*');
             $isInvActive = request()->is('inventory*') || request()->is('Inventory*') || request()->routeIs('inventory.*');
         @endphp
 
         {{-- ==================== POS SECTION ==================== --}}
+        @if($canSeePos)
         <div>
             {{-- POS Header Button (accordion trigger) --}}
             <button
@@ -52,11 +56,14 @@
                     $posMenus = [
                         ['name' => 'Kasir', 'route' => 'POS.kasir'],
                         ['name' => 'Transaksi', 'route' => 'POS.transaksi'],
-                        ['name' => 'User', 'route' => 'POS.user'],
-                        ['name' => 'Sales', 'route' => 'POS.sales'],
-                        ['name' => 'Customer', 'route' => 'POS.customer'],
-                        ['name' => 'Laporan', 'route' => 'POS.laporan']
                     ];
+                    // Hanya Manager dan Admin yang dapat melihat menu User
+                    if ($authU?->isManagerOrAdmin()) {
+                        $posMenus[] = ['name' => 'User', 'route' => 'POS.user'];
+                    }
+                    $posMenus[] = ['name' => 'Sales', 'route' => 'POS.sales'];
+                    $posMenus[] = ['name' => 'Customer', 'route' => 'POS.customer'];
+                    $posMenus[] = ['name' => 'Laporan', 'route' => 'POS.laporan'];
                 @endphp
 
                 @foreach ($posMenus as $menu)
@@ -83,8 +90,10 @@
                 @endforeach
             </div>
         </div>
+        @endif
 
         {{-- ==================== INVENTORY SECTION ==================== --}}
+        @if($canSeeInv)
         <div>
             {{-- Inventory Header Button (accordion trigger) --}}
             <button
@@ -109,6 +118,7 @@
                 @php
                     $invMenus = [
                         ['name' => 'Produk', 'route' => 'inventory.item'],
+                        ['name' => 'Cek Stok', 'route' => 'inventory.opname'],
                         ['name' => 'Merk', 'route' => 'inventory.merk'],
                         ['name' => 'Kategori', 'route' => 'inventory.kategori'],
                         ['name' => 'Supplier', 'route' => 'inventory.supplier'],
@@ -144,6 +154,7 @@
                 @endforeach
             </div>
         </div>
+        @endif
 
     </div>
 

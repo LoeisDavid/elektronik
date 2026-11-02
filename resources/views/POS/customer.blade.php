@@ -116,12 +116,13 @@
 
         {{-- BUTTONS: CETAK LAPORAN DESA & TAMBAH DATA --}}
         <div class="flex items-center gap-2">
-            {{-- CETAK LAPORAN DESA --}}
+            @if(auth()->user()?->isManagerOrAdmin())
+            {{-- CETAK LAPORAN DESA (Hanya Manager dan Admin) --}}
             <a
                 href="{{ route('POS.customer.desa.cetak') }}"
                 target="_blank"
                 class="h-9.5 px-3.5 bg-white border border-primary-db hover:bg-primary-db/10 text-primary-db rounded-lg flex items-center gap-2 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs"
-                title="Cetak Laporan Penjualan Desa (Pembelian Terdikit)"
+                title="Cetak Laporan Penjualan Desa"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.641-2.115-1.18-3.088a9.043 9.043 0 01-.54-1.241m0 0a9.014 9.014 0 0117.84 0m-17.84 0a9.043 9.043 0 00-.54 1.24m18.38 0c-.24 1.077-.641 2.116-1.18 3.089m0 0a9.043 9.043 0 01-.54 1.24m0 0a9.014 9.014 0 01-16.66 0" />
@@ -129,6 +130,7 @@
                 </svg>
                 <span>Cetak Laporan Desa</span>
             </a>
+            @endif
 
             {{-- TAMBAH CUSTOMER / DESA --}}
             <button

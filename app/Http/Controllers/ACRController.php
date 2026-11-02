@@ -237,6 +237,10 @@ class ACRController extends Controller
      */
     public function edit(string $id)
     {
+        if (!auth()->user()?->isManagerOrAdmin()) {
+            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        }
+
         try {
             $refNo = urldecode($id);
             $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
@@ -295,6 +299,10 @@ class ACRController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if (!auth()->user()?->isManagerOrAdmin()) {
+            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        }
+
         $refNo = urldecode($id);
         $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
 
@@ -457,6 +465,10 @@ class ACRController extends Controller
      */
     public function cetakLaporan(Request $request)
     {
+        if (!auth()->user()?->isManagerOrAdmin() && !auth()->user()?->isKasir()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat dan mencetak laporan transaksi.');
+        }
+
         try {
             $dari   = $request->input('tanggal_dari');
             $sampai = $request->input('tanggal_sampai');

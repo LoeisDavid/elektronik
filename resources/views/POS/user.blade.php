@@ -184,13 +184,35 @@
 
                             {{-- Role --}}
                             <td class="py-3.5 px-4">
-                                {{ $user->ROLE == 1 ? 'Admin' : 'Kasir' }}
+                                @if($user->ROLE == 4)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Manager</span>
+                                @elseif($user->ROLE == 1)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Admin</span>
+                                @elseif($user->ROLE == 3)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Storage</span>
+                                @elseif($user->ROLE == 2)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Kasir</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">{{ $user->ROLE }}</span>
+                                @endif
                             </td>
 
 
                             {{-- AKSI --}}
                             <td class="py-3.5 px-4 text-center">
+                                @php
+                                    $canManage = false;
+                                    $authU = auth()->user();
+                                    if ($authU?->isManager()) {
+                                        // Manager bisa edit siapa saja kecuali Manager lain
+                                        $canManage = ($user->ROLE != 4 || $user->USERNAME === $authU->USERNAME);
+                                    } elseif ($authU?->isAdmin()) {
+                                        // Admin hanya bisa edit/hapus Kasir dan Storage (tidak bisa Admin/Manager)
+                                        $canManage = ($user->ROLE != 4 && $user->ROLE != 1);
+                                    }
+                                @endphp
 
+                                @if($canManage)
                                 <div class="relative inline-block">
 
                                     {{-- BUTTON --}}
@@ -256,6 +278,7 @@
                                         </button>
 
 
+                                        @if($user->USERNAME !== $authU?->USERNAME && ($authU?->isManager() ? $user->ROLE != 4 : ($user->ROLE != 4 && $user->ROLE != 1)))
                                         {{-- DELETE --}}
                                         <form
                                             method="POST"
@@ -290,10 +313,15 @@
                                             </button>
 
                                         </form>
+                                        @endif
 
                                     </div>
 
                                 </div>
+                                @else
+                                    <span class="text-xs text-gray-400 select-none">-</span>
+                                @endif
+                            </td>
 
                             </td>
 

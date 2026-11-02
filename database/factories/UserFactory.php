@@ -38,7 +38,7 @@ class UserFactory extends Factory
             'AL' => substr(fake('id_ID')->address(), 0, 100),
             'HP' => substr('08' . fake()->numerify('##########'), 0, 25),
             'DES' => substr(fake('id_ID')->name(), 0, 100),
-            'ROLE' => fake()->randomElement([1, 2, 3]),
+            'ROLE' => fake()->randomElement([1, 2, 3, 4]),
             'created_at' => now(),
             'updated_at' => now(),
         ];

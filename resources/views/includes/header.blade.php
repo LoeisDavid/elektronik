@@ -33,10 +33,15 @@
         @endif
 
         {{-- User Info --}}
-        <div class="flex items-center gap-2.5 py-1 px-1.5 rounded-lg" title="User: {{ Auth::user()->USERNAME ?? 'User' }}">
+        <div class="flex items-center gap-2 py-1 px-1.5 rounded-lg" title="User: {{ Auth::user()->USERNAME ?? 'User' }} ({{ Auth::user()->role_name ?? '-' }})">
             <span class="text-base font-medium italic text-primary-db tracking-tight">
                 {{ Auth::user()->USERNAME ?? 'User' }}
             </span>
+            @if(Auth::check() && Auth::user()->role_name)
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary-db/10 text-primary-db uppercase tracking-wider">
+                    {{ Auth::user()->role_name }}
+                </span>
+            @endif
         </div>
 
     </div>

@@ -94,8 +94,16 @@ class DbClearCommand extends Command
                 $this->line(" - [{$db}] Tabel <comment>ds</comment> berhasil dikosongkan.");
             }
 
-            // Buat 1 user admin default
-            $this->info(" - [{$db}] Membuat 1 user admin default...");
+            // Buat user default (manager, admin, storage, kasir)
+            $this->info(" - [{$db}] Membuat user default (manager, admin, storage, kasir)...");
+            User::create([
+                'USERNAME' => 'manager',
+                'PASS'     => Hash::make('manager123'),
+                'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
+                'HP'       => '081234567891',
+                'DES'      => 'Manager Toko',
+                'ROLE'     => 4,
+            ]);
             User::create([
                 'USERNAME' => 'admin',
                 'PASS'     => Hash::make('admin123'),
@@ -103,6 +111,22 @@ class DbClearCommand extends Command
                 'HP'       => '081234567890',
                 'DES'      => 'Administrator Toko',
                 'ROLE'     => 1,
+            ]);
+            User::create([
+                'USERNAME' => 'storage',
+                'PASS'     => Hash::make('storage123'),
+                'AL'       => 'Gudang Utama Jakarta',
+                'HP'       => '081234567892',
+                'DES'      => 'Petugas Gudang',
+                'ROLE'     => 3,
+            ]);
+            User::create([
+                'USERNAME' => 'kasir',
+                'PASS'     => Hash::make('kasir123'),
+                'AL'       => 'Jl. Diponegoro No. 10, Sumenep',
+                'HP'       => '081234567893',
+                'DES'      => 'Kasir Toko',
+                'ROLE'     => 2,
             ]);
 
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
