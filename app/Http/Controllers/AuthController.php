@@ -12,7 +12,9 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('POS.kasir');
+            return Auth::user()->isStorage()
+                ? redirect()->route('inventory.item')
+                : redirect()->route('POS.kasir');
         }
 
         $databases = DatabaseSwitcher::getDatabases();
@@ -72,6 +74,10 @@ class AuthController extends Controller
                 $request->session()->put('kas_opening', (int) $activeKas->AWLT);
             } else {
                 $request->session()->forget(['kas_open', 'kas_opening', 'catatan_opening']);
+            }
+
+            if (Auth::user()?->isStorage()) {
+                return redirect()->intended(route('inventory.item'));
             }
 
             return redirect()->intended(route('POS.kasir'));

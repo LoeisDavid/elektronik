@@ -115,16 +115,46 @@ trait SeedsStoreData
 
         $chunkSize = min(500, max(50, $totalRecords));
 
-        // 1. Users (1 user admin: admin / admin123)
-        $this->command?->info("1. Seeding Users (admin: admin / admin123)...");
-        User::create([
-            'USERNAME' => 'admin',
-            'PASS'     => Hash::make('admin123'),
-            'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
-            'HP'       => '081234567890',
-            'DES'      => $isSparepart ? 'Admin Sparepart Elektronik' : 'Administrator Toko Elektronik',
-            'ROLE'     => 1,
-        ]);
+        // 1. Users (manager, admin, storage, kasir)
+        $this->command?->info("1. Seeding Users (manager, admin, storage, kasir)...");
+        $usersToSeed = [
+            [
+                'USERNAME' => 'manager',
+                'PASS'     => Hash::make('manager123'),
+                'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
+                'HP'       => '081234567891',
+                'DES'      => $isSparepart ? 'Manager Sparepart Elektronik' : 'Manager Toko Elektronik',
+                'ROLE'     => 4, // Manager
+            ],
+            [
+                'USERNAME' => 'admin',
+                'PASS'     => Hash::make('admin123'),
+                'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
+                'HP'       => '081234567890',
+                'DES'      => $isSparepart ? 'Admin Sparepart Elektronik' : 'Administrator Toko Elektronik',
+                'ROLE'     => 1, // Admin
+            ],
+            [
+                'USERNAME' => 'storage',
+                'PASS'     => Hash::make('storage123'),
+                'AL'       => 'Gudang Utama Jakarta',
+                'HP'       => '081234567892',
+                'DES'      => $isSparepart ? 'Petugas Gudang Sparepart' : 'Petugas Gudang Elektronik',
+                'ROLE'     => 3, // Storage
+            ],
+            [
+                'USERNAME' => 'kasir',
+                'PASS'     => Hash::make('kasir123'),
+                'AL'       => 'Jl. Diponegoro No. 10, Sumenep',
+                'HP'       => '081234567893',
+                'DES'      => $isSparepart ? 'Kasir Sparepart Toko' : 'Kasir Toko Elektronik',
+                'ROLE'     => 2, // Kasir
+            ],
+        ];
+
+        foreach ($usersToSeed as $u) {
+            User::create($u);
+        }
 
         // 2. CST & Desa (di tabel cst: desa memiliki DS=null, customer memiliki DS=kode_desa)
         $this->command?->info("2. Seeding Desa & Customer di tabel CST ($totalRecords records)...");

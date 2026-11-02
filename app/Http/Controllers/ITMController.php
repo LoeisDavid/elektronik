@@ -366,6 +366,10 @@ public function index(Request $request)
     // ================================================================
     public function update(Request $request, string $id)
     {
+        if (auth()->user()?->isStorage()) {
+            return redirect()->back()->with('error', 'Storage hanya dapat menambah stok, menambah barang, cek stok, dan cetak laporan.');
+        }
+
         $decodedId = urldecode($id);
         $item = ITM::where('ITM', $decodedId)->firstOrFail();
 
@@ -595,6 +599,10 @@ public function index(Request $request)
 
     public function destroy($id)
     {
+        if (!auth()->user()?->isAdmin()) {
+            return redirect()->back()->with('error', 'Hanya Admin yang memiliki hak akses untuk menghapus produk.');
+        }
+
         try {
             $item = ITM::where('ITM', $id)->firstOrFail();
             $item->delete();

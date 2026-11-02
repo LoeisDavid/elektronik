@@ -266,7 +266,8 @@
                             <td class="py-3.5 px-4 text-center">
 
                                 <div class="inline-flex items-center justify-center gap-2">
-                                    {{-- TOMBOL EDIT TRANSAKSI --}}
+                                    @if(auth()->user()?->isManagerOrAdmin())
+                                    {{-- TOMBOL EDIT TRANSAKSI (Hanya Admin dan Manager) --}}
                                     <a
                                         href="{{ route('POS.transaksi.edit', ['id' => $item->REF_NO]) }}"
                                         title="Edit Transaksi {{ $item->REF_NO }}"
@@ -286,6 +287,7 @@
                                             />
                                         </svg>
                                     </a>
+                                    @endif
 
                                     @php
                                         $cstModel = $item->cst();

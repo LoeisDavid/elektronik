@@ -240,6 +240,10 @@ class CSTController extends Controller
      */
     public function cetakLaporanDesa(Request $request)
     {
+        if (!auth()->user()?->isManagerOrAdmin()) {
+            abort(403, 'Hanya Admin dan Manager yang dapat melihat dan mencetak laporan desa.');
+        }
+
         try {
             $desaList = DB::table('cst as desa')
                 ->whereNull('desa.DS')

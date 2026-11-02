@@ -220,7 +220,8 @@
                                                 <span>Detail</span>
                                             </a>
 
-                                            {{-- EDIT --}}
+                                            {{-- EDIT (Hanya Admin & Manager, Storage tidak bisa edit) --}}
+                                            <?php if (!auth()->user()?->isStorage()): ?>
                                             <button
                                                 type="button"
                                                 data-itm="<?= e($r->itm) ?>"
@@ -237,8 +238,10 @@
                                                 </svg>
                                                 <span>Edit</span>
                                             </button>
+                                            <?php endif; ?>
 
-                                            {{-- HAPUS --}}
+                                            {{-- HAPUS (HANYA ADMIN) --}}
+                                            <?php if (auth()->user()?->isAdmin()): ?>
                                             <form method="POST" action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>">
                                                 <?= csrf_field() ?>
                                                 <?= method_field('DELETE') ?>
@@ -254,6 +257,7 @@
                                                     <span>Hapus</span>
                                                 </button>
                                             </form>
+                                            <?php endif; ?>
 
                                         </div>
                                     </div>
