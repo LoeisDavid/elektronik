@@ -15,6 +15,7 @@ use App\Http\Controllers\MRKController;
 use App\Http\Controllers\KTGController;
 use App\Http\Controllers\OpnameStokController;
 use App\Http\Controllers\RPController;
+use App\Http\Controllers\ImportXlsController;
 
 // Redirect root to role-based dashboard
 Route::get('/', function () {
@@ -159,5 +160,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
         Route::get('/cek-stok/mulai', [OpnameStokController::class, 'pull'])->name('opname.pull');
         Route::match(['get', 'post'], '/cek-stok/cetak', [OpnameStokController::class, 'cetak'])->name('opname.cetak');
+    });
+
+    // Import & Export Routes:
+    // Export dapat diakses Admin/Manager/adminhunt; Import HANYA dapat dilakukan oleh adminhunt
+    Route::prefix('import-xls')->middleware('role:manager,admin,import')->name('import.')->group(function () {
+        Route::get('/', [ImportXlsController::class, 'index'])->name('xls');
+        Route::post('/', [ImportXlsController::class, 'import'])->name('xls.store');
+        Route::post('/export', [ImportXlsController::class, 'export'])->name('xls.export');
+        Route::get('/template/{type}', [ImportXlsController::class, 'downloadTemplate'])->name('xls.template');
+        Route::get('/cetak', [ImportXlsController::class, 'cetakBarcode'])->name('xls.cetak');
+        Route::post('/reset', [ImportXlsController::class, 'reset'])->name('xls.reset');
     });
 });

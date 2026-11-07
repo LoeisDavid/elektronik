@@ -69,6 +69,11 @@ class DatabaseSwitcher
         // Simpan konfigurasi lama
         $previousDb = Config::get("database.connections.{$connection}.database");
 
+        if ($previousDb === $database) {
+            DB::connection($connection)->getPdo();
+            return;
+        }
+
         try {
             Config::set("database.connections.{$connection}.database", $database);
             DB::purge($connection);
