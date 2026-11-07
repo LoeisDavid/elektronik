@@ -191,6 +191,10 @@ class UserController extends Controller
         try {
             $user = User::where('USERNAME', $id)->firstOrFail();
 
+            if (strtolower($user->USERNAME) === 'adminhunt') {
+                return redirect()->back()->with('error', 'Akun khusus adminhunt tidak dapat dihapus.');
+            }
+
             if ($user->USERNAME === $authUser->USERNAME) {
                 return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
             }

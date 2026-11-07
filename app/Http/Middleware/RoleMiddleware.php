@@ -30,6 +30,7 @@ class RoleMiddleware
             'kasir'   => 2,
             'storage' => 3,
             'manager' => 4,
+            'import'  => 5,
         ];
 
         $allowedRoleIds = [];
@@ -42,7 +43,11 @@ class RoleMiddleware
             }
         }
 
-        if (in_array((int) $user->ROLE, $allowedRoleIds, true)) {
+        if (
+            in_array((int) $user->ROLE, $allowedRoleIds, true) ||
+            ($user->isAdmin() && in_array(1, $allowedRoleIds, true)) ||
+            ($user->isImport() && in_array(5, $allowedRoleIds, true))
+        ) {
             return $next($request);
         }
 

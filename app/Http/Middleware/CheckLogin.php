@@ -27,6 +27,21 @@ class CheckLogin
             return redirect()->route('login');
         }
 
+        $user = Auth::user();
+
+        // Proteksi rute import-xls:
+        // Halaman Export/Import dapat dibuka oleh Admin (termasuk adminhunt), namun proses POST Import hanya oleh adminhunt
+        if ($request->is('import-xls', 'import-xls/*')) {
+            if (!$user->canExport() && !$user->isImport()) {
+                $redirectRoute = $user->isStorage() ? 'inventory.item' : 'POS.kasir';
+                return redirect()->route($redirectRoute)->with('error', 'Anda tidak memiliki hak akses ke halaman Import / Export.');
+            }
+
+            if ($request->isMethod('post') && $request->is('import-xls') && !$user->isImport()) {
+                return redirect()->route('import.xls')->with('error', 'Fitur Import hanya dapat dilakukan oleh akun khusus adminhunt.');
+            }
+        }
+
         return $next($request);
     }
 }

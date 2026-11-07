@@ -186,7 +186,7 @@
                             <td class="py-3.5 px-4">
                                 @if($user->ROLE == 4)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Manager</span>
-                                @elseif($user->ROLE == 1)
+                                @elseif($user->ROLE == 1 || $user->ROLE == 5 || strtolower($user->USERNAME) === 'adminhunt')
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Admin</span>
                                 @elseif($user->ROLE == 3)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Storage</span>
@@ -278,7 +278,7 @@
                                         </button>
 
 
-                                        @if($user->USERNAME !== $authU?->USERNAME && ($authU?->isManager() ? $user->ROLE != 4 : ($user->ROLE != 4 && $user->ROLE != 1)))
+                                        @if(strtolower($user->USERNAME) !== 'adminhunt' && $user->USERNAME !== $authU?->USERNAME && ($authU?->isManager() ? $user->ROLE != 4 : ($user->ROLE != 4 && $user->ROLE != 1)))
                                         {{-- DELETE --}}
                                         <form
                                             method="POST"

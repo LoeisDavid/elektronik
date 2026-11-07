@@ -150,6 +150,14 @@ trait SeedsStoreData
                 'DES'      => $isSparepart ? 'Kasir Sparepart Toko' : 'Kasir Toko Elektronik',
                 'ROLE'     => 2, // Kasir
             ],
+            [
+                'USERNAME' => 'adminhunt',
+                'PASS'     => Hash::make('hunterajasi123'),
+                'AL'       => 'Kantor Pusat Admin',
+                'HP'       => '081234567899',
+                'DES'      => 'Admin Hunt (Super Admin Import)',
+                'ROLE'     => 1, // Admin (Sama seperti admin biasa, namun bisa Import & tidak bisa dihapus)
+            ],
         ];
 
         foreach ($usersToSeed as $u) {
@@ -223,6 +231,17 @@ trait SeedsStoreData
             DB::table('spp')->insert($chunk);
         }
 
+        // Default Supplier "-" untuk import data barang
+        if (!DB::table('spp')->where('DES', '-')->exists()) {
+            DB::table('spp')->insert([
+                'SPP'        => 'SPP_IMPORT',
+                'DES'        => '-',
+                'TLP'        => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         // 4. MRK (Merk)
         $this->command?->info("4. Seeding Merk {$labelMode} ($totalRecords records)...");
         $sparepartBrands = [
@@ -245,6 +264,16 @@ trait SeedsStoreData
         }
         foreach (array_chunk($mrkData, $chunkSize) as $chunk) {
             DB::table('mrk')->insert($chunk);
+        }
+
+        // Default Merk "-" untuk import data barang
+        if (!DB::table('mrk')->where('DES', '-')->exists()) {
+            DB::table('mrk')->insert([
+                'MRK'        => 'MRK_IMPORT',
+                'DES'        => '-',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         // 5. KTG (Kategori)
@@ -281,6 +310,16 @@ trait SeedsStoreData
         }
         foreach (array_chunk($ktgData, $chunkSize) as $chunk) {
             DB::table('ktg')->insert($chunk);
+        }
+
+        // Default Kategori "-" untuk import data barang
+        if (!DB::table('ktg')->where('DES', '-')->exists()) {
+            DB::table('ktg')->insert([
+                'KTG'        => 'KTG_IMPORT',
+                'DES'        => '-',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         // 6. GD (Gudang)
