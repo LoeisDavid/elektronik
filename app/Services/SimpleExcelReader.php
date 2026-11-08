@@ -5,6 +5,8 @@ namespace App\Services;
 use ZipArchive;
 use DOMDocument;
 use Exception;
+use Shuchkin\SimpleXLSX;
+use Shuchkin\SimpleXLSXGen;
 
 class SimpleExcelReader
 {
@@ -117,6 +119,31 @@ class SimpleExcelReader
      */
     public static function parseXlsxSheets(string $filePath): array
     {
+        // Gunakan library Composer shuchkin/simplexlsx jika tersedia (tidak wajib ext-zip)
+        if (class_exists(SimpleXLSX::class)) {
+            $xlsx = SimpleXLSX::parseFile($filePath);
+            if ($xlsx !== false) {
+                $resultSheets = [];
+                $sheetNames = $xlsx->sheetNames();
+                foreach ($sheetNames as $idx => $sheetName) {
+                    $rawRows = $xlsx->rows($idx);
+                    $cleanRows = [];
+                    foreach ($rawRows as $r) {
+                        $cleanRows[] = array_map(fn($v) => trim((string) $v), $r);
+                    }
+                    $name = trim((string) $sheetName) !== '' ? (string) $sheetName : 'Sheet' . ($idx + 1);
+                    $resultSheets[$name] = $cleanRows;
+                }
+                if (!empty($resultSheets)) {
+                    return $resultSheets;
+                }
+            }
+        }
+
+        if (!class_exists(ZipArchive::class)) {
+            throw new Exception('Gagal membaca file Excel (.xlsx): Library SimpleXLSX / ZipArchive tidak tersedia.');
+        }
+
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== true) {
             throw new Exception('Gagal membuka file Excel (.xlsx).');
@@ -268,6 +295,20 @@ class SimpleExcelReader
         }
 
         $tempPath = $outputPath ?: (tempnam(sys_get_temp_dir(), 'export_xlsx_') . '.xlsx');
+
+        // Gunakan library Composer shuchkin/simplexlsxgen (bekerja di semua laptop tanpa wajib ext-zip)
+        if (class_exists(SimpleXLSXGen::class)) {
+            $xlsxGen = new SimpleXLSXGen();
+            foreach ($sheets as $rawName => $rows) {
+                $cleanName = preg_replace('/[\\\\\\/?*\\[\\]:]/', '', (string) $rawName);
+                $cleanName = substr(trim($cleanName) ?: 'Sheet1', 0, 31);
+                $xlsxGen->addSheet(empty($rows) ? [['']] : $rows, $cleanName);
+            }
+            if ($xlsxGen->saveAs($tempPath)) {
+                return $tempPath;
+            }
+        }
+
         $zip = new ZipArchive();
         if ($zip->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new Exception('Gagal membuat file Excel (.xlsx).');
