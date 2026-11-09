@@ -223,14 +223,7 @@
         </div>
 
         {{-- PAGINASI --}}
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#142854] rounded-b-lg">
-            <div>
-                Menampilkan {{ $rpList->firstItem() ?? 0 }} - {{ $rpList->lastItem() ?? 0 }} dari {{ $rpList->total() }} perpindahan
-            </div>
-            <div>
-                {{ $rpList->onEachSide(1)->links('pagination::simple-tailwind') }}
-            </div>
-        </div>
+        <x-pagination :paginator="$rpList" label="perpindahan" />
     </div>
 </div>
 

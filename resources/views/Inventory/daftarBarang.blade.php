@@ -76,13 +76,7 @@
                 </div>
 
                 {{-- Footer / pagination --}}
-                <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db">
-                    <span>Menampilkan {{ $items->firstItem() ?? 0 }}-{{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} produk</span>
-
-                    <div>
-                        {{ $items->links() }}
-                    </div>
-                </div>
+                <x-pagination :paginator="$items" label="produk" />
             </div>
         </div>
     </div>

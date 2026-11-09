@@ -4,107 +4,67 @@
     $p = $paginator ?? $data;
 @endphp
 
-@if ($p && $p->total() > 0)
-    <div class="px-4 py-3 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#142854] rounded-b-lg">
+@if ($p && $p->total() >= 0)
+    @php
+        $halaman   = $p->currentPage();
+        $totalHal  = max(1, $p->lastPage());
+        $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+        $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
+        $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb';
+        $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
+        $nomor     = fn ($i) => $i === $halaman
+            ? '<span class="' . $btnAktif . '">' . $i . '</span>'
+            : '<a href="' . e($p->url($i)) . '" class="' . $btnNormal . '">' . $i . '</a>';
+        $titik     = '<span class="px-1">...</span>';
+    @endphp
+    <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
         {{-- INFO JUMLAH DATA --}}
-        <div class="whitespace-nowrap font-medium text-gray-600">
-            Menampilkan <span class="font-bold text-[#142854]">{{ $p->firstItem() ?? 0 }}</span> - <span class="font-bold text-[#142854]">{{ $p->lastItem() ?? 0 }}</span> dari <span class="font-bold text-[#142854]">{{ $p->total() ?? 0 }}</span> {{ $label }}
+        <div class="whitespace-nowrap">
+            Menampilkan {{ $p->firstItem() ?? 0 }}-{{ $p->lastItem() ?? 0 }} dari {{ $p->total() ?? 0 }} {{ $label }}
         </div>
 
         {{-- TOMBOL PAGINATION --}}
-        @if ($p->lastPage() > 1)
-            <div class="flex items-center gap-1 select-none">
-                {{-- PREVIOUS --}}
-                @if ($p->onFirstPage())
-                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1] opacity-50 cursor-not-allowed">
-                        ‹
-                    </span>
+        <div class="flex items-center gap-1">
+            @if ($halaman > 1)
+                <a href="{{ $p->previousPageUrl() }}" class="{{ $btnNormal }}">‹</a>
+            @else
+                <span class="{{ $btnOff }}">‹</span>
+            @endif
+
+            {!! $nomor(1) !!}
+
+            @if ($totalHal > 3)
+                @if ($halaman <= 2)
+                    {!! $nomor(2) !!}
+                    {!! $nomor(3) !!}
+                @elseif ($halaman >= $totalHal - 1)
+                    {!! $titik !!}
+                    {!! $nomor($totalHal - 2) !!}
+                    {!! $nomor($totalHal - 1) !!}
                 @else
-                    <a href="{{ $p->previousPageUrl() }}"
-                       class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200 font-bold"
-                       title="Halaman Sebelumnya">
-                        ‹
-                    </a>
+                    {!! $titik !!}
+                    {!! $nomor($halaman - 1) !!}
+                    {!! $nomor($halaman) !!}
+                    {!! $nomor($halaman + 1) !!}
                 @endif
 
-                @php
-                    $current = $p->currentPage();
-                    $last = $p->lastPage();
-                @endphp
-
-                {{-- HALAMAN 1 --}}
-                <a href="{{ $p->url(1) }}"
-                   class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == 1 ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                    1
-                </a>
-
-                @if ($last <= 5)
-                    {{-- JIKA TOTAL HALAMAN <= 5, TAMPILKAN SEMUA --}}
-                    @for ($page = 2; $page <= $last; $page++)
-                        <a href="{{ $p->url($page) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == $page ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                            {{ $page }}
-                        </a>
-                    @endfor
-                @else
-                    {{-- SLIDING WINDOW UNTUK HALAMAN BANYAK --}}
-                    @if ($current <= 3)
-                        @for ($page = 2; $page <= 4; $page++)
-                            <a href="{{ $p->url($page) }}"
-                               class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == $page ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                                {{ $page }}
-                            </a>
-                        @endfor
-                        <span class="px-1 text-gray-400 font-semibold">...</span>
-                        <a href="{{ $p->url($last) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == $last ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                            {{ $last }}
-                        </a>
-                    @elseif ($current >= $last - 2)
-                        <span class="px-1 text-gray-400 font-semibold">...</span>
-                        @for ($page = $last - 3; $page <= $last; $page++)
-                            @if ($page > 1)
-                                <a href="{{ $p->url($page) }}"
-                                   class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == $page ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                                    {{ $page }}
-                                </a>
-                            @endif
-                        @endfor
-                    @else
-                        <span class="px-1 text-gray-400 font-semibold">...</span>
-                        <a href="{{ $p->url($current - 1) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] transition-all duration-200">
-                            {{ $current - 1 }}
-                        </a>
-                        <a href="{{ $p->url($current) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854]">
-                            {{ $current }}
-                        </a>
-                        <a href="{{ $p->url($current + 1) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] transition-all duration-200">
-                            {{ $current + 1 }}
-                        </a>
-                        <span class="px-1 text-gray-400 font-semibold">...</span>
-                        <a href="{{ $p->url($last) }}"
-                           class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold transition-all duration-200 {{ $current == $last ? 'bg-[#142854] text-white border-[#142854]' : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854]' }}">
-                            {{ $last }}
-                        </a>
-                    @endif
+                @if ($halaman <= $totalHal - 2)
+                    {!! $titik !!}
                 @endif
 
-                {{-- NEXT --}}
-                @if ($p->hasMorePages())
-                    <a href="{{ $p->nextPageUrl() }}"
-                       class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200 font-bold"
-                       title="Halaman Berikutnya">
-                        ›
-                    </a>
-                @else
-                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1] opacity-50 cursor-not-allowed">
-                        ›
-                    </span>
-                @endif
-            </div>
-        @endif
+                {!! $nomor($totalHal) !!}
+            @elseif ($totalHal == 3)
+                {!! $nomor(2) !!}
+                {!! $nomor(3) !!}
+            @elseif ($totalHal == 2)
+                {!! $nomor(2) !!}
+            @endif
+
+            @if ($halaman < $totalHal)
+                <a href="{{ $p->nextPageUrl() }}" class="{{ $btnNormal }}">›</a>
+            @else
+                <span class="{{ $btnOff }}">›</span>
+            @endif
+        </div>
     </div>
 @endif
