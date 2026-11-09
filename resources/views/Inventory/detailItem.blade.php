@@ -199,35 +199,68 @@
             </div>
 
             {{-- Footer / Pagination --}}
-            <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db">
-                <span>
-                    Menampilkan {{ $items->firstItem() ?? 0 }}-{{ $items->lastItem() ?? 0 }}
-                    dari {{ $items->total() }} data
-                </span>
-
-                @if($items->hasPages())
-                <div class="flex items-center gap-1">
-                    @if($items->onFirstPage())
-                        <span class="h-7 w-7 border border-gray-200 rounded-md flex items-center justify-center text-gray-300">‹</span>
-                    @else
-                        <a href="{{ $items->previousPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">‹</a>
-                    @endif
-
-                    @foreach(range(1, $items->lastPage()) as $p)
-                        @if($p === $items->currentPage())
-                            <span class="h-7 w-7 border rounded-md flex items-center justify-center font-semibold bg-primary-db text-white border-primary-db">{{ $p }}</span>
-                        @else
-                            <a href="{{ $items->url($p) }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">{{ $p }}</a>
-                        @endif
-                    @endforeach
-
-                    @if($items->hasMorePages())
-                        <a href="{{ $items->nextPageUrl() }}" class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">›</a>
-                    @else
-                        <span class="h-7 w-7 border border-gray-200 rounded-md flex items-center justify-center text-gray-300">›</span>
-                    @endif
+            <?php
+                $halaman   = (int) $items->currentPage();
+                $totalHal  = max(1, (int) $items->lastPage());
+                $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+                $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
+                $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb';
+                $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
+                $nomor     = fn ($i) => (int) $i === $halaman
+                    ? '<span class="' . $btnAktif . '">' . $i . '</span>'
+                    : '<a href="' . e($items->url($i)) . '" class="' . $btnNormal . '">' . $i . '</a>';
+                $titik     = '<span class="px-1">...</span>';
+            ?>
+            <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
+                <div class="whitespace-nowrap">
+                    Menampilkan <?= (int) ($items->firstItem() ?? 0) ?>-<?= (int) ($items->lastItem() ?? 0) ?>
+                    dari <?= (int) $items->total() ?> data
                 </div>
-                @endif
+
+                <div class="flex items-center gap-1">
+                    <?php if ($halaman > 1): ?>
+                        <a href="<?= e($items->previousPageUrl()) ?>" class="<?= $btnNormal ?>">‹</a>
+                    <?php else: ?>
+                        <span class="<?= $btnOff ?>">‹</span>
+                    <?php endif; ?>
+
+                    <?= $nomor(1) ?>
+
+                    <?php if ($totalHal > 3): ?>
+
+                        <?php if ($halaman <= 2): ?>
+                            <?= $nomor(2) ?>
+                            <?= $nomor(3) ?>
+                        <?php elseif ($halaman >= $totalHal - 1): ?>
+                            <?= $titik ?>
+                            <?= $nomor($totalHal - 2) ?>
+                            <?= $nomor($totalHal - 1) ?>
+                        <?php else: ?>
+                            <?= $titik ?>
+                            <?= $nomor($halaman - 1) ?>
+                            <?= $nomor($halaman) ?>
+                            <?= $nomor($halaman + 1) ?>
+                        <?php endif; ?>
+
+                        <?php if ($halaman <= $totalHal - 2): ?>
+                            <?= $titik ?>
+                        <?php endif; ?>
+
+                        <?= $nomor($totalHal) ?>
+
+                    <?php elseif ($totalHal == 3): ?>
+                        <?= $nomor(2) ?>
+                        <?= $nomor(3) ?>
+                    <?php elseif ($totalHal == 2): ?>
+                        <?= $nomor(2) ?>
+                    <?php endif; ?>
+
+                    <?php if ($halaman < $totalHal): ?>
+                        <a href="<?= e($items->nextPageUrl()) ?>" class="<?= $btnNormal ?>">›</a>
+                    <?php else: ?>
+                        <span class="<?= $btnOff ?>">›</span>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

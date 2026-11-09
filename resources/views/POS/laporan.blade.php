@@ -31,17 +31,17 @@
         return route('POS.laporan') . (count($query) ? '?' . http_build_query($query) : '');
     };
 
-    // Window nomor halaman (maks 5 tombol)
-    $halaman   = $pagination['page'];
-    $totalHal  = $pagination['total_pages'];
-    $mulai     = max(1, $halaman - 2);
-    $akhir     = min($totalHal, $mulai + 4);
-    $mulai     = max(1, $akhir - 4);
+    $halaman   = (int) $pagination['page'];
+    $totalHal  = max(1, (int) $pagination['total_pages']);
 
     $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
     $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200';
     $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb';
     $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
+    $nomor     = fn ($i) => (int) $i === $halaman
+        ? '<span class="' . $btnAktif . '">' . $i . '</span>'
+        : '<a href="' . e($buatUrl($i)) . '" class="' . $btnNormal . '">' . $i . '</a>';
+    $titik     = '<span class="px-1">...</span>';
 ?>
 
 <div class="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-secondary-bw p-6 space-y-6">
@@ -200,7 +200,6 @@
             </span>
 
             <div class="flex items-center gap-1">
-                <?php if ($totalHal > 1): ?>
                 <!-- Prev -->
                 <?php if ($halaman > 1): ?>
                     <a href="<?= e($buatUrl($halaman - 1)) ?>" class="<?= $btnNormal ?>">‹</a>
@@ -208,21 +207,40 @@
                     <span class="<?= $btnOff ?>">‹</span>
                 <?php endif; ?>
 
-                <!-- Nomor halaman -->
-                <?php for ($i = $mulai; $i <= $akhir; $i++): ?>
-                    <?php if ($i === $halaman): ?>
-                        <span class="<?= $btnAktif ?>"><?= $i ?></span>
+                <?= $nomor(1) ?>
+
+                <?php if ($totalHal > 3): ?>
+                    <?php if ($halaman <= 2): ?>
+                        <?= $nomor(2) ?>
+                        <?= $nomor(3) ?>
+                    <?php elseif ($halaman >= $totalHal - 1): ?>
+                        <?= $titik ?>
+                        <?= $nomor($totalHal - 2) ?>
+                        <?= $nomor($totalHal - 1) ?>
                     <?php else: ?>
-                        <a href="<?= e($buatUrl($i)) ?>" class="<?= $btnNormal ?>"><?= $i ?></a>
+                        <?= $titik ?>
+                        <?= $nomor($halaman - 1) ?>
+                        <?= $nomor($halaman) ?>
+                        <?= $nomor($halaman + 1) ?>
                     <?php endif; ?>
-                <?php endfor; ?>
+
+                    <?php if ($halaman <= $totalHal - 2): ?>
+                        <?= $titik ?>
+                    <?php endif; ?>
+
+                    <?= $nomor($totalHal) ?>
+                <?php elseif ($totalHal == 3): ?>
+                    <?= $nomor(2) ?>
+                    <?= $nomor(3) ?>
+                <?php elseif ($totalHal == 2): ?>
+                    <?= $nomor(2) ?>
+                <?php endif; ?>
 
                 <!-- Next -->
                 <?php if ($halaman < $totalHal): ?>
                     <a href="<?= e($buatUrl($halaman + 1)) ?>" class="<?= $btnNormal ?>">›</a>
                 <?php else: ?>
                     <span class="<?= $btnOff ?>">›</span>
-                <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

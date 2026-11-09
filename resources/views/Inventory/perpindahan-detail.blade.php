@@ -229,14 +229,7 @@
                 </div>
 
                 {{-- PAGINASI TABEL --}}
-                <div class="px-4 py-3 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#142854]">
-                    <div>
-                        Menampilkan {{ $itemsPaginated->firstItem() ?? 0 }} - {{ $itemsPaginated->lastItem() ?? 0 }} dari {{ $itemsPaginated->total() }} barang
-                    </div>
-                    <div>
-                        {{ $itemsPaginated->onEachSide(1)->links('pagination::simple-tailwind') }}
-                    </div>
-                </div>
+                <x-pagination :paginator="$itemsPaginated" label="barang" />
             </div>
         </div>
     </div>
