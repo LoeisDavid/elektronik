@@ -26,10 +26,10 @@ class KASFactory extends Factory
     public function definition(): array
     {
         $num = static::$sequence++;
-        $awlt = 500000;
-        $dbt = fake()->numberBetween(10, 50) * 100000;
-        $dbnt = fake()->numberBetween(5, 20) * 100000;
-        $crt = fake()->numberBetween(0, 2) * 50000;
+        $awlt = 200000;
+        $dbt = fake()->numberBetween(3, 15) * 50000;
+        $dbnt = fake()->numberBetween(1, 8) * 50000;
+        $crt = fake()->numberBetween(0, 1) * 25000;
         $akht = $awlt + $dbt - $crt;
         $tgl = fake()->dateTimeBetween('-30 days', 'now');
 

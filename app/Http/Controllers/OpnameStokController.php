@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ITM;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,11 +12,34 @@ class OpnameStokController extends Controller
     /**
      * Halaman pembukaan (memilih barang yang mau dicek).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $daftarItem = ITM::orderBy('DES')->get(['ITM', 'DES']);
+        $keyword = trim((string) $request->query('keyword', ''));
 
-        return view('inventory.opname-stok', compact('daftarItem'));
+        $daftarItem = DB::table('itm as i')
+            ->leftJoin('ktg as k', 'k.KTG', '=', 'i.KTG')
+            ->leftJoin('mrk as m', 'm.MRK', '=', 'i.MRK')
+            ->when($keyword !== '', function ($q) use ($keyword) {
+                $like = '%' . $keyword . '%';
+                $q->where(function ($sub) use ($like) {
+                    $sub->where('i.ITM', 'like', $like)
+                        ->orWhere('i.DES', 'like', $like)
+                        ->orWhere('k.DES', 'like', $like)
+                        ->orWhere('m.DES', 'like', $like);
+                });
+            })
+            ->orderBy('i.DES')
+            ->select(
+                'i.ITM',
+                'i.DES',
+                'i.STOK',
+                DB::raw("COALESCE(k.DES, '-') as ktg_nama"),
+                DB::raw("COALESCE(m.DES, '-') as mrk_nama")
+            )
+            ->paginate(5)
+            ->withQueryString();
+
+        return view('inventory.opname-stok', compact('daftarItem', 'keyword'));
     }
 
     /**
@@ -83,6 +107,7 @@ class OpnameStokController extends Controller
         ];
         $tanggal = date('j') . ' ' . $bulanIndo[(int)date('n')] . ' ' . date('Y');
         $petugas = auth()->user()->USERNAME ?? 'admin';
+        $lokasi  = config('perusahaan.kota', 'Sumenep');
 
         if ($request->isMethod('post') && $request->filled('payload')) {
             $payload = json_decode($request->input('payload'), true) ?? [];
@@ -110,7 +135,10 @@ class OpnameStokController extends Controller
                 'tidak_terscan' => $payload['summary']['tidak_terscan'] ?? $cChecking,
             ];
 
-            return view('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'));
+            $pdf = Pdf::loadView('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'))
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-cek-stok-' . date('YmdHis') . '.pdf');
         }
 
         // Fallback jika dibuka via GET dengan parameter itm
@@ -143,7 +171,10 @@ class OpnameStokController extends Controller
                 'tidak_terscan' => $cChecking,
             ];
 
-            return view('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'));
+            $pdf = Pdf::loadView('Inventory.cetak-opname', compact('items', 'summary', 'tanggal', 'petugas', 'lokasi'))
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->stream('laporan-cek-stok-' . date('YmdHis') . '.pdf');
         }
 
         return redirect()->route('inventory.opname');

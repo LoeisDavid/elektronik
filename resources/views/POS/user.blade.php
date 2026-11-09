@@ -184,13 +184,35 @@
 
                             {{-- Role --}}
                             <td class="py-3.5 px-4">
-                                {{ $user->ROLE == 1 ? 'Admin' : 'Kasir' }}
+                                @if($user->ROLE == 4)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Manager</span>
+                                @elseif($user->ROLE == 1 || $user->ROLE == 5 || strtolower($user->USERNAME) === 'adminhunt')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Admin</span>
+                                @elseif($user->ROLE == 3)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Storage</span>
+                                @elseif($user->ROLE == 2)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Kasir</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">{{ $user->ROLE }}</span>
+                                @endif
                             </td>
 
 
                             {{-- AKSI --}}
                             <td class="py-3.5 px-4 text-center">
+                                @php
+                                    $canManage = false;
+                                    $authU = auth()->user();
+                                    if ($authU?->isManager()) {
+                                        // Manager bisa edit siapa saja kecuali Manager lain
+                                        $canManage = ($user->ROLE != 4 || $user->USERNAME === $authU->USERNAME);
+                                    } elseif ($authU?->isAdmin()) {
+                                        // Admin hanya bisa edit/hapus Kasir dan Storage (tidak bisa Admin/Manager)
+                                        $canManage = ($user->ROLE != 4 && $user->ROLE != 1);
+                                    }
+                                @endphp
 
+                                @if($canManage)
                                 <div class="relative inline-block">
 
                                     {{-- BUTTON --}}
@@ -227,6 +249,7 @@
                                         <button
                                             type="button"
                                             data-usr="{{ $user->USERNAME }}"
+                                            data-username="{{ $user->USERNAME }}"
                                             data-al="{{ $user->AL }}"
                                             data-hp="{{ $user->HP }}"
                                             data-des="{{ $user->DES }}"
@@ -255,6 +278,7 @@
                                         </button>
 
 
+                                        @if(strtolower($user->USERNAME) !== 'adminhunt' && $user->USERNAME !== $authU?->USERNAME && ($authU?->isManager() ? $user->ROLE != 4 : ($user->ROLE != 4 && $user->ROLE != 1)))
                                         {{-- DELETE --}}
                                         <form
                                             method="POST"
@@ -289,10 +313,15 @@
                                             </button>
 
                                         </form>
+                                        @endif
 
                                     </div>
 
                                 </div>
+                                @else
+                                    <span class="text-xs text-gray-400 select-none">-</span>
+                                @endif
+                            </td>
 
                             </td>
 
@@ -320,688 +349,20 @@
         </div>
 
 
-        {{-- ========================================================= --}}
-        {{-- FOOTER --}}
-        {{-- ========================================================= --}}
+        {{-- FOOTER / PAGINATION --}}
+        <x-pagination :paginator="$data" label="user" />
 
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-primary-db rounded-b-lg">
-
-            {{-- INFO --}}
-            <div class="whitespace-nowrap">
-
-                Menampilkan
-                {{ $data->firstItem() ?? 0 }}
-                -
-                {{ $data->lastItem() ?? 0 }}
-                dari
-                {{ $data->total() ?? 0 }}
-                user
-
-            </div>
-
-
-            {{-- PAGINATION --}}
-            @if ($data->lastPage() > 1)
-
-                <div class="flex items-center gap-1">
-
-                    {{-- PREVIOUS --}}
-                    @if ($data->onFirstPage())
-
-                        <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
-                            ‹
-                        </span>
-
-                    @else
-
-                        <a
-                            href="{{ $data->previousPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            ‹
-                        </a>
-
-                    @endif
-
-
-                    @php
-                        $current = $data->currentPage();
-                        $last = $data->lastPage();
-                    @endphp
-
-
-                    {{-- ========================================= --}}
-                    {{-- 1 --}}
-                    {{-- ========================================= --}}
-
-                    <a
-                        href="{{ $data->url(1) }}"
-                        class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                        {{ $current == 1
-                            ? 'bg-[#142854] text-white border-[#142854]'
-                            : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                    >
-                        1
-                    </a>
-
-
-                    @if ($last <= 5)
-
-                        {{-- PAGE 2 --}}
-                        @for ($page = 2; $page <= $last; $page++)
-
-                            <a
-                                href="{{ $data->url($page) }}"
-                                class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                                {{ $current == $page
-                                    ? 'bg-[#142854] text-white border-[#142854]'
-                                    : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                            >
-                                {{ $page }}
-                            </a>
-
-                        @endfor
-
-
-                    @elseif ($current <= 3)
-
-                        {{-- 1 2 3 ... LAST --}}
-
-                        <a
-                            href="{{ $data->url(2) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                        >
-                            2
-                        </a>
-
-                        <a
-                            href="{{ $data->url(3) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == 3
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                        >
-                            3
-                        </a>
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            {{ $last }}
-                        </a>
-
-
-                    @elseif ($current >= $last - 2)
-
-                        {{-- 1 ... LAST-2 LAST-1 LAST --}}
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last - 2) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last - 2
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                        >
-                            {{ $last - 2 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($last - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last - 1
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                        >
-                            {{ $last - 1 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold
-                            {{ $current == $last
-                                ? 'bg-[#142854] text-white border-[#142854]'
-                                : 'bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200' }}"
-                        >
-                            {{ $last }}
-                        </a>
-
-
-                    @else
-
-                        {{-- 1 ... CURRENT-1 CURRENT CURRENT+1 ... LAST --}}
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($current - 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            {{ $current - 1 }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($current) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200"
-                        >
-                            {{ $current }}
-                        </a>
-
-                        <a
-                            href="{{ $data->url($current + 1) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            {{ $current + 1 }}
-                        </a>
-
-                        <span class="px-1">
-                            ...
-                        </span>
-
-                        <a
-                            href="{{ $data->url($last) }}"
-                            class="h-7 w-7 border rounded-md flex items-center justify-center text-xs font-semibold bg-white text-[#142854] border-[#A8B1C1] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            {{ $last }}
-                        </a>
-
-                    @endif
-
-
-                    {{-- NEXT --}}
-                    @if ($data->hasMorePages())
-
-                        <a
-                            href="{{ $data->nextPageUrl() }}"
-                            class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200"
-                        >
-                            ›
-                        </a>
-
-                    @else
-
-                        <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">
-                            ›
-                        </span>
-
-                    @endif
-
-                </div>
-
-            @endif
-
-        </div>
 
     </div>
 
 
-    {{-- ========================================================= --}}
-    {{-- MODAL TAMBAH --}}
-    {{-- ========================================================= --}}
-
-    {{-- ========================================================= --}}
-    {{-- MODAL TAMBAH --}}
-    {{-- ========================================================= --}}
-
-    <div
-        id="tambahUserModal"
-        class="fixed inset-0 z-50 {{ $errors->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-    >
-
-        {{-- Backdrop Click Area --}}
-        <div
-            class="absolute inset-0"
-            onclick="closeTambahModal()"
-        ></div>
-
-        {{-- Modal Card Container --}}
-        <div
-    class="relative w-full max-w-lg bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
->
-
-    <h2 class="text-2xl font-bold mb-5 tracking-tight">
-        Tambah User
-    </h2>
-
-    <form
-        method="POST"
-        id="formTambah"
-        action="{{ route('POS.user.store') }}"
-        class="space-y-5"
-    >
-        @csrf
-
-        {{-- GROUP 1: Informasi Akun (Akses) --}}
-        <div class="space-y-3 pt-1">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                {{-- USERNAME --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Username
-                    </label>
-
-                    <input
-                        type="text"
-                        name="USERNAME"
-                        placeholder="Contoh: CST004"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        value="{{ old('USERNAME') }}"
-                    >
-                    @error('USERNAME')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- PASSWORD --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Password
-                    </label>
-
-                    <input
-                        type="password"
-                        name="PASS"
-                        placeholder="Masukkan password"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                    @error('PASS')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- CONFIRM PASSWORD --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Konfirmasi Password
-                    </label>
-
-                    <input
-                        type="password"
-                        name="CONFIRM_PASS"
-                        placeholder="Ulangi password"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                    >
-                    @error('CONFIRM_PASS')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-            </div>
-        </div>
-
-        {{-- GROUP 2: Data Diri & Role --}}
-        <div class="space-y-3 pt-1">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                {{-- NAMA LENGKAP (DES) --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Nama Lengkap
-                    </label>
-
-                    <input
-                        type="text"
-                        name="DES"
-                        placeholder="Masukkan nama"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        value="{{ old('DES') }}"
-                    >
-                    @error('DES')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- NOMOR HANDPHONE (HP) --}}
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Nomor Handphone
-                    </label>
-
-                    <input
-                        type="text"
-                        name="HP"
-                        placeholder="08123456789"
-                        required
-                        class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                        value="{{ old('HP') }}"
-                    >
-                    @error('HP')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-            </div>
-
-            {{-- ROLE (Hidden, default 1) --}}
-            <input type="hidden" name="ROLE" value="1">
-
-        </div>
-
-        {{-- GROUP 3: Alamat --}}
-        <div class="space-y-3 pt-1">
-
-            {{-- ALAMAT --}}
-            <div>
-                <label class="block text-sm font-semibold mb-1">
-                    Alamat
-                </label>
-
-                <textarea
-                    name="AL"
-                    rows="2"
-                    placeholder="Contoh: Jl. Jend. Sudirman No. 1, Jakarta Selatan"
-                    class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5"
-                >{{ old('AL') }}</textarea>
-                @error('AL')
-                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-        </div>
-
-        {{-- TOMBOL AKSI --}}
-        <div class="pt-4 flex items-center gap-3">
-
-            <button
-                type="button"
-                onclick="closeTambahModal()"
-                class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer transition-colors"
-            >
-                Batal
-            </button>
-
-            <button
-                type="submit"
-                id="btnTambah"
-                class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold cursor-pointer transition-all duration-200 shadow-xs hover:shadow"
-            >
-                Simpan
-            </button>
-
-        </div>
-
-    </form>
+    {{-- MODAL TAMBAH & EDIT USER --}}
+    @include('POS.modals.user-modal')
 
 </div>
 
-    </div>
+@endsection
 
-
-    {{-- ========================================================= --}}
-    {{-- MODAL EDIT --}}
-    {{-- ========================================================= --}}
-
-    <div
-        id="editUserModal"
-        class="fixed inset-0 z-50 {{ $errors->editUser->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-    >
-
-        {{-- Backdrop Click Area --}}
-        <div
-            class="absolute inset-0"
-            onclick="closeEditModal()"
-        ></div>
-
-        {{-- Modal Card Container --}}
-        <div
-            class="relative w-full max-w-lg bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black max-h-[90vh] overflow-y-auto"
-        >
-
-            <h2 class="text-2xl font-bold mb-5 tracking-tight">
-                Edit User
-            </h2>
-
-            <form
-                id="editUserForm"
-                method="POST"
-                class="space-y-5"
-                action="{{ $errors->editUser->any() && old('USERNAME') ? route('POS.user.update', ['id' => old('USERNAME')]) : '' }}"
-            >
-                @csrf
-                @method('PUT')
-
-                {{-- GROUP 1: Informasi Akun (Akses) --}}
-                <div class="space-y-3 pt-1">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {{-- USERNAME --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Username
-                            </label>
-                            <input
-                                id="editUSERNAME"
-                                type="text"
-                                name="USERNAME"
-                                placeholder="Contoh: David Loes"
-                                readonly
-                                class="w-full bg-gray-100 border border-black/80 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 cursor-not-allowed focus:outline-none"
-                                value="{{ $errors->editUser->any() ? old('USERNAME') : '' }}"
-                            >
-                        </div>
-
-                        {{-- PASSWORD (Opsional saat Edit) --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Password <span class="text-xs font-normal text-gray-500">(Kosongi jika tak diubah)</span>
-                            </label>
-                            <input
-                                id="editPASS"
-                                type="password"
-                                name="PASS"
-                                placeholder="Masukkan password"
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                            >
-                            @error('PASS', 'editUser')
-                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- GROUP 2: Data Diri & Role --}}
-                <div class="space-y-3 pt-1">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {{-- NAMA LENGKAP (DES) --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Nama Lengkap
-                            </label>
-                            <input
-                                id="editDES"
-                                type="text"
-                                name="DES"
-                                placeholder="Masukkan nama"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                                value="{{ $errors->editUser->any() ? old('DES') : '' }}"
-                            >
-                            @error('DES', 'editUser')
-                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- NOMOR HANDPHONE (HP) --}}
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">
-                                Nomor Handphone
-                            </label>
-                            <input
-                                id="editHP"
-                                type="text"
-                                name="HP"
-                                placeholder="08123456789"
-                                required
-                                class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
-                                value="{{ $errors->editUser->any() ? old('HP') : '' }}"
-                            >
-                            @error('HP', 'editUser')
-                                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- ROLE (Hidden, default 1) --}}
-                    <input type="hidden" id="editROLE" name="ROLE" value="1">
-                </div>
-
-                {{-- GROUP 3: Alamat --}}
-                <div class="space-y-3 pt-1">
-                    {{-- ALAMAT (AL) --}}
-                    <div>
-                        <label class="block text-sm font-semibold mb-1">
-                            Alamat
-                        </label>
-                        <textarea
-                            id="editAL"
-                            name="AL"
-                            rows="2"
-                            placeholder="Masukkan alamat lengkap..."
-                            class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db resize-none transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5"
-                        >{{ $errors->editUser->any() ? old('AL') : '' }}</textarea>
-                        @error('AL', 'editUser')
-                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-                {{-- TOMBOL AKSI --}}
-                <div class="pt-4 flex items-center gap-3">
-                    <button
-                        type="button"
-                        onclick="closeEditModal()"
-                        class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold hover:bg-gray-100 cursor-pointer transition-colors"
-                    >
-                        Batal
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold cursor-pointer transition-all duration-200 shadow-xs hover:shadow"
-                    >
-                        Simpan
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-{{-- ============================================================= --}}
-{{-- JAVASCRIPT (hanya tampilan: menu aksi, dropdown, modal)        --}}
-{{-- ============================================================= --}}
-
-<script>
-
-    // ---------- Menu aksi ----------
-    function toggleActionMenu(button) {
-        const menu = button.parentElement.querySelector('.action-menu');
-
-        document.querySelectorAll('.action-menu').forEach(function (item) {
-            if (item !== menu) item.classList.add('hidden');
-        });
-
-        menu.classList.toggle('hidden');
-    }
-
-    // ---------- Dropdown sort (buka/tutup saja) ----------
-    function toggleFilterUser(event) {
-        event.stopPropagation();
-        document.getElementById('panelFilterUser').classList.toggle('hidden');
-        document.getElementById('arrowUserSort').classList.toggle('rotate-180');
-    }
-
-    // ---------- Tutup menu/dropdown saat klik di luar ----------
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('.action-menu') && !event.target.closest('[onclick="toggleActionMenu(this)"]')) {
-            document.querySelectorAll('.action-menu').forEach(function (menu) {
-                menu.classList.add('hidden');
-            });
-        }
-
-        if (!event.target.closest('#containerFilterUser')) {
-            document.getElementById('panelFilterUser').classList.add('hidden');
-            document.getElementById('arrowUserSort').classList.remove('rotate-180');
-        }
-    });
-
-    // ---------- Modal tambah ----------
-    function openTambahModal() {
-        const modal = document.getElementById('tambahUserModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeTambahModal() {
-        const modal = document.getElementById('tambahUserModal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    // ---------- Modal edit ----------
-    function openEditModal(button) {
-        document.getElementById('editUSERNAME').value = button.dataset.usr;
-        document.getElementById('editDES').value = button.dataset.des;
-        document.getElementById('editHP').value = button.dataset.hp;
-        document.getElementById('editROLE').value = button.dataset.role;
-        document.getElementById('editAL').value = button.dataset.al;
-        document.getElementById('editUserForm').action = button.dataset.action;
-
-        document.querySelectorAll('.action-menu').forEach(function (menu) {
-            menu.classList.add('hidden');
-        });
-
-        const modal = document.getElementById('editUserModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeEditModal() {
-        const modal = document.getElementById('editUserModal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    // Mencegah double submit (ditaruh di luar fungsi agar aktif otomatis)
-    document.getElementById('formTambah').addEventListener('submit', function (event) {
-        const btn = document.getElementById('btnTambah');
-        
-        // 1. Cek apakah tombol sudah dalam kondisi disabled
-        if (btn.disabled) {
-            event.preventDefault();
-            return;
-        }
-
-        // 2. Matikan tombol dan ganti teksnya agar user tahu sedang memproses
-        btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed'); // Opsional: Tambah efek visual redup Tailwind
-        btn.innerText = 'Menyimpan...';
-    });
-
-</script>
-
+@section('js')
+    @vite(['resources/js/pages/pos/user.js'])
 @endsection

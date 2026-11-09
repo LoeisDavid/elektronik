@@ -91,7 +91,7 @@ class ITMFactory extends Factory
             'ITM' => sprintf('ITM%07d', $num), // 10 chars, fits string(10)
             'DES' => substr($prodName, 0, 150),
             'STOK' => 0, // Disesuaikan dengan jumlah ITMDT pada Seeder
-            'HRG' => fake()->numberBetween(150, 15000) * 1000,
+            'HRG' => fake()->numberBetween(15, 85) * 5000,
             'KTG' => fn () => KTG::factory(),
             'MRK' => fn () => MRK::factory(),
             'created_at' => now(),

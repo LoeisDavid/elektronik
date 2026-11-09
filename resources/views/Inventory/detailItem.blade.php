@@ -7,13 +7,43 @@
 <div class="flex-1 flex flex-col h-full overflow-y-auto bg-secondary-bw p-4 md:p-6 space-y-4">
 
     {{-- Kembali --}}
+    @php
+        $ref = request('ref');
+        $gd = request('gd');
+        $backUrl = request('back_url');
+
+        $isFromDetailGudang = $ref === 'detail_gudang' 
+            || !empty($gd) 
+            || ($backUrl && (str_contains($backUrl, '/gudang/') && !str_ends_with($backUrl, '/gudang')));
+
+        if (!$isFromDetailGudang && !$backUrl) {
+            $prev = url()->previous();
+            if ($prev && $prev !== url()->current() && str_contains($prev, '/gudang/')) {
+                $isFromDetailGudang = true;
+                $backUrl = $prev;
+            }
+        }
+
+        if ($isFromDetailGudang) {
+            $backText = 'Kembali ke Detail Gudang';
+            if (!$backUrl) {
+                $backUrl = $gd ? route('inventory.gudang.show', $gd) : route('inventory.gudang');
+            }
+        } else {
+            $backText = 'Kembali ke Inventory';
+            if (!$backUrl) {
+                $backUrl = route('inventory.item');
+            }
+        }
+    @endphp
+
     <div>
-        <a href="{{ route('inventory.item') }}"
-           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-black transition-colors">
+        <a href="{{ $backUrl }}"
+           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-black transition-colors cursor-pointer">
             <svg class="w-4 h-4 mr-1 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-            Kembali ke Inventory
+            {{ $backText }}
         </a>
     </div>
 
@@ -45,6 +75,16 @@
 
         {{-- Search + Filter (hanya submit saat tombol Cari ditekan / Enter di kolom pencarian) --}}
         <form method="GET" id="filterForm" class="flex flex-wrap items-center gap-2">
+            @if(request('ref'))
+                <input type="hidden" name="ref" value="{{ request('ref') }}">
+            @endif
+            @if(request('gd'))
+                <input type="hidden" name="gd" value="{{ request('gd') }}">
+            @endif
+            @if(request('back_url'))
+                <input type="hidden" name="back_url" value="{{ request('back_url') }}">
+            @endif
+
             <div class="relative w-64">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
                     <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +123,7 @@
             <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold hover:bg-primary-sdb active:bg-dark-navy transition-all duration-200">Cari</button>
 
             @if($q || $tanggal || $status !== 'semua' || $sort !== 'default')
-                <a href="{{ url()->current() }}"
+                <a href="{{ route('inventory.item.show', array_filter(['id' => $item->ITM, 'ref' => request('ref'), 'gd' => request('gd'), 'back_url' => request('back_url')])) }}"
                 class="py-1.5 px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 rounded-xl text-xs font-semibold">
                     Reset
                 </a>

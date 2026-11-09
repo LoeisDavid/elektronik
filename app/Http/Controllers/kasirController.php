@@ -8,6 +8,7 @@ use App\Models\ITMDT;
 use App\Models\ACR;
 use App\Models\STS;
 use App\Models\CST;
+use App\Models\DS;
 use App\Models\SLS;
 use App\Models\KAS;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +16,21 @@ use Illuminate\Support\Facades\DB;
 class kasirController extends Controller
 {
     /**
-     * Shift kasir yang sedang aktif (TGLK masih kosong), yang terbaru.
-     * Tidak memakai filter tanggal karena tiap kas berdiri sendiri.
+     * Ambil username user yang sedang login (maksimal 10 karakter sesuai kolom USER di tabel KAS).
+     */
+    private function currentUsername(): string
+    {
+        return substr(auth()->user()?->USERNAME ?? 'admin', 0, 10);
+    }
+
+    /**
+     * Shift kasir yang sedang aktif (TGLK masih kosong) khusus untuk user yang sedang login.
+     * Tidak memakai filter tanggal karena tiap kas berdiri sendiri per user.
      */
     private function kasAktif(): ?KAS
     {
-        return KAS::whereNull('TGLK')
+        return KAS::where('USER', $this->currentUsername())
+            ->whereNull('TGLK')
             ->orderBy('TGLM', 'desc')
             ->first();
     }
@@ -30,10 +40,11 @@ class kasirController extends Controller
      */
     public function index()
     {
-        // Ambil data keranjang, voucher, dan diskon dari session
+        // Ambil data keranjang, voucher, diskon, dan PPN dari session
         $cart = session()->get('cart', []);
         $voucher = session()->get('voucher', 0);
         $discountPercent = session()->get('discount_percent', 0);
+        $ppn = session()->get('ppn', null);
 
         // Status kasir ditentukan dari database (shift aktif)
         $activeKas = $this->kasAktif();
@@ -48,10 +59,11 @@ class kasirController extends Controller
         }
 
         // Ambil daftar customer dan sales untuk autocomplete / pencarian
-        $customers = CST::select('CST', 'DES', 'TLP')->get();
+        $customers = CST::select('CST', 'DES', 'TLP', 'DS')->orderBy('DES', 'asc')->get();
+        $desaList = CST::whereNull('DS')->select('CST', 'DES')->orderBy('DES', 'asc')->get();
         $salesList = SLS::select('SLS', 'DES', 'HP')->get();
 
-        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'isKasirOpen', 'activeKas', 'customers', 'salesList'));
+        return view('POS.kasir', compact('cart', 'voucher', 'discountPercent', 'ppn', 'isKasirOpen', 'activeKas', 'customers', 'desaList', 'salesList'));
     }
 
     /**
@@ -62,10 +74,10 @@ class kasirController extends Controller
         $rawOpening = (string) ($request->input('kas_opening') ?? 0);
         $nominalOpening = (int) (preg_replace('/[^\d]/', '', $rawOpening) ?: 0);
         $today = now()->toDateString();
-        $user = auth()->user()?->USERNAME ?? 'admin';
+        $user = $this->currentUsername();
 
         try {
-            // Jika sudah ada shift aktif, jangan buat baris baru
+            // Jika user ini sudah memiliki shift aktif (TGLK kosong), lanjutkan kasir tersebut
             $kas = $this->kasAktif();
 
             if (!$kas) {
@@ -77,7 +89,7 @@ class kasirController extends Controller
                 $kas = KAS::create([
                     'CD'    => $cd,
                     'TGL'   => $today,
-                    'USER'  => substr($user, 0, 10),
+                    'USER'  => $user,
                     'AWLT'  => $nominalOpening,
                     'AWLNT' => 0,
                     'DBT'   => 0,
@@ -92,7 +104,7 @@ class kasirController extends Controller
             }
 
             session()->put('kas_open', true);
-            session()->put('kas_opening', $nominalOpening);
+            session()->put('kas_opening', (int) $kas->AWLT);
 
             return response()->json([
                 'success' => true,
@@ -146,10 +158,18 @@ class kasirController extends Controller
     public function tutupKasir(Request $request)
     {
         try {
-            $activeKasList = KAS::whereNull('TGLK')->get();
+            $activeKasList = KAS::where('USER', $this->currentUsername())
+                ->whereNull('TGLK')
+                ->get();
+
+            $nominalAkhirTunaiInput = $request->filled('nominal_akhir_tunai')
+                ? (float) preg_replace('/[^0-9]/', '', (string) $request->input('nominal_akhir_tunai'))
+                : null;
 
             foreach ($activeKasList as $kas) {
-                $saldoAkhirTunai    = ($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0);
+                $saldoAkhirTunai    = $nominalAkhirTunaiInput !== null
+                    ? $nominalAkhirTunaiInput
+                    : (($kas->AWLT ?? 0) + ($kas->DBT ?? 0) - ($kas->CRT ?? 0));
                 $saldoAkhirNonTunai = ($kas->AWLNT ?? 0) + ($kas->DBNT ?? 0) - ($kas->CRNT ?? 0);
 
                 $kas->update([
@@ -250,18 +270,28 @@ class kasirController extends Controller
 
         $cart = session()->get('cart', []);
 
-        // 1. Cek apakah barcode BC_OUT sudah ada di keranjang
+        // 1. Cek di tabel ITMDT khusus berdasarkan BC_OUT apa adanya
+        $itmdt = ITMDT::where('BC_OUT', $code)->first();
+
+        // Jika datanya tidak ketemu, coba hapus char paling depan dan paling belakang
+        if (!$itmdt && strlen($code) >= 3) {
+            $candidate = substr($code, 1, -1);
+            $candidateItmdt = ITMDT::where('BC_OUT', $candidate)->first();
+            if ($candidateItmdt) {
+                $code = $candidate;
+                $itmdt = $candidateItmdt;
+            }
+        }
+
+        // 2. Cek apakah barcode BC_OUT sudah ada di keranjang
         if (isset($cart[$code])) {
             return redirect()->route('POS.kasir')->with('warning', 'Barcode "' . $code . '" sudah ada di keranjang!');
         }
 
-        // 2. Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
+        // 3. Cek apakah barcode sudah tercatat di tabel STS (sudah terjual)
         if (STS::where('BC_OUT', $code)->exists()) {
             return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" sudah terjual dan tidak dapat digunakan lagi!');
         }
-
-        // 3. Cek di tabel ITMDT khusus berdasarkan BC_OUT
-        $itmdt = ITMDT::where('BC_OUT', $code)->first();
 
         if (!$itmdt) {
             return redirect()->route('POS.kasir')->with('error', 'Barcode "' . $code . '" tidak ditemukan!');
@@ -299,6 +329,8 @@ class kasirController extends Controller
         $cart = $request->input('cart', session()->get('cart', []));
         $voucherAmount = max(0, (float) ($request->input('voucher', session()->get('voucher', 0))));
         $discountPercent = min(100, max(0, (float) ($request->input('discount_percent', session()->get('discount_percent', 0)))));
+        $ppnInput = $request->input('ppn', session()->get('ppn', null));
+        $ppnPercent = ($ppnInput !== null && $ppnInput !== '') ? min(100, max(0, (int) $ppnInput)) : null;
         $paymentMethod = $request->input('payment_method', 'tunai');
         $bankName = $request->input('bank_name', null);
         $nominalBayar = (float) ($request->input('nominal_bayar', 0));
@@ -329,7 +361,9 @@ class kasirController extends Controller
         }
 
         $diskonTransaksiNominal = $subtotal * ($discountPercent / 100);
-        $grandTotal = max(0, $subtotal - $voucherAmount - $diskonTransaksiNominal);
+        $totalSetelahDiskon = max(0, $subtotal - $voucherAmount - $diskonTransaksiNominal);
+        $ppnNominal = ($ppnPercent !== null && $ppnPercent > 0) ? ($totalSetelahDiskon * ($ppnPercent / 100)) : 0;
+        $grandTotal = $totalSetelahDiskon + $ppnNominal;
 
         try {
             DB::beginTransaction();
@@ -355,13 +389,16 @@ class kasirController extends Controller
 
             // Dapatkan Customer CST
             $cst = 'CST0000001';
+            $cstObj = null;
             if ($pelangganInput) {
                 $foundCst = CST::where('DES', $pelangganInput)->orWhere('CST', $pelangganInput)->first();
                 if ($foundCst) {
                     $cst = $foundCst->CST;
+                    $cstObj = $foundCst;
                 }
             } else {
-                $cst = CST::first()?->CST ?? 'CST0000001';
+                $cstObj = CST::first();
+                $cst = $cstObj?->CST ?? 'CST0000001';
             }
 
             // Dapatkan Sales SLS
@@ -397,7 +434,18 @@ class kasirController extends Controller
                 'USER'    => substr($user, 0, 10),
             ]);
 
+            // Validasi: pastikan tidak ada barcode dalam keranjang yang sudah tercatat di tabel STS
+            $incomingBcOuts = [];
+            foreach ($cart as $key => $item) {
+                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 20);
+            }
+            $alreadySold = STS::whereIn('BC_OUT', $incomingBcOuts)->pluck('BC_OUT')->toArray();
+            if (!empty($alreadySold)) {
+                throw new \Exception('Barang dengan barcode ' . implode(', ', $alreadySold) . ' sudah terjual di STS!');
+            }
+
             // 3. Simpan Rincian Barang ke Tabel STS (Setiap unit barang memiliki BC_OUT berbeda)
+            $soldBcOuts = [];
             foreach ($cart as $key => $item) {
                 $bcOut = substr($item['code'] ?? $key, 0, 20);
                 $itmCode = substr($item['id'] ?? $bcOut, 0, 20);
@@ -421,9 +469,11 @@ class kasirController extends Controller
                     'POT_1'  => $pot1 > 0 ? $pot1 : null,
                     'POT_2'  => null,
                     'POT_R'  => $potR > 0 ? $potR : null,
-                    'PPN'    => null,
+                    'PPN'    => ($ppnPercent !== null && $ppnPercent > 0) ? $ppnPercent : null,
                     'BRT'    => $brtItem,
                 ]);
+
+                $soldBcOuts[] = $bcOut;
 
                 // Kurangi STOK di tabel ITM agar tetap sinkron (jumlah ITMDT - jumlah STS)
                 ITM::where('ITM', $itmCode)->where('STOK', '>', 0)->decrement('STOK');
@@ -440,11 +490,16 @@ class kasirController extends Controller
             $kas->save();
 
             // Kosongkan keranjang setelah berhasil dibayar
-            session()->forget(['cart', 'voucher', 'discount_percent']);
+            session()->forget(['cart', 'voucher', 'discount_percent', 'ppn']);
 
             DB::commit();
 
             $kembalian = max(0, $nominalBayar - $grandTotal);
+
+            $dsObj = ($cstObj && $cstObj->DS) ? CST::where('CST', $cstObj->DS)->first() : null;
+            $customerNama = $cstObj?->DES ?? ($pelangganInput ?: '-');
+            $customerAlamat = $cstObj?->AL ?? '-';
+            $customerDesa = $dsObj?->DES ?? ($cstObj && empty($cstObj->DS) ? $cstObj->DES : '-');
 
             return response()->json([
                 'success'          => true,
@@ -455,10 +510,16 @@ class kasirController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_global'  => $diskonTransaksiNominal,
                 'voucher'          => $voucherAmount,
+                'ppn_percent'      => $ppnPercent,
+                'ppn_nominal'      => $ppnNominal,
                 'grand_total'      => $grandTotal,
                 'dibayar'          => $nominalBayar,
                 'kembalian'        => $kembalian,
                 'kasir'            => $user,
+                'customer_nama'    => $customerNama,
+                'customer_alamat'  => $customerAlamat,
+                'customer_desa'    => $customerDesa,
+                'sold_bc_outs'     => $soldBcOuts,
                 'tanggal'          => now()->translatedFormat('d M Y'),
                 'waktu'            => now()->format('H.i'),
             ]);
@@ -472,6 +533,34 @@ class kasirController extends Controller
     }
 
     /**
+     * Memeriksa barcode (BC_OUT) di tabel STS untuk validasi / sinkronisasi draft kasir.
+     * Mengembalikan daftar BC_OUT yang sudah ada di tabel STS (sudah terjual).
+     */
+    public function checkDraftSts(Request $request)
+    {
+        $barcodes = $request->input('barcodes', []);
+        if (empty($barcodes) || !is_array($barcodes)) {
+            return response()->json([
+                'success'       => true,
+                'sold_barcodes' => []
+            ]);
+        }
+
+        $cleanBarcodes = array_values(array_unique(array_filter(array_map('trim', $barcodes))));
+
+        $sold = STS::whereIn('BC_OUT', $cleanBarcodes)
+            ->pluck('BC_OUT')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'success'       => true,
+            'sold_barcodes' => $sold
+        ]);
+    }
+
+    /**
      * Sinkronisasi perubahan dari JavaScript (hapus item, diskon, voucher) ke Session
      */
     public function syncCart(Request $request)
@@ -479,9 +568,14 @@ class kasirController extends Controller
         $cart = $request->input('cart', []);
         $voucher = max(0, (float) $request->input('voucher', 0));
         $discountPercent = min(100, max(0, (float) $request->input('discount_percent', 0)));
+        $ppn = $request->input('ppn');
+        $ppnValue = ($ppn !== null && $ppn !== '') ? min(100, max(0, (int) $ppn)) : null;
 
         if (is_array($cart)) {
             foreach ($cart as $k => $item) {
+                if (isset($item['price'])) {
+                    $cart[$k]['price'] = max(0, (float) $item['price']);
+                }
                 if (isset($item['discount'])) {
                     $cart[$k]['discount'] = min(100, max(0, (float) $item['discount']));
                 }
@@ -494,6 +588,11 @@ class kasirController extends Controller
         session()->put('cart', $cart);
         session()->put('voucher', $voucher);
         session()->put('discount_percent', $discountPercent);
+        if ($ppnValue !== null) {
+            session()->put('ppn', $ppnValue);
+        } else {
+            session()->forget('ppn');
+        }
 
         return response()->json([
             'success' => true,
@@ -506,7 +605,7 @@ class kasirController extends Controller
      */
     public function clearCart()
     {
-        session()->forget(['cart', 'voucher', 'discount_percent']);
+        session()->forget(['cart', 'voucher', 'discount_percent', 'ppn']);
         return redirect()->route('POS.kasir')->with('info', 'Keranjang berhasil dikosongkan.');
     }
 }

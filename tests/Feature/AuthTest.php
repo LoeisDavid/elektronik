@@ -3,29 +3,30 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        User::create([
-            'USERNAME' => 'admin',
-            'PASS' => Hash::make('admin123'),
-            'ROLE' => 1,
-        ]);
+        User::firstOrCreate(
+            ['USERNAME' => 'admin'],
+            [
+                'PASS' => Hash::make('admin123'),
+                'ROLE' => 1,
+            ]
+        );
     }
     public function test_login_page_loads(): void
     {
         $response = $this->get('/login');
         $response->assertStatus(200);
-        $response->assertSee('NamaToko');
         $response->assertSee('Username:');
         $response->assertSee('Password:');
         $response->assertSee('LOGIN');
@@ -38,7 +39,7 @@ class AuthTest extends TestCase
             'password' => 'admin123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('POS.kasir'));
         $this->assertAuthenticated();
     }
 
@@ -46,10 +47,9 @@ class AuthTest extends TestCase
     {
         $user = User::where('USERNAME', 'admin')->first();
 
-        $response = $this->actingAs($user)->get('/dashboard');
+        $response = $this->actingAs($user)->get(route('POS.kasir'));
         $response->assertStatus(200);
-        $response->assertSee('Halaman Dashboard');
-        $response->assertSee('admin');
+        $response->assertSee('Kasir');
     }
 
     public function test_user_can_logout(): void

@@ -12,55 +12,55 @@ use Illuminate\Support\Facades\DB;
 class GDController extends Controller
 {
     // halaman index untuk menampilkan semua data gudang
-public function index(Request $request)
-{
-    try {
-        // Stok = jumlah itmdt di gudang tsb yang BC_OUT-nya tidak ada di sts
-        $stokSub = DB::table('itmdt')
-            ->selectRaw('COUNT(*)')
-            ->whereColumn('itmdt.GD', 'gd.GD')
-            ->whereNotExists(function ($q) {
-                $q->select(DB::raw(1))
-                  ->from('sts')
-                  ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
-            });
+    public function index(Request $request)
+    {
+        try {
+            // Stok = jumlah itmdt di gudang tsb yang BC_OUT-nya tidak ada di sts
+            $stokSub = DB::table('itmdt')
+                ->selectRaw('COUNT(*)')
+                ->whereColumn('itmdt.GD', 'gd.GD')
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                    ->from('sts')
+                    ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+                });
 
-        $query = GD::query()
-            ->select('gd.*')
-            ->selectSub($stokSub, 'stok');
+            $query = GD::query()
+                ->select('gd.*')
+                ->selectSub($stokSub, 'stok');
 
-        if ($request->filled('keyword')) {
-            $search = $request->keyword;
-            $query->where(function ($q) use ($search) {
-                $q->where('DES', 'LIKE', "%{$search}%")
-                  ->orWhere('GD', 'LIKE', "%{$search}%");
-            });
+            if ($request->filled('keyword')) {
+                $search = $request->keyword;
+                $query->where(function ($q) use ($search) {
+                    $q->where('DES', 'LIKE', "%{$search}%")
+                    ->orWhere('GD', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $sort = $request->sort;
+
+            if ($sort == 'a-z') {
+                $query->orderBy('DES', 'asc');
+            } else if ($sort == 'z-a') {
+                $query->orderBy('DES', 'desc');
+            } else if ($sort == 'new-old') {
+                $query->orderBy('created_at', 'desc');
+            } else if ($sort == 'old-new') {
+                $query->orderBy('created_at', 'asc');
+            } else if ($sort == 'stok-sedikit') {
+                $query->orderBy('stok', 'asc')->orderBy('DES', 'asc');
+            } else {
+                // default: stok terbanyak
+                $query->orderBy('stok', 'desc')->orderBy('DES', 'asc');
+            }
+
+            $data = $query->paginate(10);
+
+            return view('Inventory.gudang', compact('data'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
         }
-
-        $sort = $request->sort;
-
-        if ($sort == 'a-z') {
-            $query->orderBy('DES', 'asc');
-        } else if ($sort == 'z-a') {
-            $query->orderBy('DES', 'desc');
-        } else if ($sort == 'new-old') {
-            $query->orderBy('created_at', 'desc');
-        } else if ($sort == 'old-new') {
-            $query->orderBy('created_at', 'asc');
-        } else if ($sort == 'stok-sedikit') {
-            $query->orderBy('stok', 'asc')->orderBy('DES', 'asc');
-        } else {
-            // default: stok terbanyak
-            $query->orderBy('stok', 'desc')->orderBy('DES', 'asc');
-        }
-
-        $data = $query->paginate(10);
-
-        return view('Inventory.gudang', compact('data'));
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data gudang');
     }
-}
 
     // halaman create untuk menampilkan form tambah data gudang
     public function create()
@@ -70,17 +70,36 @@ public function index(Request $request)
 
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'DES' => 'required|string|max:45',
-            ]);
+        $validated = $request->validate([
+            'DES' => 'required|string|max:45|unique:gd,DES',
+        ], [
+            'DES.required' => 'Nama gudang wajib diisi.',
+            'DES.string'   => 'Nama gudang harus berupa teks.',
+            'DES.max'      => 'Nama gudang maksimal 45 karakter.',
+            'DES.unique'   => 'Nama gudang sudah terdaftar.',
+        ]);
 
+        try {
             $validated['GD'] = $this->generateCode($validated['DES'], 'GD');
 
-            GD::create($validated);
+            $gd = GD::create($validated);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data gudang berhasil ditambahkan.',
+                    'data'    => $gd,
+                ]);
+            }
 
             return redirect()->route('inventory.gudang')->with('success', 'Data gudang berhasil ditambahkan.');
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan ketika menambahkan data gudang.',
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan data gudang');
         }
     }

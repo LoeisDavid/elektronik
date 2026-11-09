@@ -237,12 +237,26 @@ public function index(Request $request)
                 throw ValidationException::withMessages(['ITM' => 'Kode ITM sudah digunakan.']);
             }
 
-            ITM::create($data + ['STOK' => 0]);
+            $itm = ITM::create($data + ['STOK' => 0]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Barang berhasil ditambahkan.',
+                    'data'    => $itm,
+                ]);
+            }
 
             return redirect()->route('inventory.item')->with('success', 'Barang berhasil ditambahkan.');
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan ketika menambahkan barang.',
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan barang');
         }
     }
@@ -352,6 +366,10 @@ public function index(Request $request)
     // ================================================================
     public function update(Request $request, string $id)
     {
+        if (auth()->user()?->isStorage()) {
+            return redirect()->back()->with('error', 'Storage hanya dapat menambah stok, menambah barang, cek stok, dan cetak laporan.');
+        }
+
         $decodedId = urldecode($id);
         $item = ITM::where('ITM', $decodedId)->firstOrFail();
 
@@ -581,6 +599,10 @@ public function index(Request $request)
 
     public function destroy($id)
     {
+        if (!auth()->user()?->isAdmin()) {
+            return redirect()->back()->with('error', 'Hanya Admin yang memiliki hak akses untuk menghapus produk.');
+        }
+
         try {
             $item = ITM::where('ITM', $id)->firstOrFail();
             $item->delete();

@@ -122,6 +122,19 @@
                         Reset
                     </a>
                 <?php endif; ?>
+
+                {{-- Cetak Laporan Transaksi / Penjualan (Bisa diakses Kasir, Admin, dan Manager) --}}
+                <button
+                    type="button"
+                    onclick="openModalPrintLaporan()"
+                    class="ml-auto flex items-center justify-center gap-2 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl px-4 py-2.5 text-xs font-semibold cursor-pointer transition-all duration-200 shadow-xs"
+                    title="Cetak Laporan Penjualan / Transaksi (Range Tanggal)"
+                >
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
+                    </svg>
+                    <span>Print Laporan Transaksi</span>
+                </button>
             </form>
         </div>
 
@@ -135,13 +148,14 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-3 px-4 font-semibold">Kode</th>
                         <th class="py-3 px-4 font-semibold">Kasir</th>
                         <th class="py-3 px-4 font-semibold">Waktu Buka</th>
                         <th class="py-3 px-4 font-semibold">Waktu Tutup</th>
                         <th class="py-3 px-4 font-semibold">Kas Awal</th>
                         <th class="py-3 px-4 font-semibold">Total Penjualan</th>
-                        <th class="py-3 px-4 font-semibold">Kas Akhir Rill</th>
+                        <th class="py-3 px-4 font-semibold">Total Tunai</th>
+                        <th class="py-3 px-4 font-semibold">Total Non Tunai</th>
+                        <th class="py-3 px-4 font-semibold">Uang Akhir Tunai</th>
                         <th class="py-3 px-4 font-semibold">Selisih</th>
                     </tr>
                 </thead>
@@ -150,19 +164,20 @@
                     <?php if (count($laporan) > 0): ?>
                         <?php foreach ($laporan as $row): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4 font-mono text-gray-600"><?= e($row->cd ?? '-') ?></td>
                                 <td class="py-3.5 px-4 font-medium"><?= e($row->kasir) ?></td>
                                 <td class="py-3.5 px-4"><?= e($jam($row->waktu_buka)) ?></td>
                                 <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($jam($row->waktu_tutup)) : '<span class="text-amber-600">Belum ditutup</span>' ?></td>
                                 <td class="py-3.5 px-4"><?= e($rp($row->kas_awal)) ?></td>
                                 <td class="py-3.5 px-4"><?= e($rp($row->total_penjualan)) ?></td>
-                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($rp($row->kas_akhir_rill)) : '-' ?></td>
+                                <td class="py-3.5 px-4"><?= e($rp($row->tunai)) ?></td>
+                                <td class="py-3.5 px-4"><?= e($rp($row->non_tunai)) ?></td>
+                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($rp($row->uang_akhir_tunai)) : '-' ?></td>
                                 <td class="py-3.5 px-4">
                                     <?php if ($row->selisih === null): ?>
                                         -
                                     <?php else: ?>
-                                        <span class="<?= $row->selisih < 0 ? 'text-red-600' : ($row->selisih > 0 ? 'text-green-600' : '') ?>">
-                                            <?= ($row->selisih < 0 ? '-' : '') . e($rp(abs($row->selisih))) ?>
+                                        <span class="<?= $row->selisih < 0 ? 'text-red-600 font-semibold' : ($row->selisih > 0 ? 'text-green-600 font-semibold' : '') ?>">
+                                            <?= e($rp(abs($row->selisih))) ?>
                                         </span>
                                     <?php endif; ?>
                                 </td>
@@ -170,7 +185,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
+                            <td colspan="9" class="py-8 px-4 text-center text-gray-500">Tidak ada data laporan kasir.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -213,5 +228,106 @@
         </div>
     </div>
 
+    {{-- ========================================================= --}}
+    {{-- MODAL PRINT LAPORAN PENJUALAN (RANGE TANGGAL)             --}}
+    {{-- ========================================================= --}}
+    <div
+        id="modalPrintLaporan"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-opacity"
+        onclick="if(event.target === this) closeModalPrintLaporan()"
+    >
+        <div class="bg-white rounded-2xl border border-gray-300 w-full max-w-md p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-primary-db/10 text-primary-db flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900 leading-tight">Cetak Laporan Penjualan</h3>
+                        <p class="text-xs text-gray-500">Pilih rentang tanggal transaksi untuk dicetak</p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onclick="closeModalPrintLaporan()"
+                    class="text-gray-400 hover:text-gray-600 rounded-lg p-1.5 transition-colors cursor-pointer"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form action="{{ route('POS.transaksi.cetak') }}" method="GET" target="_blank" data-no-lock="true" onsubmit="setTimeout(closeModalPrintLaporan, 50)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                            Dari Tanggal
+                        </label>
+                        <input
+                            type="date"
+                            name="tanggal_dari"
+                            value="{{ $tanggal ?: now()->subDays(30)->toDateString() }}"
+                            class="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db shadow-xs"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                            Sampai Tanggal
+                        </label>
+                        <input
+                            type="date"
+                            name="tanggal_sampai"
+                            value="{{ $tanggal ?: now()->toDateString() }}"
+                            class="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db shadow-xs"
+                        >
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-5 mt-5 border-t border-gray-200">
+                    <button
+                        type="button"
+                        onclick="closeModalPrintLaporan()"
+                        class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="submit"
+                        class="px-5 py-2 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
+                        </svg>
+                        <span>Cetak Laporan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
+@endsection
+
+@section('js')
+<script>
+    function openModalPrintLaporan() {
+        const modal = document.getElementById('modalPrintLaporan');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeModalPrintLaporan() {
+        const modal = document.getElementById('modalPrintLaporan');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeModalPrintLaporan();
+        }
+    });
+</script>
 @endsection

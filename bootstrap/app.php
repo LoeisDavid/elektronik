@@ -13,12 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            \App\Http\Middleware\SwitchDatabase::class,
             \App\Http\Middleware\CheckLogin::class,
         ]);
 
         $middleware->alias([
             'auth' => \App\Http\Middleware\CheckLogin::class,
             'check.login' => \App\Http\Middleware\CheckLogin::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
