@@ -5,12 +5,12 @@
     id="tambahSalesModal"
     class="fixed inset-0 z-50 {{ $errors->any() && !$errors->editSales->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
 >
-    <div class="absolute inset-0" onclick="closeTambahModal()"></div>
+    <div class="absolute inset-0" onclick="closeTambahSalesModal()"></div>
 
     <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black">
         <h2 class="text-2xl font-bold text-black tracking-tight mb-5">Tambah Sales</h2>
 
-        <form id="formTambah" method="POST" action="{{ route('POS.sales.store') }}" class="space-y-4">
+        <form id="formTambahSales" method="POST" action="{{ route('POS.sales.store') }}" class="space-y-4">
             @csrf
 
             {{-- DES --}}
@@ -64,13 +64,13 @@
             <div class="pt-4 flex items-center gap-3">
                 <button
                     type="button"
-                    onclick="closeTambahModal()"
+                    onclick="closeTambahSalesModal()"
                     class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 cursor-pointer"
                 >
                     Batal
                 </button>
                 <button
-                    id="btnTambah"
+                    id="btnTambahSales"
                     type="submit"
                     class="flex-1 py-2.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer shadow-xs hover:shadow"
                 >
@@ -88,7 +88,7 @@
     id="editSalesModal"
     class="fixed inset-0 z-50 {{ $errors->editSales->any() ? 'flex' : 'hidden' }} items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
 >
-    <div class="absolute inset-0" onclick="closeEditModal()"></div>
+    <div class="absolute inset-0" onclick="closeEditSalesModal()"></div>
 
     <div class="relative w-full max-w-sm bg-secondary-bw border border-gray-300 p-6 rounded-2xl shadow-2xl z-10 text-black">
         <h2 class="text-2xl font-bold text-black tracking-tight mb-5">Edit Sales</h2>
@@ -169,7 +169,7 @@
             <div class="pt-4 flex items-center gap-3">
                 <button
                     type="button"
-                    onclick="closeEditModal()"
+                    onclick="closeEditSalesModal()"
                     class="flex-1 py-2.5 px-4 bg-white border border-black/80 rounded-xl text-sm font-semibold text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 cursor-pointer"
                 >
                     Batal

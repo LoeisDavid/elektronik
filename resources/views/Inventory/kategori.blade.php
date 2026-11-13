@@ -108,6 +108,7 @@
                 <colgroup>
                     <col class="w-48">
                     <col>
+                    <col class="w-48">
                     <col class="w-24">
                 </colgroup>
 
@@ -116,6 +117,7 @@
                     <tr class="bg-primary-db text-white text-xs font-semibold rounded-t-lg">
                         <th class="py-2.5 px-4 font-semibold text-center rounded-tl-lg">Kode Kategori</th>
                         <th class="py-2.5 px-4 font-semibold text-center">Nama Kategori</th>
+                        <th class="py-2.5 px-4 font-semibold text-center">Total Aset</th>
                         <th class="py-2.5 px-4 font-semibold text-center rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
@@ -134,6 +136,11 @@
                         {{-- Nama Kategori --}}
                         <td class="py-3.5 px-4 text-center truncate">
                             {{ $kategori->DES }}
+                        </td>
+
+                        {{-- Total Aset --}}
+                        <td class="py-3.5 px-4 text-center font-medium">
+                            Rp {{ number_format((float) ($asetPerKtg[$kategori->KTG] ?? 0), 0, ',', '.') }}
                         </td>
 
                         {{-- AKSI --}}
@@ -222,7 +229,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="py-8 text-center text-gray-500 text-sm">
+                        <td colspan="4" class="py-8 text-center text-gray-500 text-sm">
                             Tidak ada data kategori.
                         </td>
                     </tr>

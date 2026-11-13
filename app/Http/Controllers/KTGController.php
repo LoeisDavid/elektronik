@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\KTG;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class KTGController extends Controller
 {
@@ -25,8 +26,21 @@ class KTGController extends Controller
                 ->orderBy('DES', $sort)
                 ->paginate(10)
                 ->withQueryString();   // keyword & sort tetap terbawa saat pindah halaman
-     
-            return view('inventory.kategori', compact('data', 'sort'));
+
+            // Total aset per kategori (HRB dari ITMDT yang belum terjual / belum ada di STS)
+            $asetPerKtg = DB::table('itmdt')
+                ->join('itm', 'itm.ITM', '=', 'itmdt.ITM')
+                ->whereNotExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('sts')
+                        ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+                })
+                ->select('itm.KTG', DB::raw('SUM(itmdt.HRB) as total_aset'))
+                ->groupBy('itm.KTG')
+                ->pluck('total_aset', 'itm.KTG')
+                ->all();
+
+            return view('inventory.kategori', compact('data', 'sort', 'asetPerKtg'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan data kategori.');
         }

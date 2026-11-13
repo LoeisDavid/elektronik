@@ -174,6 +174,23 @@ export function prosesPembayaran() {
                                     }
                                 });
                             }
+                            if ($select.attr('id') === 'inputSalesKonfirmasi') {
+                                return jQuery(`
+                                    <div class="py-2.5 px-2 text-center text-xs">
+                                        <p class="text-gray-600 mb-1.5 font-medium">Sales tidak ditemukan</p>
+                                        <button type="button" class="btn-tambah-sls w-full py-1.5 px-3 bg-[#101D36] hover:bg-[#1C325B] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                                            + Tambah Sales Baru
+                                        </button>
+                                    </div>
+                                `).on('click', '.btn-tambah-sls', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    $select.select2('close');
+                                    if (typeof window.openTambahSalesModal === 'function') {
+                                        window.openTambahSalesModal('inputSalesKonfirmasi');
+                                    }
+                                });
+                            }
                             return 'Data tidak ditemukan';
                         }
                     },
