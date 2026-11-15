@@ -59,6 +59,7 @@ class KASController extends Controller
                     'non_tunai'        => $penjualanNon,
                     'total_penjualan'  => $totalPenjualan,
                     'uang_akhir_tunai' => $uangAkhirTunai,
+                    'kas_akhir_rill'   => $uangAkhirTunai,
                     'selisih'          => $selisih,
                 ];
             }
