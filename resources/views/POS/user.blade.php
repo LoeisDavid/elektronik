@@ -125,27 +125,27 @@
 
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 rounded-tl-lg">
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">
                             Username
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Nama
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Alamat
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Nomor Handphone
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Role
                         </th>
 
-                        <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">
+                        <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -185,15 +185,15 @@
                             {{-- Role --}}
                             <td class="py-3.5 px-4">
                                 @if($user->ROLE == 4)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">Manager</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-db text-white border border-primary-db">Manager</span>
                                 @elseif($user->ROLE == 1 || $user->ROLE == 5 || strtolower($user->USERNAME) === 'adminhunt')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Admin</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-db/10 text-primary-db border border-primary-db/20">Admin</span>
                                 @elseif($user->ROLE == 3)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Storage</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">Storage</span>
                                 @elseif($user->ROLE == 2)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Kasir</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">Kasir</span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">{{ $user->ROLE }}</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">{{ $user->ROLE }}</span>
                                 @endif
                             </td>
 

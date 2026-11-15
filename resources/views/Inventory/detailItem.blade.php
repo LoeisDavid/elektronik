@@ -85,18 +85,18 @@
                 <input type="hidden" name="back_url" value="{{ request('back_url') }}">
             @endif
 
-            <div class="relative w-64">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+            <div class="relative w-64 sm:w-72">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-black">
                     <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                     </svg>
                 </div>
                 <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama gudang / kode stok / supplier"
-                       class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db">
+                       class="h-[42px] w-full pl-10 pr-4 bg-white border border-gray-400 rounded-xl text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db">
             </div>
 
             <input type="date" name="tanggal" value="{{ $tanggal }}"
-                   class="py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db">
+                   class="h-[42px] px-3.5 bg-white border border-gray-400 rounded-xl text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db">
 
             <div class="w-40">
                 <select name="status"
@@ -107,7 +107,7 @@
                 </select>
             </div>
 
-            <div class="w-56">
+            <div class="w-72">
                 <select name="sort"
                         class="searchable-select py-1.5 px-3 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none">
                     <option value="default"        @selected($sort === 'default')>Default (Belum Terjual & Terlama)</option>
@@ -120,11 +120,11 @@
                 </select>
             </div>
 
-            <button type="submit" class="py-1.5 px-4 bg-primary-db text-white rounded-xl text-xs font-semibold hover:bg-primary-sdb active:bg-dark-navy transition-all duration-200">Cari</button>
+            <button type="submit" class="h-[42px] px-5 bg-primary-db text-white rounded-xl text-sm font-semibold hover:bg-primary-sdb active:bg-dark-navy transition-all duration-200 cursor-pointer shadow-xs">Cari</button>
 
             @if($q || $tanggal || $status !== 'semua' || $sort !== 'default')
                 <a href="{{ route('inventory.item.show', array_filter(['id' => $item->ITM, 'ref' => request('ref'), 'gd' => request('gd'), 'back_url' => request('back_url')])) }}"
-                class="py-1.5 px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 rounded-xl text-xs font-semibold">
+                class="h-[42px] px-4 inline-flex items-center bg-white border border-gray-400 text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 transition-all duration-200 rounded-xl text-sm font-semibold">
                     Reset
                 </a>
             @endif
@@ -136,26 +136,26 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-primary-db text-white text-xs font-semibold">
-                            <th class="py-3 px-4 text-center">Kode Stok</th>
-                            <th class="py-3 px-4 text-center">Harga Beli</th>
-                            <th class="py-3 px-4 text-center">Supplier</th>
-                            <th class="py-3 px-4 text-center">Tanggal Masuk</th>
-                            <th class="py-3 px-4 text-center">Tanggal Keluar</th>
-                            <th class="py-3 px-4 text-center">Gudang</th>
-                            <th class="py-3 px-4 text-center">Status</th>
-                            <th class="py-3 px-4 text-center">Aksi</th>
+                            <th class="py-3 px-4 font-semibold text-center">Kode Stok</th>
+                            <th class="py-3 px-4 font-semibold text-center">Harga Beli</th>
+                            <th class="py-3 px-4 font-semibold text-center">Supplier</th>
+                            <th class="py-3 px-4 font-semibold text-center">Tanggal Masuk</th>
+                            <th class="py-3 px-4 font-semibold text-center">Tanggal Keluar</th>
+                            <th class="py-3 px-4 font-semibold text-center">Gudang</th>
+                            <th class="py-3 px-4 font-semibold text-center">Status</th>
+                            <th class="py-3 px-4 font-semibold text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-xs text-black">
                         @forelse($items as $row)
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3 px-4 font-mono text-center">{{ $row->kode_stok }}</td>
-                                <td class="py-3 px-4 text-center">Rp {{ number_format($row->HRB, 0, ',', '.') }}</td>
-                                <td class="py-3 px-4 text-center">{{ $row->supplier }}</td>
-                                <td class="py-3 px-4 text-center">{{ $row->tgl_masuk?->translatedFormat('d M Y') ?? '-' }}</td>
-                                <td class="py-3 px-4 text-center">{{ $row->tgl_keluar?->translatedFormat('d M Y') ?? '-' }}</td>
-                                <td class="py-3 px-4 text-center">{{ $row->nama_gudang }}</td>
-                                <td class="py-3 px-4 text-center">
+                                <td class="py-3 px-4 font-mono text-center font-medium">{{ $row->kode_stok }}</td>
+                                <td class="py-3 px-4 text-center font-medium">Rp {{ number_format($row->HRB, 0, ',', '.') }}</td>
+                                <td class="py-3 px-4 text-center font-medium">{{ $row->supplier }}</td>
+                                <td class="py-3 px-4 text-center font-medium">{{ $row->tgl_masuk?->translatedFormat('d M Y') ?? '-' }}</td>
+                                <td class="py-3 px-4 text-center font-medium">{{ $row->tgl_keluar?->translatedFormat('d M Y') ?? '-' }}</td>
+                                <td class="py-3 px-4 text-center font-medium">{{ $row->nama_gudang }}</td>
+                                <td class="py-3 px-4 text-center font-medium">
                                     @if($row->terjual)
                                         <span class="px-3 py-0.5 rounded border border-red-400 bg-red-100 text-red-700 font-semibold">Terjual</span>
                                     @else
@@ -219,9 +219,17 @@
 
                 <div class="flex items-center gap-1">
                     <?php if ($halaman > 1): ?>
-                        <a href="<?= e($items->previousPageUrl()) ?>" class="<?= $btnNormal ?>">‹</a>
+                        <a href="<?= e($items->previousPageUrl()) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </a>
                     <?php else: ?>
-                        <span class="<?= $btnOff ?>">‹</span>
+                        <span class="<?= $btnOff ?>" aria-hidden="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </span>
                     <?php endif; ?>
 
                     <?= $nomor(1) ?>
@@ -256,9 +264,17 @@
                     <?php endif; ?>
 
                     <?php if ($halaman < $totalHal): ?>
-                        <a href="<?= e($items->nextPageUrl()) ?>" class="<?= $btnNormal ?>">›</a>
+                        <a href="<?= e($items->nextPageUrl()) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </a>
                     <?php else: ?>
-                        <span class="<?= $btnOff ?>">›</span>
+                        <span class="<?= $btnOff ?>" aria-hidden="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -298,19 +314,9 @@
                     onclick="cetakStruk()"
                     class="flex-1 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl py-2.5 px-6 text-center text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
                 >
-                    <svg
-                        class="w-4 h-4 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4h2m0 0h10m-6 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                        />
-                    </svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
                     Print Barcode
                 </button>
             </div>

@@ -167,6 +167,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('import-xls')->middleware('role:manager,admin,import')->name('import.')->group(function () {
         Route::get('/', [ImportXlsController::class, 'index'])->name('xls');
         Route::post('/', [ImportXlsController::class, 'import'])->name('xls.store');
+        Route::post('/confirm', [ImportXlsController::class, 'confirm'])->name('xls.confirm');
         Route::post('/export', [ImportXlsController::class, 'export'])->name('xls.export');
         Route::get('/template/{type}', [ImportXlsController::class, 'downloadTemplate'])->name('xls.template');
         Route::get('/cetak', [ImportXlsController::class, 'cetakBarcode'])->name('xls.cetak');

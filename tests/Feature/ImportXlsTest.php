@@ -24,8 +24,18 @@ class ImportXlsTest extends TestCase
     {
         parent::setUp();
         User::where('USERNAME', 'adminhunt')->delete();
-        ITMDT::whereIn('ITM', ['TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005'])->delete();
-        ITM::whereIn('ITM', ['TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005'])->delete();
+        ITMDT::whereIn('ITM', [
+            'TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005',
+            'JAMDINDINGDIAMOND01', 'JAMDINDINGDIAMOND25CHARSS', 'JAMDINDINGKODEBARANG25CHR',
+        ])->delete();
+        ITM::whereIn('ITM', [
+            'TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005',
+            'JAMDINDINGDIAMOND01', 'JAMDINDINGDIAMOND25CHARSS', 'JAMDINDINGKODEBARANG25CHR',
+        ])->delete();
+        MRK::where('DES', 'MerkTest25')->delete();
+        KTG::where('DES', 'KategoriTest25')->delete();
+        SPP::where('DES', 'SupplierTest25')->delete();
+        GD::where('DES', 'GudangTest25')->delete();
         ACR::whereIn('REF_NO', ['TRX001', 'TRX002', 'TRX003', 'TRX004', 'TRX005'])->delete();
         STS::whereIn('REF_NO', ['TRX001', 'TRX002', 'TRX003', 'TRX004', 'TRX005'])->delete();
     }
@@ -144,8 +154,38 @@ class ImportXlsTest extends TestCase
         ]);
 
         $response->assertRedirect(route('import.xls'));
-        $response->assertSessionHas('success');
         $response->assertSessionHas('imported_barcodes');
+        $response->assertSessionHas('import_status', 'preview');
+        $response->assertSessionHas('import_pending');
+
+        // Sebelum dikonfirmasi, data belum masuk ke database
+        $this->assertNull(ITM::where('ITM', 'BRG001')->first());
+
+        // Verifikasi tampilan UI pada tahap Preview (menunggu konfirmasi)
+        $previewPage = $this->get(route('import.xls'));
+        $previewPage->assertStatus(200);
+        $previewPage->assertSee('Preview Data Import');
+        $previewPage->assertSee('Konfirmasi Import');
+        $previewPage->assertDontSee('Cetak Barcode (');
+        $previewPage->assertDontSee('barcode unit siap dicetak');
+        $previewPage->assertDontSee('Khusus adminhunt');
+        $previewPage->assertDontSee('Admin & Manager');
+        $previewPage->assertDontSee('Jenis 1:');
+        $previewPage->assertDontSee('Jenis 2:');
+        $previewPage->assertDontSee('Tipe 1:');
+
+        // Konfirmasi Import untuk menyimpan ke database
+        $confirmResp = $this->post(route('import.xls.confirm'));
+        $confirmResp->assertRedirect(route('import.xls'));
+        $confirmResp->assertSessionHas('success');
+        $confirmResp->assertSessionHas('import_status', 'confirmed');
+
+        // Verifikasi tampilan UI halaman Import & Export setelah konfirmasi berhasil
+        $pageResp = $this->get(route('import.xls'));
+        $pageResp->assertStatus(200);
+        $pageResp->assertSee('Data Import Barang');
+        $pageResp->assertSee('Cetak Barcode (');
+        $pageResp->assertSee('Kode ITM (5 Label)');
 
         // BRG001 harus memakai kode MRK dari Merk "Aqua" yang sudah ada
         $brg1 = ITM::where('ITM', 'BRG001')->first();
@@ -232,7 +272,11 @@ class ImportXlsTest extends TestCase
             'file'      => $uploadedFile,
         ]);
         $response->assertRedirect(route('import.xls'));
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('import_status', 'preview');
+
+        $confirmResp = $this->post(route('import.xls.confirm'));
+        $confirmResp->assertRedirect(route('import.xls'));
+        $confirmResp->assertSessionHas('success');
 
         $brg1 = ITM::where('ITM', 'BRG001')->first();
         $this->assertNotNull($brg1);
@@ -295,12 +339,135 @@ class ImportXlsTest extends TestCase
         );
     }
 
+    public function test_import_widen_itm_up_to_25_chars_and_rejects_over_25_chars()
+    {
+        $adminHunt = User::updateOrCreate(
+            ['USERNAME' => 'adminhunt'],
+            ['PASS' => Hash::make('hunterajasi123'), 'ROLE' => User::ROLE_ADMIN, 'DES' => 'Admin Hunt', 'HP' => '081234567899']
+        );
+        $this->actingAs($adminHunt);
+
+        // 1. Two colliding >10-char codes (19 chars & 25 chars) in stok_barang must stay distinct with full BC_OUT (up to 35 chars)
+        $csvStok = implode("\n", [
+            'Kode Barang,Nama Barang,Supplier,Merk,Kategori,Stok,Harga Beli,Tanggal Beli,Gudang',
+            'JAMDINDINGDIAMOND01,Jam Dinding Diamond 01,SupplierTest25,MerkTest25,KategoriTest25,1,50000,2026-11-13,GudangTest25',
+            'JAMDINDINGDIAMOND25CHARSS,Jam Dinding Diamond 25,SupplierTest25,MerkTest25,KategoriTest25,1,60000,2026-11-13,GudangTest25',
+        ]);
+        $fileStok = UploadedFile::fake()->createWithContent('widen_stok.csv', $csvStok);
+
+        $respStok = $this->post(route('import.xls.store'), [
+            'jenis'     => 'xls',
+            'tipe'      => 'paket',
+            'paket_sub' => 'stok_barang',
+            'file'      => $fileStok,
+        ]);
+        $respStok->assertRedirect(route('import.xls'));
+        $respStok->assertSessionHas('import_status', 'preview');
+
+        // Test batal import saat preview (reset menghapus temp file & session preview)
+        $pending = session('import_pending');
+        $this->assertNotNull($pending);
+        $this->assertFileExists($pending['temp_path']);
+
+        $cancelResp = $this->post(route('import.xls.reset'));
+        $cancelResp->assertRedirect(route('import.xls'));
+        $cancelResp->assertSessionMissing('imported_barcodes');
+        $cancelResp->assertSessionMissing('import_pending');
+        $this->assertFileDoesNotExist($pending['temp_path']);
+        $this->assertNull(ITM::where('ITM', 'JAMDINDINGDIAMOND01')->first());
+
+        // Upload ulang dan konfirmasi import
+        $fileStokConfirm = UploadedFile::fake()->createWithContent('widen_stok.csv', $csvStok);
+        $this->post(route('import.xls.store'), [
+            'jenis'     => 'xls',
+            'tipe'      => 'paket',
+            'paket_sub' => 'stok_barang',
+            'file'      => $fileStokConfirm,
+        ])->assertSessionHas('import_status', 'preview');
+
+        $confirmStok = $this->post(route('import.xls.confirm'));
+        $confirmStok->assertRedirect(route('import.xls'));
+        $confirmStok->assertSessionHas('success');
+
+        $itm1 = ITM::where('ITM', 'JAMDINDINGDIAMOND01')->first();
+        $itm2 = ITM::where('ITM', 'JAMDINDINGDIAMOND25CHARSS')->first();
+        $this->assertNotNull($itm1);
+        $this->assertNotNull($itm2);
+        $this->assertSame(19, strlen($itm1->ITM));
+        $this->assertSame(25, strlen($itm2->ITM));
+
+        $bc2 = ITMDT::where('ITM', 'JAMDINDINGDIAMOND25CHARSS')->first();
+        $this->assertNotNull($bc2);
+        $this->assertStringStartsWith('JAMDINDINGDIAMOND25CHARSS', $bc2->BC_OUT);
+        $this->assertSame(35, strlen($bc2->BC_OUT));
+
+        // 2. Paket master barang also accepts full 25-char Kode Barang
+        $csvMaster = implode("\n", [
+            'Kode Item,Nama,Stok,Harga,Kategori,Merk',
+            'JAMDINDINGKODEBARANG25CHR,Jam Dinding 25 Char,1,75000,KategoriTest25,MerkTest25',
+        ]);
+        $fileMaster = UploadedFile::fake()->createWithContent('widen_master.csv', $csvMaster);
+
+        $respMaster = $this->post(route('import.xls.store'), [
+            'jenis'     => 'xls',
+            'tipe'      => 'paket',
+            'paket_sub' => 'barang',
+            'file'      => $fileMaster,
+        ]);
+        $respMaster->assertRedirect(route('import.xls'));
+        $respMaster->assertSessionHas('success');
+        $this->assertNotNull(ITM::where('ITM', 'JAMDINDINGKODEBARANG25CHR')->first());
+
+        // 3. Kode Barang > 25 chars is rejected clearly in both stok_barang and barang modes
+        $csvTooLongStok = implode("\n", [
+            'Kode Barang,Nama Barang,Supplier,Merk,Kategori,Stok,Harga Beli,Tanggal Beli,Gudang',
+            'KODEBARANGSUPERPANJANG26CH,Barang Terlalu Panjang,SupplierTest25,MerkTest25,KategoriTest25,1,50000,2026-11-13,GudangTest25',
+        ]);
+        $fileTooLongStok = UploadedFile::fake()->createWithContent('toolong_stok.csv', $csvTooLongStok);
+
+        $respTooLongStok = $this->post(route('import.xls.store'), [
+            'jenis'     => 'xls',
+            'tipe'      => 'paket',
+            'paket_sub' => 'stok_barang',
+            'file'      => $fileTooLongStok,
+        ]);
+        $respTooLongStok->assertRedirect();
+        $respTooLongStok->assertSessionHasErrors('file');
+        $this->assertNull(ITM::where('ITM', 'like', 'KODEBARANGSUPERPANJANG%')->first());
+
+        $csvTooLongMaster = implode("\n", [
+            'Kode Item,Nama,Stok,Harga,Kategori,Merk',
+            'KODEBARANGSUPERPANJANG26CH,Barang Terlalu Panjang,1,50000,KategoriTest25,MerkTest25',
+        ]);
+        $fileTooLongMaster = UploadedFile::fake()->createWithContent('toolong_master.csv', $csvTooLongMaster);
+
+        $respTooLongMaster = $this->post(route('import.xls.store'), [
+            'jenis'     => 'xls',
+            'tipe'      => 'paket',
+            'paket_sub' => 'barang',
+            'file'      => $fileTooLongMaster,
+        ]);
+        $respTooLongMaster->assertRedirect();
+        $respTooLongMaster->assertSessionHasErrors('file');
+        $this->assertNull(ITM::where('ITM', 'like', 'KODEBARANGSUPERPANJANG%')->first());
+    }
+
     protected function tearDown(): void
     {
         STS::whereIn('REF_NO', ['TRX001', 'TRX002', 'TRX003', 'TRX004', 'TRX005'])->delete();
         ACR::whereIn('REF_NO', ['TRX001', 'TRX002', 'TRX003', 'TRX004', 'TRX005'])->delete();
-        ITMDT::whereIn('ITM', ['TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005'])->delete();
-        ITM::whereIn('ITM', ['TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005'])->delete();
+        ITMDT::whereIn('ITM', [
+            'TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005',
+            'JAMDINDINGDIAMOND01', 'JAMDINDINGDIAMOND25CHARSS', 'JAMDINDINGKODEBARANG25CHR',
+        ])->delete();
+        ITM::whereIn('ITM', [
+            'TESTAC01', 'TESTAC02', 'XLSXAC01', 'BRG001', 'BRG002', 'BRG003', 'BRG004', 'BRG005',
+            'JAMDINDINGDIAMOND01', 'JAMDINDINGDIAMOND25CHARSS', 'JAMDINDINGKODEBARANG25CHR',
+        ])->delete();
+        MRK::where('DES', 'MerkTest25')->delete();
+        KTG::where('DES', 'KategoriTest25')->delete();
+        SPP::where('DES', 'SupplierTest25')->delete();
+        GD::where('DES', 'GudangTest25')->delete();
         ITM::whereIn('DES', ['Mouse', 'AC blabla', 'Printer brother C21', 'Lamp LED C4', 'Kulkas Polytron 4B'])->delete();
         MRK::whereIn('DES', ['Aqua', 'Indomie', 'Kapal Api', 'Lifebuoy', 'Paseo', 'Merk SQL Zip'])->delete();
         KTG::whereIn('DES', ['Minuman', 'Makanan', 'Perawatan Diri', 'Kebutuhan Rumah'])->delete();
