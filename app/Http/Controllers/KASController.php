@@ -10,7 +10,14 @@ class KASController extends Controller
     public function index(Request $request)
     {
         try {
-            $tanggal = trim((string) $request->query('tanggal', ''));
+            $tanggalDari   = trim((string) $request->query('tanggal_dari', ''));
+            $tanggalSampai = trim((string) $request->query('tanggal_sampai', ''));
+            if ($tanggalDari === '' && $tanggalSampai === '' && $request->filled('tanggal')) {
+                $tanggalDari = $tanggalSampai = trim((string) $request->query('tanggal', ''));
+            }
+            if ($tanggalDari !== '' && $tanggalSampai !== '' && $tanggalDari > $tanggalSampai) {
+                [$tanggalDari, $tanggalSampai] = [$tanggalSampai, $tanggalDari];
+            }
             $kasir   = trim((string) $request->query('kasir', ''));
             $page    = max(1, (int) $request->query('page', 1));
             $perPage = 4;
@@ -69,10 +76,13 @@ class KASController extends Controller
             asort($daftarKasir);
 
             // ------------------------------------------------------------
-            // 3. Data untuk Tabel Laporan (Ambil semua data, jika difilter tanggal/kasir sesuaikan)
+            // 3. Data untuk Tabel Laporan (Ambil semua data, jika difilter tanggal dari-sampai/kasir sesuaikan)
             // ------------------------------------------------------------
-            $hasilTabel = array_values(array_filter($semuaRow, function ($row) use ($tanggal, $kasir) {
-                if ($tanggal !== '' && $row->tanggal !== $tanggal) {
+            $hasilTabel = array_values(array_filter($semuaRow, function ($row) use ($tanggalDari, $tanggalSampai, $kasir) {
+                if ($tanggalDari !== '' && $row->tanggal < $tanggalDari) {
+                    return false;
+                }
+                if ($tanggalSampai !== '' && $row->tanggal > $tanggalSampai) {
                     return false;
                 }
                 if ($kasir !== '' && (string) $row->kode_user !== $kasir) {
@@ -83,12 +93,21 @@ class KASController extends Controller
 
             // ------------------------------------------------------------
             // 4. Statistik 4 Card Atas
-            // Default HARI INI jika tanggal kosong. Mengikuti tanggal & kasir jika difilter.
+            // Default HARI INI jika tanggal kosong. Mengikuti tanggal dari-sampai & kasir jika difilter.
             // ------------------------------------------------------------
-            $tanggalStat = $tanggal !== '' ? $tanggal : date('Y-m-d');
-            $hasilStat = array_values(array_filter($semuaRow, function ($row) use ($tanggalStat, $kasir) {
-                if ($row->tanggal !== $tanggalStat) {
-                    return false;
+            $adaFilterTanggal = $tanggalDari !== '' || $tanggalSampai !== '';
+            $hasilStat = array_values(array_filter($semuaRow, function ($row) use ($adaFilterTanggal, $tanggalDari, $tanggalSampai, $kasir) {
+                if ($adaFilterTanggal) {
+                    if ($tanggalDari !== '' && $row->tanggal < $tanggalDari) {
+                        return false;
+                    }
+                    if ($tanggalSampai !== '' && $row->tanggal > $tanggalSampai) {
+                        return false;
+                    }
+                } else {
+                    if ($row->tanggal !== date('Y-m-d')) {
+                        return false;
+                    }
                 }
                 if ($kasir !== '' && (string) $row->kode_user !== $kasir) {
                     return false;
@@ -103,14 +122,20 @@ class KASController extends Controller
             $persenTunai    = $totalPenjualan > 0 ? round($totalTunai / $totalPenjualan * 100) : 0;
             $persenNonTunai = $totalPenjualan > 0 ? 100 - $persenTunai : 0;
 
-            if ($tanggal !== '' && $kasir !== '') {
-                $statLabel = date('d/m/Y', strtotime($tanggal)) . ' - ' . ($daftarKasir[$kasir] ?? $kasir);
-            } elseif ($tanggal !== '') {
-                $statLabel = date('d/m/Y', strtotime($tanggal));
-            } elseif ($kasir !== '') {
-                $statLabel = 'Hari ini - ' . ($daftarKasir[$kasir] ?? $kasir) . ' (' . date('d/m/Y') . ')';
+            if ($tanggalDari !== '' && $tanggalSampai !== '') {
+                $statLabel = $tanggalDari === $tanggalSampai
+                    ? date('d/m/Y', strtotime($tanggalDari))
+                    : date('d/m/Y', strtotime($tanggalDari)) . ' - ' . date('d/m/Y', strtotime($tanggalSampai));
+            } elseif ($tanggalDari !== '') {
+                $statLabel = 'Mulai ' . date('d/m/Y', strtotime($tanggalDari));
+            } elseif ($tanggalSampai !== '') {
+                $statLabel = 'Sampai ' . date('d/m/Y', strtotime($tanggalSampai));
             } else {
                 $statLabel = 'Hari ini (' . date('d/m/Y') . ')';
+            }
+
+            if ($kasir !== '') {
+                $statLabel .= ' - ' . ($daftarKasir[$kasir] ?? $kasir);
             }
 
             $stat = [
@@ -147,7 +172,8 @@ class KASController extends Controller
                 'stat',
                 'pagination',
                 'daftarKasir',
-                'tanggal',
+                'tanggalDari',
+                'tanggalSampai',
                 'kasir'
             ));
         } catch (\Exception $e) {

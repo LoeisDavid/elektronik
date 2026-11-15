@@ -99,7 +99,7 @@
         {{-- TAMBAH SALES --}}
         <button
             type="button"
-            onclick="openTambahModal()"
+            onclick="openTambahSalesModal()"
             class="h-9.5 px-4 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 shadow-xs hover:shadow cursor-pointer"
         >
             <span class="text-lg leading-none font-bold">+</span>
@@ -219,7 +219,7 @@
                                             data-hp="{{ $sale->HP }}"
                                             data-al="{{ $sale->AL }}"
                                             data-action="{{ route('POS.sales.update', ['id' => $sale->SLS]) }}"
-                                            onclick="openEditModal(this)"
+                                            onclick="openEditSalesModal(this)"
                                             class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
                                         >
 

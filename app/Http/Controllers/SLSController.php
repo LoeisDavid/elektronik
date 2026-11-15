@@ -70,12 +70,27 @@ class SLSController extends Controller
         try {
             $validated['SLS'] = $this->generateCode($validated['DES'], 'SLS');
 
-            SLS::create($validated);
+            $sales = SLS::create($validated);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sales berhasil ditambahkan.',
+                    'data'    => $sales,
+                ]);
+            }
 
             return redirect()
                 ->route('POS.sales')
                 ->with('success', 'Sales berhasil ditambahkan.');
         } catch (\Exception $e) {
+            report($e);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menambahkan sales: ' . $e->getMessage(),
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menambahkan sales.');
         }
     }

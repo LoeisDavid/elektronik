@@ -31,18 +31,20 @@ class ITMController extends Controller
 public function index(Request $request)
 {
     try {
-        $keyword = trim((string) $request->query('keyword', ''));
-        $sort    = (string) $request->query('sort', 'nama_asc');
+        $keyword   = trim((string) $request->query('keyword', ''));
+        $filterKtg = trim((string) $request->query('ktg', ''));
+        $filterMrk = trim((string) $request->query('mrk', ''));
+        $sort      = (string) $request->query('sort', 'tgl_terbaru');
         if (!isset(self::OPSI_SORT[$sort])) {
-            $sort = 'nama_asc';
+            $sort = 'tgl_terbaru';
         }
         $page = max(1, (int) $request->query('page', 1));
 
         // ------------------------------------------------------------
         // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
         // ------------------------------------------------------------
-        $KTG = KTG::all();
-        $MRK = MRK::all();
+        $KTG = KTG::orderBy('DES')->get();
+        $MRK = MRK::orderBy('DES')->get();
         $SPP = SPP::all();
         $GD  = GD::all();
 
@@ -51,37 +53,44 @@ public function index(Request $request)
         $namaSPP = $SPP->pluck('DES', 'SPP')->all();
 
         // ------------------------------------------------------------
-        // 2. Ambil total aset (HRB dari ITMDT yang belum terjual / belum ada di STS)
+        // 2. Ambil total aset & tanggal ITMDT (hanya yang belum terjual / belum ada di STS)
         // ------------------------------------------------------------
-        $asetPerItm = DB::table('itmdt')
+        $itmdtStats = DB::table('itmdt')
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('sts')
                     ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
             })
-            ->select('ITM', DB::raw('SUM(HRB) as total_aset'))
+            ->select(
+                'ITM',
+                DB::raw('SUM(HRB) as total_aset'),
+                DB::raw('MAX(COALESCE(created_at, TM)) as tgl_terbaru'),
+                DB::raw('MIN(COALESCE(created_at, TM)) as tgl_terlama')
+            )
             ->groupBy('ITM')
-            ->pluck('total_aset', 'ITM')
-            ->all();
+            ->get()
+            ->keyBy('ITM');
 
         $semuaRow = [];
         $totalAsetKeseluruhan = 0;
 
-        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK', 'created_at']) as $itm) {
-            $totalAset = (float) ($asetPerItm[$itm->ITM] ?? 0);
+        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK']) as $itm) {
+            $statItmdt = $itmdtStats->get($itm->ITM);
+            $totalAset = (float) ($statItmdt->total_aset ?? 0);
             $totalAsetKeseluruhan += $totalAset;
 
             $semuaRow[] = (object) [
-                'itm'        => $itm->ITM,
-                'des'        => $itm->DES,
-                'ktg'        => $itm->KTG,
-                'ktg_nama'   => $namaKTG[$itm->KTG] ?? '-',
-                'mrk'        => $itm->MRK,
-                'mrk_nama'   => $namaMRK[$itm->MRK] ?? '-',
-                'hrg'        => $itm->HRG,
-                'stok'       => (int) $itm->STOK,
-                'total_aset' => $totalAset,
-                'created_at' => $itm->created_at ? (string) $itm->created_at : null,
+                'itm'         => $itm->ITM,
+                'des'         => $itm->DES,
+                'ktg'         => $itm->KTG,
+                'ktg_nama'    => $namaKTG[$itm->KTG] ?? '-',
+                'mrk'         => $itm->MRK,
+                'mrk_nama'    => $namaMRK[$itm->MRK] ?? '-',
+                'hrg'         => $itm->HRG,
+                'stok'        => (int) $itm->STOK,
+                'total_aset'  => $totalAset,
+                'tgl_terbaru' => $statItmdt->tgl_terbaru ?? null,
+                'tgl_terlama' => $statItmdt->tgl_terlama ?? null,
             ];
         }
 
@@ -107,12 +116,12 @@ public function index(Request $request)
         }
 
         // ------------------------------------------------------------
-        // 4. Search PHP murni
+        // 4. Search & Filter PHP murni
         // ------------------------------------------------------------
         $hasil = $semuaRow;
 
         if ($keyword !== '') {
-            $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
+            $hasil = array_values(array_filter($hasil, function ($r) use ($keyword) {
                 foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama] as $field) {
                     if (mb_stripos((string) $field, $keyword) !== false) {
                         return true;
@@ -121,6 +130,14 @@ public function index(Request $request)
 
                 return false;
             }));
+        }
+
+        if ($filterKtg !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->ktg === $filterKtg));
+        }
+
+        if ($filterMrk !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->mrk === $filterMrk));
         }
 
         // ------------------------------------------------------------
@@ -134,12 +151,16 @@ public function index(Request $request)
                     return -$nama;
 
                 case 'tgl_terbaru':
+                    if ($a->tgl_terbaru === $b->tgl_terbaru) return $nama;
+                    if ($a->tgl_terbaru === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terbaru === null) return -1;
+                    return strcmp($b->tgl_terbaru, $a->tgl_terbaru);
+
                 case 'tgl_terlama':
-                    if ($a->created_at === $b->created_at) return $nama;
-                    if ($a->created_at === null) return 1;   // tanpa tanggal selalu di bawah
-                    if ($b->created_at === null) return -1;
-                    $cmp = strcmp($a->created_at, $b->created_at);
-                    return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
+                    if ($a->tgl_terlama === $b->tgl_terlama) return $nama;
+                    if ($a->tgl_terlama === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terlama === null) return -1;
+                    return strcmp($a->tgl_terlama, $b->tgl_terlama);
 
                 case 'stok_terbanyak':
                     return ($b->stok <=> $a->stok) ?: $nama;
@@ -183,6 +204,8 @@ public function index(Request $request)
             'daftarITM'  => $daftarITM,
             'opsiSort'   => self::OPSI_SORT,
             'keyword'    => $keyword,
+            'filterKtg'  => $filterKtg,
+            'filterMrk'  => $filterMrk,
             'sort'       => $sort,
             'MRK'        => $MRK,
             'KTG'        => $KTG,
