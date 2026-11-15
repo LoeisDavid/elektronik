@@ -123,23 +123,23 @@
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 rounded-tl-lg">
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">
                             Kode Sales
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Nama Sales
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Nomor HP
                         </th>
 
-                        <th class="py-2.5 px-4 ">
+                        <th class="py-2.5 px-4 font-semibold">
                             Alamat
                         </th>
 
-                        <th class="py-2.5 px-4  text-center w-20 rounded-tr-lg">
+                        <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -155,7 +155,7 @@
                         <tr class="hover:bg-gray-50/80 transition-colors">
 
                             {{-- SLS --}}
-                            <td class="py-3.5 px-4 font-medium">
+                            <td class="py-3.5 px-4 font-medium font-mono">
                                 {{ $sale->SLS }}
                             </td>
 

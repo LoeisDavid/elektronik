@@ -41,18 +41,25 @@ class ImportXlsController extends Controller
     ];
 
     /**
+     * Urutan barcode per prefix (direset setiap proses import/preview)
+     */
+    private array $prefixSequences = [];
+
+    /**
      * Tampilkan halaman utama Import & Export.
      */
     public function index()
     {
         $importedBarcodes = session('imported_barcodes', []);
         $importSummary    = session('import_summary', null);
+        $importStatus     = session('import_status', 'confirmed');
         $availableTables  = self::AVAILABLE_TABLES;
         $canImport        = auth()->user()?->isImport() ?? false;
 
         return view('import.index', compact(
             'importedBarcodes',
             'importSummary',
+            'importStatus',
             'availableTables',
             'canImport'
         ));
@@ -253,7 +260,7 @@ class ImportXlsController extends Controller
         }
 
         try {
-            // TIPE 1: PER TABEL
+            $selectedTables = [];
             if ($tipe === 'pertabel') {
                 $selectedTables = array_values(array_intersect(
                     (array) $request->input('tables', []),
@@ -262,85 +269,180 @@ class ImportXlsController extends Controller
                 if (empty($selectedTables)) {
                     return back()->withErrors(['tables' => 'Pilih minimal 1 tabel pada mode Import Per Tabel.']);
                 }
+            }
 
-                $result = $this->importPerTabelXls($sheets, $selectedTables);
+            $this->prefixSequences = [];
+            DB::beginTransaction();
 
-                if (!empty($result['barcodes'])) {
-                    session()->put('imported_barcodes', $result['barcodes']);
-                    session()->put('import_summary', [
-                        'total_barang'   => $result['items_count'],
-                        'total_stok'     => count($result['barcodes']),
-                        'total_barcodes' => count($result['barcodes']),
-                    ]);
+            $outcome = $this->executeXlsSheets($sheets, $tipe, $paketSub, $selectedTables);
+
+            if (!empty($outcome['barcodes'])) {
+                // Rollback agar belum tersimpan ke database sampai user klik Konfirmasi Import
+                DB::rollBack();
+
+                $previewDir = storage_path('app/import_preview');
+                if (!is_dir($previewDir)) {
+                    @mkdir($previewDir, 0775, true);
+                }
+                $oldPending = session('import_pending');
+                if (!empty($oldPending['temp_path']) && is_file($oldPending['temp_path'])) {
+                    @unlink($oldPending['temp_path']);
                 }
 
-                return redirect()->route('import.xls')->with(
-                    'success',
-                    "Berhasil mengimpor {$result['rows_count']} baris data ke tabel: " . implode(', ', $selectedTables) . "!"
-                );
-            }
+                $tempFilePath = $previewDir . DIRECTORY_SEPARATOR . 'preview_' . uniqid('', true) . '.' . $ext;
+                copy($uploadedFile->getRealPath(), $tempFilePath);
 
-            // TIPE 3: BACKUP SEMUA
-            if ($tipe === 'backup') {
-                $allTables = ['mrk', 'ktg', 'spp', 'gd', 'cst', 'sls', 'users', 'itm', 'itmdt', 'acr', 'sts', 'kas', 'rp', 'rpd'];
-                $result = $this->importPerTabelXls($sheets, $allTables, true);
-
-                return redirect()->route('import.xls')->with(
-                    'success',
-                    "Restore Backup XLS selesai! Total {$result['rows_count']} baris data berhasil dipulihkan."
-                );
-            }
-
-            // TIPE 2: PAKET (penjualan | stok_barang | barang)
-            if ($paketSub === 'penjualan') {
-                $stat = $this->importPaketPenjualanXls($sheets);
-                return redirect()->route('import.xls')->with(
-                    'success',
-                    "Import Penjualan berhasil! {$stat['acr']} transaksi (ACR) dan {$stat['sts']} detail item (STS) telah disimpan."
-                );
-            }
-
-            if ($paketSub === 'barang') {
-                $stat = $this->importPaketBarangXls($sheets);
-                if (!empty($stat['barcodes'])) {
-                    session()->put('imported_barcodes', $stat['barcodes']);
-                    session()->put('import_summary', [
-                        'total_barang'   => $stat['total_barang'],
-                        'total_stok'     => $stat['total_stok'],
-                        'total_barcodes' => count($stat['barcodes']),
-                    ]);
-                    return redirect()->route('import.xls')->with(
-                        'success',
-                        "Berhasil mengimpor {$stat['total_barang']} data barang lengkap dengan {$stat['total_stok']} unit barcode!"
-                    );
-                }
-                return redirect()->route('import.xls')->with(
-                    'success',
-                    "Import Data Barang (ITM) berhasil! {$stat['itm']} barang telah disimpan."
-                );
-            }
-
-            // Default Paket: stok_barang (ITM + ITMDT + Barcode)
-            $stat = $this->importPaketStokBarangXls($sheets);
-
-            if (!empty($stat['barcodes'])) {
-                session()->put('imported_barcodes', $stat['barcodes']);
-                session()->put('import_summary', [
-                    'total_barang'   => $stat['total_barang'],
-                    'total_stok'     => $stat['total_stok'],
-                    'total_barcodes' => count($stat['barcodes']),
+                session()->put('imported_barcodes', $outcome['barcodes']);
+                session()->put('import_summary', $outcome['summary']);
+                session()->put('import_status', 'preview');
+                session()->put('import_pending', [
+                    'temp_path' => $tempFilePath,
+                    'ext'       => $ext,
+                    'tipe'      => $tipe,
+                    'paket_sub' => $paketSub,
+                    'tables'    => $selectedTables,
                 ]);
+
+                return redirect()->route('import.xls')->with(
+                    'success',
+                    'Preview data import siap. Silakan periksa daftar di bawah lalu klik Konfirmasi Import.'
+                );
             }
 
-            return redirect()->route('import.xls')->with(
-                'success',
-                "Berhasil mengimpor {$stat['total_barang']} barang dengan total {$stat['total_stok']} unit barcode!"
-            );
+            DB::commit();
+
+            return redirect()->route('import.xls')->with('success', $outcome['message']);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             return back()->withErrors([
                 'file' => 'Terjadi kesalahan saat memproses data ke database: ' . $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Konfirmasi dan simpan data import yang sedang berada di daftar preview.
+     */
+    public function confirm(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user || !$user->isImport()) {
+            return redirect()->route('import.xls')->with('error', 'Fitur Import hanya dapat diakses oleh akun khusus adminhunt.');
+        }
+
+        $pending = session('import_pending');
+        if (empty($pending) || empty($pending['temp_path']) || !is_file($pending['temp_path'])) {
+            return redirect()->route('import.xls')->with('error', 'Tidak ada data preview import yang menunggu konfirmasi.');
+        }
+
+        @set_time_limit(300);
+
+        try {
+            $sheets = SimpleExcelReader::readSheets($pending['temp_path'], $pending['ext']);
+            $this->prefixSequences = [];
+
+            $outcome = $this->executeXlsSheets(
+                $sheets,
+                $pending['tipe'] ?? 'paket',
+                $pending['paket_sub'] ?? 'stok_barang',
+                (array) ($pending['tables'] ?? [])
+            );
+
+            @unlink($pending['temp_path']);
+            session()->forget('import_pending');
+            session()->put('import_status', 'confirmed');
+
+            if (!empty($outcome['barcodes'])) {
+                session()->put('imported_barcodes', $outcome['barcodes']);
+                session()->put('import_summary', $outcome['summary']);
+            }
+
+            return redirect()->route('import.xls')->with('success', $outcome['message']);
+        } catch (\Throwable $e) {
+            return redirect()->route('import.xls')->withErrors([
+                'file' => 'Terjadi kesalahan saat menyimpan data import: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Jalankan proses pembacaan & penyimpanan sheet XLS sesuai tipe & paket.
+     */
+    private function executeXlsSheets(array $sheets, string $tipe, string $paketSub, array $selectedTables): array
+    {
+        // TIPE 1: PER TABEL
+        if ($tipe === 'pertabel') {
+            $result = $this->importPerTabelXls($sheets, $selectedTables);
+
+            return [
+                'barcodes' => $result['barcodes'] ?? [],
+                'summary'  => [
+                    'total_barang'   => $result['items_count'] ?: count(array_unique(array_column($result['barcodes'] ?? [], 'itm'))),
+                    'total_stok'     => count($result['barcodes'] ?? []),
+                    'total_barcodes' => count($result['barcodes'] ?? []),
+                ],
+                'message'  => "Berhasil mengimpor {$result['rows_count']} baris data ke tabel: " . implode(', ', $selectedTables) . "!",
+            ];
+        }
+
+        // TIPE 3: BACKUP SEMUA
+        if ($tipe === 'backup') {
+            $allTables = ['mrk', 'ktg', 'spp', 'gd', 'cst', 'sls', 'users', 'itm', 'itmdt', 'acr', 'sts', 'kas', 'rp', 'rpd'];
+            $result = $this->importPerTabelXls($sheets, $allTables, true);
+
+            return [
+                'barcodes' => [],
+                'summary'  => null,
+                'message'  => "Restore Backup XLS selesai! Total {$result['rows_count']} baris data berhasil dipulihkan.",
+            ];
+        }
+
+        // TIPE 2: PAKET (penjualan | stok_barang | barang)
+        if ($paketSub === 'penjualan') {
+            $stat = $this->importPaketPenjualanXls($sheets);
+
+            return [
+                'barcodes' => [],
+                'summary'  => null,
+                'message'  => "Import Penjualan berhasil! {$stat['acr']} transaksi (ACR) dan {$stat['sts']} detail item (STS) telah disimpan.",
+            ];
+        }
+
+        if ($paketSub === 'barang') {
+            $stat = $this->importPaketBarangXls($sheets);
+            if (!empty($stat['barcodes'])) {
+                return [
+                    'barcodes' => $stat['barcodes'],
+                    'summary'  => [
+                        'total_barang'   => $stat['total_barang'],
+                        'total_stok'     => $stat['total_stok'],
+                        'total_barcodes' => count($stat['barcodes']),
+                    ],
+                    'message'  => "Berhasil mengimpor {$stat['total_barang']} data barang lengkap dengan {$stat['total_stok']} unit barcode!",
+                ];
+            }
+
+            return [
+                'barcodes' => [],
+                'summary'  => null,
+                'message'  => "Import Data Barang (ITM) berhasil! {$stat['itm']} barang telah disimpan.",
+            ];
+        }
+
+        // Default Paket: stok_barang (ITM + ITMDT + Barcode)
+        $stat = $this->importPaketStokBarangXls($sheets);
+
+        return [
+            'barcodes' => $stat['barcodes'] ?? [],
+            'summary'  => [
+                'total_barang'   => $stat['total_barang'],
+                'total_stok'     => $stat['total_stok'],
+                'total_barcodes' => count($stat['barcodes'] ?? []),
+            ],
+            'message'  => "Berhasil mengimpor {$stat['total_barang']} barang dengan total {$stat['total_stok']} unit barcode!",
+        ];
     }
 
     // =========================================================================
@@ -499,7 +601,7 @@ class ImportXlsController extends Controller
             $recRaw = trim((string) ($r[$cRec] ?? ''));
             $recKey = $this->normalizeRecKey($recRaw, $count + 1);
 
-            $bcOut = substr(trim((string) ($r[$cBc] ?? '')) ?: $itmObj->ITM, 0, 20);
+            $bcOut = substr(trim((string) ($r[$cBc] ?? '')) ?: $itmObj->ITM, 0, 40);
             $stVal = substr(trim((string) ($r[$cSt] ?? '1')) ?: '1', 0, 3);
             $pot1  = (int) round(SimpleExcelReader::parseNumber($r[$cPot1] ?? 0));
             $pot2  = (int) round(SimpleExcelReader::parseNumber($r[$cPot2] ?? 0));
@@ -680,7 +782,10 @@ class ImportXlsController extends Controller
                     $tmDate = SimpleExcelReader::parseDate($row[$colTglBeli], now()->toDateString());
                 }
 
-                $kdBarang = strtoupper(substr($kdRaw, 0, 10));
+                if (mb_strlen($kdRaw, 'UTF-8') > 25) {
+                    throw new \RuntimeException("Kode Barang '{$kdRaw}' melebihi batas maksimal 25 karakter.");
+                }
+                $kdBarang = strtoupper($kdRaw);
                 if ($kdBarang === '') {
                     $kdBarang = $this->generateUniqueCode($namaRaw, 'itm', 'ITM', 'ITM');
                 }
@@ -829,7 +934,10 @@ class ImportXlsController extends Controller
             $namaRaw = ($cNama !== null) ? trim((string) ($r[$cNama] ?? '')) : '';
             if ($kdRaw === '' && $namaRaw === '') continue;
 
-            $kd   = strtoupper(substr($kdRaw, 0, 10)) ?: $this->generateUniqueCode($namaRaw, 'itm', 'ITM', 'ITM');
+            if (mb_strlen($kdRaw, 'UTF-8') > 25) {
+                throw new \RuntimeException("Kode Barang '{$kdRaw}' melebihi batas maksimal 25 karakter.");
+            }
+            $kd   = strtoupper($kdRaw) ?: $this->generateUniqueCode($namaRaw, 'itm', 'ITM', 'ITM');
             $nama = substr($namaRaw ?: $kd, 0, 150);
             $stok = ($cStok !== null) ? max(0, (int) round(SimpleExcelReader::parseNumber($r[$cStok] ?? 0))) : 0;
             $hrg  = ($cHrg !== null)  ? max(0.0, SimpleExcelReader::parseNumber($r[$cHrg] ?? 0)) : 0.0;
@@ -907,9 +1015,9 @@ class ImportXlsController extends Controller
             $sppObj = $this->resolveSpp($spVal ?: '-');
 
             $bcOutRaw = ($cBcOut !== null) ? trim((string) ($r[$cBcOut] ?? '')) : '';
-            $bcOut    = $bcOutRaw !== '' ? substr($bcOutRaw, 0, 20) : $this->generateBcOut($itmObj->ITM, $usedBarcodes);
+            $bcOut    = $bcOutRaw !== '' ? substr($bcOutRaw, 0, 40) : $this->generateBcOut($itmObj->ITM, $usedBarcodes);
             $bcInRaw  = ($cBcIn !== null) ? trim((string) ($r[$cBcIn] ?? '')) : '';
-            $bcIn     = $bcInRaw !== '' ? substr($bcInRaw, 0, 20) : $bcOut;
+            $bcIn     = $bcInRaw !== '' ? substr($bcInRaw, 0, 40) : $bcOut;
 
             ITMDT::updateOrCreate(
                 ['BC_OUT' => $bcOut],
@@ -1683,41 +1791,69 @@ class ImportXlsController extends Controller
     /**
      * Tampilkan halaman cetak barcode Zebra ZD220 (format sama persis dengan Inventory / Cek Stok).
      */
-    public function cetakBarcode()
+    public function cetakBarcode(Request $request)
     {
         $cetak = session('imported_barcodes', []);
+
+        // [TEMP] Mode pengujian barcode berdasarkan Kode ITM (deduplikasi per ITM)
+        $mode = $request->query('mode', 'bc_out');
+        if ($mode === 'itm' && !empty($cetak)) {
+            $seen = [];
+            $deduped = [];
+            foreach ($cetak as $row) {
+                $itm = trim((string) ($row['itm'] ?? ''));
+                if ($itm === '' || isset($seen[$itm])) {
+                    continue;
+                }
+                $seen[$itm] = true;
+                $row['barcode_value'] = $itm;
+                $deduped[] = $row;
+            }
+            $cetak = $deduped;
+        }
 
         if (empty($cetak)) {
             return redirect()->route('import.xls')->with('warning', 'Tidak ada data barcode hasil import yang dapat dicetak.');
         }
 
-        return view('import.cetak-barcode', compact('cetak'));
+        return view('import.cetak-barcode', compact('cetak', 'mode'));
     }
 
     /**
-     * Reset / kosongkan daftar barcode hasil import dari session.
+     * Reset / batalkan daftar preview atau barcode hasil import dari session.
      */
     public function reset()
     {
-        session()->forget(['imported_barcodes', 'import_summary']);
-        return redirect()->route('import.xls')->with('success', 'Daftar barcode hasil import telah dikosongkan.');
+        $wasPreview = session('import_status') === 'preview';
+        $pending = session('import_pending');
+        if (!empty($pending['temp_path']) && is_file($pending['temp_path'])) {
+            @unlink($pending['temp_path']);
+        }
+
+        session()->forget(['imported_barcodes', 'import_summary', 'import_status', 'import_pending']);
+
+        return redirect()->route('import.xls')->with(
+            'success',
+            $wasPreview
+                ? 'Proses import dibatalkan dan data preview telah dihapus.'
+                : 'Daftar barcode hasil import telah dikosongkan.'
+        );
     }
 
     /**
-     * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit => maks 20 karakter.
+     * BC_OUT = ITM (maks 25) + yymmdd (6) + urutan 4 digit => maks 35 karakter.
      */
     private function generateBcOut(string $kdBarang, array &$usedInBatch = []): string
     {
-        $prefix = strtoupper(substr(trim($kdBarang), 0, 10)) . date('ymd');
+        $prefix = strtoupper(substr(trim($kdBarang), 0, 25)) . date('ymd');
 
-        static $prefixSequences = [];
-        if (!isset($prefixSequences[$prefix])) {
-            $prefixSequences[$prefix] = ITMDT::where('BC_OUT', 'like', $prefix . '%')->count();
+        if (!isset($this->prefixSequences[$prefix])) {
+            $this->prefixSequences[$prefix] = ITMDT::where('BC_OUT', 'like', $prefix . '%')->count();
         }
 
         do {
-            $prefixSequences[$prefix]++;
-            $code = $prefix . str_pad((string) $prefixSequences[$prefix], 4, '0', STR_PAD_LEFT);
+            $this->prefixSequences[$prefix]++;
+            $code = $prefix . str_pad((string) $this->prefixSequences[$prefix], 4, '0', STR_PAD_LEFT);
         } while (isset($usedInBatch[$code]) || ITMDT::where('BC_OUT', $code)->exists());
 
         $usedInBatch[$code] = true;

@@ -222,13 +222,13 @@
 
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 rounded-tl-lg">Nama item</th>
-                        <th class="py-2.5 px-4">Kategori</th>
-                        <th class="py-2.5 px-4">Merk</th>
-                        <th class="py-2.5 px-4">Stok</th>
-                        <th class="py-2.5 px-4">Harga</th>
-                        <th class="py-2.5 px-4">Total aset</th>
-                        <th class="py-2.5 px-4 w-32 rounded-tr-lg">Aksi</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Nama item</th>
+                        <th class="py-2.5 px-4 font-semibold">Kategori</th>
+                        <th class="py-2.5 px-4 font-semibold">Merk</th>
+                        <th class="py-2.5 px-4 font-semibold">Stok</th>
+                        <th class="py-2.5 px-4 font-semibold">Harga</th>
+                        <th class="py-2.5 px-4 font-semibold">Total aset</th>
+                        <th class="py-2.5 px-4 font-semibold w-32 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
 
@@ -236,11 +236,11 @@
                     <?php if (count($produk) > 0): ?>
                         <?php foreach ($produk as $r): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4"><?= e($r->des) ?></td>
-                                <td class="py-3.5 px-4"><?= e($r->ktg_nama) ?></td>
-                                <td class="py-3.5 px-4"><?= e($r->mrk_nama) ?></td>
-                                <td class="py-3.5 px-4"><?= (int) $r->stok ?> Unit</td>
-                                <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->des) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->ktg_nama) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->mrk_nama) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= (int) $r->stok ?> Unit</td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($r->hrg)) ?></td>
                                 <td class="py-3.5 px-4 font-medium text-black"><?= e($rp($r->total_aset)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
@@ -340,9 +340,17 @@
             <div class="flex items-center gap-1">
 
                 <?php if ($halaman > 1): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>">‹</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">‹</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
                 <?= $nomor(1) ?>
@@ -377,9 +385,17 @@
                 <?php endif; ?>
 
                 <?php if ($halaman < $totalHal): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>">›</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">›</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
             </div>
@@ -477,7 +493,7 @@
                             type="text"
                             inputmode="text"
                             name="stok_bc"
-                            maxlength="20"
+                            maxlength="40"
                             required
                             autocomplete="off"
                             autocapitalize="off"

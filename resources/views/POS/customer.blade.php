@@ -125,10 +125,9 @@
                 title="Cetak Laporan Penjualan Desa"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.641-2.115-1.18-3.088a9.043 9.043 0 01-.54-1.241m0 0a9.014 9.014 0 0117.84 0m-17.84 0a9.043 9.043 0 00-.54 1.24m18.38 0c-.24 1.077-.641 2.116-1.18 3.089m0 0a9.043 9.043 0 01-.54 1.24m0 0a9.014 9.014 0 01-16.66 0" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                <span>Cetak Laporan Desa</span>
+                <span>Print Laporan Desa</span>
             </a>
             @endif
 
@@ -159,13 +158,13 @@
                 {{-- HEADER --}}
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 rounded-tl-lg">Kode</th>
-                        <th class="py-2.5 px-4">Nama</th>
-                        <th class="py-2.5 px-4 text-center">Tipe</th>
-                        <th class="py-2.5 px-4">Nomor Telepon</th>
-                        <th class="py-2.5 px-4">Alamat</th>
-                        <th class="py-2.5 px-4">Desa</th>
-                        <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">Aksi</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Kode</th>
+                        <th class="py-2.5 px-4 font-semibold">Nama</th>
+                        <th class="py-2.5 px-4 font-semibold text-center">Tipe</th>
+                        <th class="py-2.5 px-4 font-semibold">Nomor Telepon</th>
+                        <th class="py-2.5 px-4 font-semibold">Alamat</th>
+                        <th class="py-2.5 px-4 font-semibold">Desa</th>
+                        <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
 
@@ -177,44 +176,44 @@
                         @endphp
                         <tr class="hover:bg-gray-50/80 transition-colors">
                             {{-- CST --}}
-                            <td class="py-3.5 px-4 font-medium text-gray-900">
+                            <td class="py-3.5 px-4 font-medium  font-mono">
                                 {{ $customer->CST }}
                             </td>
 
                             {{-- DES --}}
-                            <td class="py-3.5 px-4 font-semibold text-gray-900">
+                            <td class="py-3.5 px-4 font-medium ">
                                 {{ $customer->DES }}
                             </td>
 
                             {{-- TIPE --}}
                             <td class="py-3.5 px-4 text-center">
                                 @if ($isDesa)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                                         Desa
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
                                         Customer
                                     </span>
                                 @endif
                             </td>
 
                             {{-- TLP --}}
-                            <td class="py-3.5 px-4 text-gray-700">
+                            <td class="py-3.5 px-4 ">
                                 {{ $customer->TLP ?? '-' }}
                             </td>
 
                             {{-- AL --}}
-                            <td class="py-3.5 px-4 text-gray-700">
+                            <td class="py-3.5 px-4 ">
                                 {{ $customer->AL ?? '-' }}
                             </td>
 
                             {{-- DESA --}}
-                            <td class="py-3.5 px-4 text-gray-700">
+                            <td class="py-3.5 px-4 ">
                                 @if ($isDesa)
                                     <span class="text-xs text-gray-400 italic">(Desa Induk)</span>
                                 @else
-                                    <span class="font-medium text-gray-900">{{ $customer->ds()->first()?->DES ?? '-' }}</span>
+                                    <span class="font-medium ">{{ $customer->ds()->first()?->DES ?? '-' }}</span>
                                 @endif
                             </td>
 

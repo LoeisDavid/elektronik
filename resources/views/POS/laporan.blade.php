@@ -82,7 +82,7 @@
 
         <!-- Filter Area -->
         <div class="space-y-2">
-            <h3 class="text-base font-bold text-black">Filter:</h3>
+            <h3 class="text-base font-semibold text-black">Filter:</h3>
 
             <form action="<?= e(route('POS.laporan')) ?>" method="GET" class="flex flex-wrap items-center gap-3">
                 <!-- Filter Tanggal Dari - Sampai -->
@@ -134,9 +134,9 @@
                         class="flex items-center justify-center gap-2 bg-white border border-gray-400 rounded-xl px-4 py-2.5 text-xs text-black hover:bg-gray-300 hover:border-gray-900 active:bg-gray-200 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer transition-all duration-200"
                     >
                         <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        Reset
+                        Clear filters
                     </a>
                 <?php endif; ?>
 
@@ -147,9 +147,9 @@
                     class="ml-auto flex items-center justify-center gap-2 bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white rounded-xl px-4 py-2.5 text-xs font-semibold cursor-pointer transition-all duration-200 shadow-xs"
                     title="Cetak Laporan Penjualan / Transaksi (Range Tanggal)"
                 >
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.684-1.28-4.329m13.12 4.329c.24-1.076.673-2.684 1.28-4.329m-14.4 0a17.962 17.962 0 0114.4 0m-14.4 0a17.962 17.962 0 0014.4 0M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2zM6 14h12M9 10V6a2 2 0 012-2h2a2 2 0 012 2v4" />
-                    </svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
                     <span>Print Laporan Transaksi</span>
                 </button>
             </form>
@@ -182,14 +182,14 @@
                         <?php foreach ($laporan as $row): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
                                 <td class="py-3.5 px-4 font-medium"><?= e($row->kasir) ?></td>
-                                <td class="py-3.5 px-4"><?= e($jam($row->waktu_buka)) ?></td>
-                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($jam($row->waktu_tutup)) : '<span class="text-amber-600">Belum ditutup</span>' ?></td>
-                                <td class="py-3.5 px-4"><?= e($rp($row->kas_awal)) ?></td>
-                                <td class="py-3.5 px-4"><?= e($rp($row->total_penjualan)) ?></td>
-                                <td class="py-3.5 px-4"><?= e($rp($row->tunai)) ?></td>
-                                <td class="py-3.5 px-4"><?= e($rp($row->non_tunai)) ?></td>
-                                <td class="py-3.5 px-4"><?= $row->sudah_tutup ? e($rp($row->uang_akhir_tunai)) : '-' ?></td>
-                                <td class="py-3.5 px-4">
+                                <td class="py-3.5 px-4 font-medium"><?= e($jam($row->waktu_buka)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= $row->sudah_tutup ? e($jam($row->waktu_tutup)) : '<span class="text-amber-600">Belum ditutup</span>' ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($row->kas_awal)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($row->total_penjualan)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($row->tunai)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($row->non_tunai)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= $row->sudah_tutup ? e($rp($row->uang_akhir_tunai)) : '-' ?></td>
+                                <td class="py-3.5 px-4 font-medium">
                                     <?php if ($row->selisih === null): ?>
                                         -
                                     <?php else: ?>
@@ -219,9 +219,17 @@
             <div class="flex items-center gap-1">
                 <!-- Prev -->
                 <?php if ($halaman > 1): ?>
-                    <a href="<?= e($buatUrl($halaman - 1)) ?>" class="<?= $btnNormal ?>">‹</a>
+                    <a href="<?= e($buatUrl($halaman - 1)) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">‹</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
                 <?= $nomor(1) ?>
@@ -255,9 +263,17 @@
 
                 <!-- Next -->
                 <?php if ($halaman < $totalHal): ?>
-                    <a href="<?= e($buatUrl($halaman + 1)) ?>" class="<?= $btnNormal ?>">›</a>
+                    <a href="<?= e($buatUrl($halaman + 1)) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">›</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
             </div>
         </div>

@@ -125,12 +125,12 @@
             <table class="w-full text-center border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-3 px-4 text-left rounded-tl-lg">Kode Barang</th>
-                        <th class="py-3 px-4 text-left">Nama Barang</th>
-                        <th class="py-3 px-4">Kategori</th>
-                        <th class="py-3 px-4">Merk</th>
-                        <th class="py-3 px-4">Stok</th>
-                        <th class="py-3 px-4 w-40 text-center rounded-tr-lg">Aksi</th>
+                        <th class="py-3 px-4 font-semibold text-left rounded-tl-lg">Kode Barang</th>
+                        <th class="py-3 px-4 font-semibold text-left">Nama Barang</th>
+                        <th class="py-3 px-4 font-semibold">Kategori</th>
+                        <th class="py-3 px-4 font-semibold">Merk</th>
+                        <th class="py-3 px-4 font-semibold">Stok</th>
+                        <th class="py-3 px-4 font-semibold w-40 text-center rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyPilihBarangOpname" class="divide-y divide-gray-200 text-xs text-black">

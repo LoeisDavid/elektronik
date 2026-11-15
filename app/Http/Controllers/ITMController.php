@@ -402,7 +402,7 @@ public function index(Request $request)
         }
 
         $data = $request->validateWithBag('editItem', [
-            'ITM' => 'required|string|max:10',
+            'ITM' => 'required|string|max:25',
             'DES' => 'required|string|max:150',
             'MRK' => 'required|string|max:10',
             'KTG' => 'required|string|max:10',
@@ -450,11 +450,11 @@ public function index(Request $request)
             }
 
             $data = $request->validateWithBag('stok', [
-                'stok_itm' => 'required|string|max:10',
+                'stok_itm' => 'required|string|max:25',
                 'stok_spp' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',
                 'stok_hrb' => 'required|numeric|min:0',
-                'stok_bc'  => 'required|string|max:20',
+                'stok_bc'  => 'required|string|max:40',
             ], [
                 'stok_itm.required' => 'Pilih nama barang.',
                 'stok_spp.required' => 'Pilih supplier.',
@@ -601,7 +601,7 @@ public function index(Request $request)
     }
 
     /**
-     * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit  => maks 20 karakter.
+     * BC_OUT = ITM (maks 25) + yymmdd (6) + urutan 4 digit => maks 35 karakter.
      */
     private function generateBcOut(string $itm): string
     {
