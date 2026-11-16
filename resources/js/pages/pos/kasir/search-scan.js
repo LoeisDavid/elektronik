@@ -9,6 +9,145 @@ import { state, formatRupiah, escapeHtml } from './config.js';
 let searchItmDebounceTimer = null;
 let searchResultItems = [];
 
+// State untuk deteksi hardware barcode scanner (HID keyboard wedge)
+let scanKeyTimestamps = [];
+let scanAutoSubmitTimer = null;
+let globalScanBuffer = '';
+let globalLastKeyTime = 0;
+let globalScanTimer = null;
+let isSubmittingScan = false;
+
+const SCANNER_MAX_INTERVAL_MS = 65; // Interval antar karakter khas scanner (< 65ms)
+const SCANNER_MIN_LENGTH = 5;       // Panjang minimal kode barcode
+
+export function submitBarcodeLangsung(code) {
+    if (isSubmittingScan) return;
+    const cleanCode = String(code || '').replace(/[\u0000-\u001F\u007F]/g, '').trim();
+    if (!cleanCode) return;
+
+    const inputUtama = document.getElementById('inputScanUtama');
+    const formUtama = document.getElementById('formScanUtama');
+    if (!inputUtama || !formUtama) return;
+
+    isSubmittingScan = true;
+    clearTimeout(searchItmDebounceTimer);
+    clearTimeout(scanAutoSubmitTimer);
+    clearTimeout(globalScanTimer);
+    tutupPanelSearchItm();
+
+    inputUtama.value = cleanCode;
+    if (typeof formUtama.requestSubmit === 'function') {
+        formUtama.requestSubmit();
+    } else {
+        formUtama.submit();
+    }
+}
+
+/**
+ * Listener global agar ketika user langsung scan menggunakan barcode scanner
+ * di halaman Kasir (tanpa menekan/klik kolom pencarian terlebih dahulu),
+ * sistem otomatis menangkap barcode dan langsung menambahkannya ke keranjang.
+ */
+export function initGlobalBarcodeScanner() {
+    document.addEventListener('keydown', function (e) {
+        if (!state.isKasirOpen || isSubmittingScan) return;
+
+        // Abaikan jika ada modal lain yang sedang terbuka (selain modal barcode)
+        const modalIds = [
+            'modalBukaKasir',
+            'modalTutupKasir',
+            'modalDiskonGlobal',
+            'modalMetodePembayaran',
+            'modalKonfirmasiPembayaran',
+            'modalTambahArsip',
+            'modalDraftTransaksi',
+            'modalStrukPembayaran'
+        ];
+        for (const id of modalIds) {
+            const m = document.getElementById(id);
+            if (m && !m.classList.contains('hidden')) {
+                return;
+            }
+        }
+
+        const activeEl = document.activeElement;
+        const isInputScanUtama = activeEl && activeEl.id === 'inputScanUtama';
+        const isInputManualModal = activeEl && activeEl.id === 'inputManualBarcode';
+        const isOtherEditable = activeEl && !isInputScanUtama && !isInputManualModal && (
+            activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'SELECT' ||
+            activeEl.isContentEditable
+        );
+
+        // Jika fokus sedang di input lain (misal edit harga/diskon item di keranjang),
+        // deteksi apakah ini tembakan cepat dari scanner (karakter huruf pada input angka atau burst sangat cepat)
+        const now = performance.now();
+        const delta = now - globalLastKeyTime;
+
+        if (!isInputScanUtama && !isInputManualModal) {
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+            if (e.key === 'Enter') {
+                if (globalScanBuffer.length >= SCANNER_MIN_LENGTH && delta <= SCANNER_MAX_INTERVAL_MS * 2) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const codeToSubmit = globalScanBuffer;
+                    globalScanBuffer = '';
+                    submitBarcodeLangsung(codeToSubmit);
+                    return;
+                }
+                globalScanBuffer = '';
+                return;
+            }
+
+            if (e.key.length === 1) {
+                if (delta > SCANNER_MAX_INTERVAL_MS * 2) {
+                    globalScanBuffer = '';
+                }
+                globalLastKeyTime = now;
+                globalScanBuffer += e.key;
+
+                // Jika user tidak sedang fokus di input apapun, langsung arahkan ke inputScanUtama
+                if (!isOtherEditable) {
+                    const inputUtama = document.getElementById('inputScanUtama');
+                    if (inputUtama) {
+                        e.preventDefault();
+                        inputUtama.focus();
+                        inputUtama.value = globalScanBuffer;
+                        scanKeyTimestamps = [now];
+
+                        clearTimeout(globalScanTimer);
+                        globalScanTimer = setTimeout(() => {
+                            if (globalScanBuffer.length >= SCANNER_MIN_LENGTH) {
+                                const code = inputUtama.value.trim();
+                                globalScanBuffer = '';
+                                if (code.length >= SCANNER_MIN_LENGTH) {
+                                    submitBarcodeLangsung(code);
+                                }
+                            } else {
+                                handleSearchItmInput(inputUtama.value);
+                            }
+                        }, 120);
+                    }
+                } else {
+                    // Jika fokus di input lain tapi terdeteksi burst cepat scanner tanpa Enter
+                    clearTimeout(globalScanTimer);
+                    globalScanTimer = setTimeout(() => {
+                        if (globalScanBuffer.length >= 8) {
+                            const code = globalScanBuffer;
+                            globalScanBuffer = '';
+                            submitBarcodeLangsung(code);
+                        } else {
+                            globalScanBuffer = '';
+                        }
+                    }, 120);
+                }
+            }
+        }
+    }, true);
+}
+
 export function bukaModalBarcode() {
     const modal = document.getElementById('modalBarcode');
     if (modal) {
@@ -55,7 +194,8 @@ export function initBarcodeCameraListener() {
 }
 
 export function handleSearchItmInput(val) {
-    val = (val || '').trim();
+    const rawVal = val || '';
+    val = rawVal.trim();
     const btnClear = document.getElementById('btnClearSearch');
     if (btnClear) {
         if (val.length > 0) {
@@ -66,9 +206,41 @@ export function handleSearchItmInput(val) {
     }
 
     clearTimeout(searchItmDebounceTimer);
+    clearTimeout(scanAutoSubmitTimer);
+
     if (val.length < 1) {
         tutupPanelSearchItm();
         searchResultItems = [];
+        scanKeyTimestamps = [];
+        return;
+    }
+
+    // Cek apakah input masuk dengan kecepatan scanner (burst cepat)
+    const now = performance.now();
+    scanKeyTimestamps.push(now);
+    if (scanKeyTimestamps.length > 35) {
+        scanKeyTimestamps.shift();
+    }
+
+    let isScannerBurst = false;
+    if (val.length >= SCANNER_MIN_LENGTH && scanKeyTimestamps.length >= SCANNER_MIN_LENGTH) {
+        const recent = scanKeyTimestamps.slice(-SCANNER_MIN_LENGTH);
+        const avgInterval = (recent[recent.length - 1] - recent[0]) / (recent.length - 1);
+        if (avgInterval <= SCANNER_MAX_INTERVAL_MS) {
+            isScannerBurst = true;
+        }
+    }
+
+    if (isScannerBurst) {
+        // Jika terdeteksi input dari scanner, jangan buka dropdown search,
+        // langsung auto-submit jika scanner tidak mengirim Enter dalam 100ms
+        tutupPanelSearchItm();
+        scanAutoSubmitTimer = setTimeout(() => {
+            const currentVal = (document.getElementById('inputScanUtama')?.value || '').trim();
+            if (currentVal.length >= SCANNER_MIN_LENGTH) {
+                submitBarcodeLangsung(currentVal);
+            }
+        }, 100);
         return;
     }
 
@@ -86,6 +258,10 @@ export function handleSearchItmFocus() {
 
 export function handleSearchItmKeydown(e) {
     if (e.key === 'Escape') {
+        tutupPanelSearchItm();
+    } else if (e.key === 'Enter') {
+        clearTimeout(searchItmDebounceTimer);
+        clearTimeout(scanAutoSubmitTimer);
         tutupPanelSearchItm();
     }
 }

@@ -74,6 +74,7 @@ import {
     bukaModalBarcode,
     tutupModalBarcode,
     initBarcodeCameraListener,
+    initGlobalBarcodeScanner,
     handleSearchItmInput,
     handleSearchItmFocus,
     handleSearchItmKeydown,
@@ -204,6 +205,7 @@ document.addEventListener('click', function(e) {
 // Inisialisasi awal saat DOM siap
 document.addEventListener('DOMContentLoaded', function() {
     initBarcodeCameraListener();
+    initGlobalBarcodeScanner();
     updateDraftBadgeHeader();
     sinkronkanDraftDenganSTS();
 
