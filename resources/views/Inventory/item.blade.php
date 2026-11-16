@@ -10,17 +10,18 @@
 
     $halaman  = $pagination['page'];
     $totalHal = $pagination['total_pages'];
+    $showZero = !empty($showZero);
 
-    // URL dengan mempertahankan search, filter & sort
-    $buatUrl = function (array $ubah = []) use ($keyword, $filterKtg, $filterMrk, $sort, $halaman) {
+    // URL dengan mempertahankan search, sort & filter stok 0
+    $buatUrl = function (array $ubah = []) use ($keyword, $sort, $halaman, $showZero) {
         $q = array_merge([
-            'keyword' => $keyword,
-            'ktg'     => $filterKtg,
-            'mrk'     => $filterMrk,
-            'sort'    => $sort,
-            'page'    => $halaman,
+            'keyword'   => $keyword,
+            'sort'      => $sort,
+            'show_zero' => $showZero ? '1' : null,
+            'page'      => $halaman,
         ], $ubah);
-        if ($q['sort'] === 'tgl_terbaru') unset($q['sort']);
+        if ($q['sort'] === 'nama_asc') unset($q['sort']);
+        if (empty($q['show_zero']))    unset($q['show_zero']);
         if ((int) $q['page'] <= 1)     unset($q['page']);
         $q = array_filter($q, fn ($v) => $v !== '' && $v !== null);
 
@@ -96,6 +97,9 @@
             <form action="<?= e(route('inventory.item')) ?>" method="GET" class="flex flex-wrap items-center gap-2">
                 <?php if ($sort !== 'tgl_terbaru'): ?>
                     <input type="hidden" name="sort" value="<?= e($sort) ?>">
+                <?php endif; ?>
+                <?php if ($showZero): ?>
+                    <input type="hidden" name="show_zero" value="1">
                 <?php endif; ?>
 
                 <div class="relative w-56 md:w-64">
@@ -186,6 +190,17 @@
                     <?php endforeach; ?>
                 </div>
             </details>
+
+            {{-- CHECKBOX TAMPILKAN STOK 0 --}}
+            <label class="h-9.5 px-3.5 bg-white border border-gray-400 rounded-lg flex items-center gap-2 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db transition-all duration-200 cursor-pointer shadow-xs select-none">
+                <input
+                    type="checkbox"
+                    <?= $showZero ? 'checked' : '' ?>
+                    onchange="window.location.href = '<?= e($buatUrl(['show_zero' => $showZero ? null : '1', 'page' => 1])) ?>'"
+                    class="w-4 h-4 rounded border-gray-400 text-primary-db focus:ring-primary-db cursor-pointer accent-[#142854]"
+                >
+                <span>Tampilkan stok 0</span>
+            </label>
 
         </div>
 

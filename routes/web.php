@@ -79,10 +79,11 @@ Route::middleware('auth')->group(function () {
         Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
         // Cetak Laporan Transaksi/Penjualan (Kasir, Admin, dan Manager)
         Route::get('transaksi/cetak', [ACRController::class, 'cetakLaporan'])->name('transaksi.cetak');
-        // Edit Transaksi: HANYA Manager dan Admin
+        // Edit & Hapus Transaksi: HANYA Manager dan Admin
         Route::middleware('role:manager,admin')->group(function () {
             Route::get('transaksi/{id}/edit', [ACRController::class, 'edit'])->name('transaksi.edit');
             Route::put('transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
+            Route::delete('transaksi/{id}', [ACRController::class, 'destroy'])->name('transaksi.destroy');
         });
 
         // Laporan View (Kasir, Admin, Manager bisa melihat & cetak laporan kas)

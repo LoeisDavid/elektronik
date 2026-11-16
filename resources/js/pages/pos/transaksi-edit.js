@@ -28,10 +28,11 @@ function formatCurrencyInput(el) {
     el.setSelectionRange(newPos, newPos);
 }
 
-export function recalculateTotals() {
+export function recalculateTotals(clampAllInputs = false) {
     const rows = document.querySelectorAll('.item-row');
     let rawSubtotal = 0;
     let totalItemDiscount = 0;
+    let subtotalAfterItemDisc = 0;
 
     rows.forEach(row => {
         const hgjInput = row.querySelector('.input-hgj');
@@ -41,12 +42,28 @@ export function recalculateTotals() {
         const discountNominal = row.querySelector('.item-discount-nominal');
 
         const hgj = parseCurrency(hgjInput ? hgjInput.value : 0);
-        const pot1 = Math.min(100, Math.max(0, parseFloat(pot1Input ? pot1Input.value : 0) || 0));
-        const potr = parseCurrency(potrInput ? potrInput.value : 0);
+        let pot1 = parseFloat(pot1Input ? pot1Input.value : 0) || 0;
+        if (pot1 > 100) {
+            pot1 = 100;
+            if (pot1Input) pot1Input.value = 100;
+        } else if (pot1 < 0) {
+            pot1 = 0;
+            if (pot1Input) pot1Input.value = 0;
+        }
 
-        // Hitung diskon item
+        // Hitung diskon persen item & batas maksimal voucher untuk detail ini saja
         const discPctNominal = hgj * (pot1 / 100);
-        const itemDiscTotal = discPctNominal + potr;
+        const maxPotr = Math.max(0, Math.round(hgj - discPctNominal));
+
+        let potr = parseCurrency(potrInput ? potrInput.value : 0);
+        if (potr > maxPotr) {
+            potr = maxPotr;
+            if (potrInput && (clampAllInputs || document.activeElement === potrInput || document.activeElement === pot1Input)) {
+                potrInput.value = potr > 0 ? potr.toLocaleString('id-ID') : '';
+            }
+        }
+
+        const itemDiscTotal = Math.min(hgj, discPctNominal + potr);
         const itemSubtotal = Math.max(0, hgj - itemDiscTotal);
 
         if (subtotalDisplay) {
@@ -59,6 +76,7 @@ export function recalculateTotals() {
 
         rawSubtotal += hgj;
         totalItemDiscount += itemDiscTotal;
+        subtotalAfterItemDisc += itemSubtotal;
     });
 
     // Global Diskon, Voucher & PPN Global
@@ -67,7 +85,7 @@ export function recalculateTotals() {
     const ppnInput = document.getElementById('inputPpn');
 
     const globalPct = Math.min(100, Math.max(0, parseFloat(discPercentInput ? discPercentInput.value : 0) || 0));
-    const voucher = parseCurrency(voucherInput ? voucherInput.value : 0);
+    let voucher = parseCurrency(voucherInput ? voucherInput.value : 0);
 
     let ppnRate = 0;
     if (ppnInput && ppnInput.value.trim() !== '') {
@@ -78,8 +96,15 @@ export function recalculateTotals() {
         }
     }
 
-    const subtotalAfterItemDisc = Math.max(0, rawSubtotal - totalItemDiscount);
     const globalDiscNominal = subtotalAfterItemDisc * (globalPct / 100);
+    const maxVoucherGlobal = Math.max(0, Math.round(subtotalAfterItemDisc - globalDiscNominal));
+    if (voucher > maxVoucherGlobal) {
+        voucher = maxVoucherGlobal;
+        if (voucherInput) {
+            voucherInput.value = voucher > 0 ? voucher.toLocaleString('id-ID') : '';
+        }
+    }
+
     const totalAfterAllDisc = Math.max(0, subtotalAfterItemDisc - globalDiscNominal - voucher);
 
     const ppnNominal = ppnRate > 0 ? (totalAfterAllDisc * (ppnRate / 100)) : 0;
@@ -156,7 +181,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
         editForm.addEventListener('change', function (e) {
             if (e.target.matches('.input-hgj, .input-pot1, .input-potr, #inputDiscountPercent, #inputVoucher, #inputPpn')) {
-                recalculateTotals();
+                recalculateTotals(true);
+            }
+        });
+
+        editForm.addEventListener('click', function (e) {
+            const btnHapusItem = e.target.closest('.btn-hapus-item-transaksi');
+            if (btnHapusItem) {
+                const nama = btnHapusItem.dataset.nama || 'Barang ini';
+                const barcode = btnHapusItem.dataset.barcode || '-';
+                const yakin = confirm(
+                    `PERINGATAN: Apakah Anda yakin ingin menghapus barang "${nama}" (${barcode}) dari transaksi ini?\n\nStok barang akan dikembalikan saat perubahan disimpan.`
+                );
+                if (!yakin) return;
+
+                const row = btnHapusItem.closest('.item-row');
+                if (row) {
+                    row.remove();
+                }
+
+                const remainingRows = editForm.querySelectorAll('.item-row');
+                const emptyRow = document.getElementById('emptyItemRow');
+                if (emptyRow) {
+                    if (remainingRows.length === 0) {
+                        emptyRow.classList.remove('hidden');
+                    } else {
+                        emptyRow.classList.add('hidden');
+                    }
+                }
+
+                recalculateTotals(true);
             }
         });
 
@@ -166,6 +220,20 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             if (ppnInput) {
                 ppnInput.value = ppnInput.value.replace(/[,.]/g, '').trim();
+            }
+        });
+    }
+
+    const btnHapusTransaksi = document.getElementById('btnHapusTransaksi');
+    const formDeleteTransaksi = document.getElementById('formDeleteTransaksi');
+    if (btnHapusTransaksi && formDeleteTransaksi) {
+        btnHapusTransaksi.addEventListener('click', function () {
+            const refNo = this.dataset.ref || '';
+            const yakin = confirm(
+                `PERINGATAN: Apakah Anda yakin ingin menghapus transaksi ${refNo} secara permanen?\n\nSeluruh stok barang pada transaksi ini akan otomatis dikembalikan ke stok.`
+            );
+            if (yakin) {
+                formDeleteTransaksi.submit();
             }
         });
     }

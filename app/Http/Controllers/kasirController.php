@@ -344,20 +344,23 @@ class kasirController extends Controller
             ], 400);
         }
 
-        // Hitung Subtotal dan Total Transaksi (Termasuk Diskon & Voucher per Item)
+        // Hitung Subtotal dan Total Transaksi (Termasuk Diskon & Voucher per Item, dibatasi per detail)
         $subtotal = 0;
         $totalItemDiscountNominal = 0;
-        foreach ($cart as $item) {
+        foreach ($cart as $k => $item) {
             $itemPrice = max(0, (float) ($item['price'] ?? 0));
             $itemDiscountPct = min(100, max(0, (float) ($item['discount'] ?? 0)));
-            $itemDiscountVoucher = max(0, (float) ($item['discount_voucher'] ?? 0));
-            $qty = max(1, (int) ($item['qty'] ?? 1));
-
             $discFromPct = $itemPrice * ($itemDiscountPct / 100);
-            $priceAfterDiscount = max(0, $itemPrice - $discFromPct - $itemDiscountVoucher);
+            $maxVoucherUnit = max(0, $itemPrice - $discFromPct);
+            $itemDiscountVoucher = min($maxVoucherUnit, max(0, (float) ($item['discount_voucher'] ?? 0)));
+            $cart[$k]['discount_voucher'] = $itemDiscountVoucher;
+
+            $qty = max(1, (int) ($item['qty'] ?? 1));
+            $effectiveUnitDisc = min($itemPrice, $discFromPct + $itemDiscountVoucher);
+            $priceAfterDiscount = max(0, $itemPrice - $effectiveUnitDisc);
 
             $subtotal += ($priceAfterDiscount * $qty);
-            $totalItemDiscountNominal += (($discFromPct + $itemDiscountVoucher) * $qty);
+            $totalItemDiscountNominal += ($effectiveUnitDisc * $qty);
         }
 
         $diskonTransaksiNominal = $subtotal * ($discountPercent / 100);

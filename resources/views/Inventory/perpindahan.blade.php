@@ -36,7 +36,7 @@
                     type="text"
                     name="keyword"
                     value="{{ $keyword }}"
-                    placeholder="Cari kode, gudang, user, status..."
+                    placeholder="Cari kode, gudang, user..."
                     class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 hover:border-primary-db focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db"
                 >
             </form>
@@ -82,19 +82,17 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Kode Perpindahan</th>
-                        <th class="py-2.5 px-4 font-semibold">Tanggal Request</th>
-                        <th class="py-2.5 px-4 font-semibold">Gudang Asal</th>
-                        <th class="py-2.5 px-4 font-semibold">Gudang Tujuan</th>
-                        <th class="py-2.5 px-4 font-semibold text-center">Status</th>
-                        <th class="py-2.5 px-4 font-semibold text-center">Jumlah Barang Dipindahkan</th>
-                        <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">Aksi</th>
+                        <th class="py-2.5 px-4 rounded-tl-lg">Kode Perpindahan</th>
+                        <th class="py-2.5 px-4">Tanggal Perpindahan</th>
+                        <th class="py-2.5 px-4">Gudang Asal</th>
+                        <th class="py-2.5 px-4">Gudang Tujuan</th>
+                        <th class="py-2.5 px-4 text-center">Jumlah Barang Dipindahkan</th>
+                        <th class="py-2.5 px-4 text-center w-20 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="perpindahanBody" class="divide-y divide-gray-200 text-sm text-black">
                     @forelse ($rpList as $rp)
                         @php
-                            $stClass = $badge[$rp->SS] ?? 'bg-gray-100 border-gray-400 text-gray-700';
                             $tglRq   = $rp->DTRQ ? date('d/m/Y', strtotime($rp->DTRQ)) : '-';
                             $asal    = $rp->gudangAsal?->DES ?? $rp->GD_ASAL;
                             $tujuan  = $rp->gudangTujuan?->DES ?? $rp->GD_TUJUAN;
@@ -102,13 +100,8 @@
                         <tr class="perpindahan-row hover:bg-gray-50/80 transition-colors">
                             <td class="py-3.5 px-4 font-mono ">{{ $rp->RP }}</td>
                             <td class="py-3.5 px-4">{{ $tglRq }}</td>
-                            <td class="py-3.5 px-4 ">{{ $asal }}</td>
-                            <td class="py-3.5 px-4 ">{{ $tujuan }}</td>
-                            <td class="py-3.5 px-4 text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded border {{ $stClass }}">
-                                    {{ $rp->SS }}
-                                </span>
-                            </td>
+                            <td class="py-3.5 px-4 text-black">{{ $asal }}</td>
+                            <td class="py-3.5 px-4 text-black">{{ $tujuan }}</td>
                             <td class="py-3.5 px-4 text-center text-gray-800">{{ (int) $rp->rpd_count }}</td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="relative inline-block text-left">
@@ -133,87 +126,27 @@
                                             </a>
                                         </div>
                                         <div class="py-1">
-                                            @if($rp->SS === 'Request')
-                                                <a
-                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
-                                                    target="_blank"
-                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-amber-50 hover:text-amber-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                                                    title="Cetak Surat Permintaan (1 TTD Pemohon)"
-                                                >
-                                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                                                    <span>Cetak Surat Permintaan</span>
-                                                </a>
-                                            @elseif($rp->SS === 'Pengiriman' || $rp->SS === 'Pending')
-                                                <a
-                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
-                                                    target="_blank"
-                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-blue-50 hover:text-blue-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                                                    title="Cetak Surat Jalan (Pengirim & Penerima Manual)"
-                                                >
-                                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25V4.5A2.25 2.25 0 0012 2.25H6.75A2.25 2.25 0 004.5 4.5v9.75" /></svg>
-                                                    <span>Cetak Surat Jalan</span>
-                                                </a>
-                                            @elseif($rp->SS === 'Diterima')
-                                                <a
-                                                    href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
-                                                    target="_blank"
-                                                    class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-green-50 hover:text-green-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
-                                                    title="Cetak Bukti Penerimaan (1 TTD Penerima)"
-                                                >
-                                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                    <span>Cetak Bukti Penerimaan</span>
-                                                </a>
-                                            @endif
+                                            <a
+                                                href="{{ route('inventory.perpindahan.cetak', $rp->RP) }}"
+                                                target="_blank"
+                                                class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-800 hover:bg-green-50 hover:text-green-800 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                                                title="Cetak Bukti Perpindahan"
+                                            >
+                                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <span>Cetak Bukti Perpindahan</span>
+                                            </a>
                                         </div>
-
-                                        {{-- AKSI KONFIRMASI --}}
-                                        @if($rp->SS === 'Request')
-                                            <div class="py-1">
-                                                <form action="{{ route('inventory.perpindahan.konfirmasi1', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Konfirmasi pengiriman barang dari gudang asal?')">
-                                                    @csrf
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.25V4.5A2.25 2.25 0 0012 2.25H6.75A2.25 2.25 0 004.5 4.5v9.75" /></svg>
-                                                        <span>Konfirmasi 1 (Kirim)</span>
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('inventory.perpindahan.tolak', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Tolak request perpindahan barang ini?')">
-                                                    @csrf
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                                        <span>Tolak Request</span>
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('inventory.perpindahan.destroy', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Batalkan dan hapus request perpindahan ini?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4v3M4 7h16" /></svg>
-                                                        <span>Hapus Request</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        @elseif($rp->SS === 'Pengiriman' || $rp->SS === 'Pending')
-                                            <div class="py-1">
-                                                <form action="{{ route('inventory.perpindahan.konfirmasi2', ['id' => $rp->RP]) }}" method="POST" onsubmit="return confirm('Konfirmasi penerimaan barang untuk perpindahan {{ $rp->RP }}? Seluruh barang akan otomatis berpindah ke gudang tujuan.')">
-                                                    @csrf
-                                                    <button type="submit" class="w-full px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition-colors flex items-center gap-2 cursor-pointer">
-                                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                        <span>Konfirmasi Penerimaan</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-gray-500">
+                            <td colspan="6" class="py-8 text-center text-gray-500">
                                 <div class="flex flex-col items-center justify-center gap-2">
                                     <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                                     <p class="font-medium">Belum ada data perpindahan barang</p>
-                                    <p class="text-xs text-gray-400">Klik tombol "+ Pindah Barang" untuk membuat request perpindahan baru.</p>
+                                    <p class="text-xs text-gray-400">Klik tombol "+ Pindah Barang" untuk memindahkan stok antar gudang.</p>
                                 </div>
                             </td>
                         </tr>
@@ -236,7 +169,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-slate-50">
             <div>
                 <h2 class="text-lg font-bold text-primary-db">Pindah Barang</h2>
-                <p class="text-xs text-gray-500">Buat request perpindahan stok antar gudang</p>
+                <p class="text-xs text-gray-500">Pindahkan stok barang antar gudang secara langsung</p>
             </div>
             <button type="button" onclick="tutupModal('pindahBarangModal')" class="text-2xl text-gray-500 hover:text-black cursor-pointer leading-none">&times;</button>
         </div>
@@ -246,10 +179,10 @@
             @csrf
 
             <div class="p-6 space-y-4 overflow-y-auto flex-1">
-                {{-- TANGGAL REQUEST (DTRQ) & GUDANG TUJUAN --}}
+                {{-- TANGGAL PERPINDAHAN (DTRQ) & GUDANG TUJUAN --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Tanggal Request (DTRQ)</label>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Tanggal Perpindahan</label>
                         <input
                             type="date"
                             name="DTRQ"

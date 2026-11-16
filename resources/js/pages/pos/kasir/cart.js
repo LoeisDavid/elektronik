@@ -114,7 +114,7 @@ export function renderCart() {
                         value="${itemDiscountVoucher > 0 ? formatRupiah(itemDiscountVoucher) : ''}"
                         placeholder="Rp 0"
                         title="Voucher (Rp)"
-                        oninput="formatInputRupiah(this); ubahVoucherItemLangsung('${key}', this.value)"
+                        oninput="formatInputRupiah(this); ubahVoucherItemLangsung('${key}', this.value, this)"
                         class="input-rupiah w-full h-8 bg-white border border-black rounded-lg px-2 text-xs font-semibold text-black placeholder-gray-400 outline-none text-right focus:ring-1 focus:ring-black" />
                 </div>
 
@@ -338,21 +338,38 @@ export function commitDiskonItemLangsung(key, inputEl) {
         if (typeof inputEl === 'object' && inputEl !== null) inputEl.value = 0;
     }
 
-    if ((parseFloat(state.cartData[key].discount) || 0) === val) {
-        hitungRingkasan();
-        return;
+    state.cartData[key].discount = val;
+
+    // Pastikan voucher item tidak melebihi sisa harga setelah diskon persen
+    const itemPrice = parseFloat(state.cartData[key].price) || 0;
+    const discFromPct = itemPrice * (val / 100);
+    const maxVoucherItem = Math.max(0, Math.round(itemPrice - discFromPct));
+    if ((parseFloat(state.cartData[key].discount_voucher) || 0) > maxVoucherItem) {
+        state.cartData[key].discount_voucher = maxVoucherItem;
     }
 
-    state.cartData[key].discount = val;
     renderCart();
     simpanKeSession();
 }
 
-export function ubahVoucherItemLangsung(key, rawVal) {
+export function ubahVoucherItemLangsung(key, rawVal, inputEl = null) {
     if (!state.cartData[key]) return;
     let cleaned = typeof rawVal === 'string' ? rawVal.replace(/\D/g, '') : rawVal;
     let val = parseFloat(cleaned) || 0;
     val = Math.max(0, val);
+
+    const itemPrice = parseFloat(state.cartData[key].price) || 0;
+    const itemDiscountPct = parseFloat(state.cartData[key].discount) || 0;
+    const discFromPct = itemPrice * (itemDiscountPct / 100);
+    const maxVoucherItem = Math.max(0, Math.round(itemPrice - discFromPct));
+
+    if (val > maxVoucherItem) {
+        val = maxVoucherItem;
+        if (inputEl) {
+            inputEl.value = val > 0 ? formatRupiah(val) : '';
+        }
+    }
+
     state.cartData[key].discount_voucher = val;
 
     updateSubtotalBarisItem(key);

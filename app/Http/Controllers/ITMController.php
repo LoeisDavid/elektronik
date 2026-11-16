@@ -31,10 +31,9 @@ class ITMController extends Controller
 public function index(Request $request)
 {
     try {
-        $keyword   = trim((string) $request->query('keyword', ''));
-        $filterKtg = trim((string) $request->query('ktg', ''));
-        $filterMrk = trim((string) $request->query('mrk', ''));
-        $sort      = (string) $request->query('sort', 'tgl_terbaru');
+        $keyword  = trim((string) $request->query('keyword', ''));
+        $sort     = (string) $request->query('sort', 'nama_asc');
+        $showZero = $request->boolean('show_zero', false);
         if (!isset(self::OPSI_SORT[$sort])) {
             $sort = 'tgl_terbaru';
         }
@@ -116,9 +115,13 @@ public function index(Request $request)
         }
 
         // ------------------------------------------------------------
-        // 4. Search & Filter PHP murni
+        // 4. Filter stok 0 (default hide) & Search PHP murni
         // ------------------------------------------------------------
         $hasil = $semuaRow;
+
+        if (!$showZero) {
+            $hasil = array_values(array_filter($hasil, fn ($r) => $r->stok > 0));
+        }
 
         if ($keyword !== '') {
             $hasil = array_values(array_filter($hasil, function ($r) use ($keyword) {
@@ -207,6 +210,7 @@ public function index(Request $request)
             'filterKtg'  => $filterKtg,
             'filterMrk'  => $filterMrk,
             'sort'       => $sort,
+            'showZero'   => $showZero,
             'MRK'        => $MRK,
             'KTG'        => $KTG,
             'SPP'        => $SPP,
