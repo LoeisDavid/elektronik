@@ -174,30 +174,31 @@ class ACRController extends Controller
      * [TAMBAHAN PRINT]
      * Menampilkan view cetak nota 1/3 folio (215mm x 110mm) dengan pagination 7 item/lembar.
      * Tidak ada query ulang ke database kecuali fallback data customer.
+     * Membuat PDF struk dengan DomPDF dari data yang dikirim Blade (POST).
+     * Tidak ada query ulang ke database.
      */
     public function print(Request $request)
     {
         try {
             $request->validate([
-                'ref_no'           => 'required|string|max:50',
-                'tanggal'          => 'nullable|string|max:50',
-                'waktu'            => 'nullable|string|max:20',
-                'kasir'            => 'nullable|string|max:50',
-                'customer_nama'    => 'nullable|string|max:100',
-                'customer_desa'    => 'nullable|string|max:100',
-                'customer_alamat'  => 'nullable|string|max:255',
-                'metode'           => 'nullable|string|max:30',
-                'subtotal'         => 'nullable|numeric',
-                'discount_item'    => 'nullable|numeric',
-                'discount_percent' => 'nullable|numeric',
-                'discount_global'  => 'nullable|numeric',
-                'voucher'          => 'nullable|numeric',
-                'ppn'              => 'nullable|numeric',
-                'ppn_nominal'      => 'nullable|numeric',
-                'total'            => 'required|numeric',
-                'dibayar'          => 'nullable|numeric',
-                'kembalian'        => 'nullable|numeric',
-                'items'            => 'required|string',
+                'ref_no'          => 'required|string|max:50',
+                'tanggal'         => 'nullable|string|max:50',
+                'waktu'           => 'nullable|string|max:20',
+                'kasir'           => 'nullable|string|max:50',
+                'customer_nama'   => 'nullable|string|max:100',
+                'customer_desa'   => 'nullable|string|max:100',
+                'customer_alamat' => 'nullable|string|max:255',
+                'metode'          => 'nullable|string|max:30',
+                'subtotal'        => 'nullable|numeric',
+                'discount_item'   => 'nullable|numeric',
+                'discount_global' => 'nullable|numeric',
+                'voucher'         => 'nullable|numeric',
+                'ppn'             => 'nullable|numeric',
+                'ppn_nominal'     => 'nullable|numeric',
+                'total'           => 'required|numeric',
+                'dibayar'         => 'nullable|numeric',
+                'kembalian'       => 'nullable|numeric',
+                'items'           => 'required|string',
             ]);
 
             $itemsRaw = json_decode($request->input('items'), true);
@@ -224,106 +225,54 @@ class ACRController extends Controller
             }
 
             // Fallback cari data customer dari database jika tidak dikirim dari form
-            $customerNama = (string) ($request->input('customer_nama') ?? '');
-            $customerDesa = (string) ($request->input('customer_desa') ?? '');
-            $customerAlamat = (string) ($request->input('customer_alamat') ?? '');
+            $customerNama = $request->input('customer_nama');
+            $customerDesa = $request->input('customer_desa');
+            $customerAlamat = $request->input('customer_alamat');
 
             if (empty($customerNama) && empty($customerDesa)) {
                 $acrObj = ACR::where('REF_NO', $request->input('ref_no'))->first();
                 $cstObj = $acrObj?->cst();
                 $dsObj = ($cstObj && $cstObj->DS) ? \App\Models\CST::where('CST', $cstObj->DS)->first() : null;
 
-                $customerNama = (string) ($cstObj?->DES ?? '');
-                $customerAlamat = (string) ($cstObj?->AL ?? '');
-                $customerDesa = (string) ($dsObj?->DES ?? '');
+                $customerNama = $cstObj?->DES ?? '';
+                $customerAlamat = $cstObj?->AL ?? '';
+                $customerDesa = $dsObj?->DES ?? '';
             }
 
-            $metode = (string) ($request->input('metode') ?: 'Tunai');
-            $metodeNorm = strtolower(trim($metode));
-            $isTunai = !empty($metodeNorm)
-                && !str_contains($metodeNorm, 'non')
-                && ($metodeNorm === 'tunai' || $metodeNorm === 'cash');
-
-            $total = (float) $request->input('total');
-            $dibayar = $request->filled('dibayar') ? (float) $request->input('dibayar') : $total;
-            $kembalian = $request->filled('kembalian') ? (float) $request->input('kembalian') : max(0, $dibayar - $total);
-
             $struk = [
-                'ref_no'           => $request->input('ref_no'),
-                'tanggal'          => $request->input('tanggal') ?: date('d M Y'),
-                'waktu'            => $request->input('waktu') ?: '00.00',
-                'kasir'            => $request->input('kasir') ?: 'Kasir',
-                'customer_nama'    => $customerNama,
-                'customer_desa'    => $customerDesa,
-                'customer_alamat'  => $customerAlamat,
-                'metode'           => $metode,
-                'subtotal'         => $request->filled('subtotal') ? (float) $request->input('subtotal') : $total,
-                'discount_item'    => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
-                'discount_percent' => $request->filled('discount_percent') ? (float) $request->input('discount_percent') : 0,
-                'discount_global'  => $request->filled('discount_global') ? (float) $request->input('discount_global') : 0,
-                'voucher'          => $request->filled('voucher') ? (float) $request->input('voucher') : 0,
-                'ppn'              => $request->filled('ppn') ? (float) $request->input('ppn') : null,
-                'ppn_nominal'      => $request->filled('ppn_nominal') ? (float) $request->input('ppn_nominal') : 0,
-                'total'            => $total,
-                'dibayar'          => $isTunai ? $dibayar : null,
-                'kembalian'        => $isTunai ? $kembalian : null,
-                'items'            => $items,
+                'ref_no'          => $request->input('ref_no'),
+                'tanggal'         => $request->input('tanggal'),
+                'waktu'           => $request->input('waktu'),
+                'kasir'           => $request->input('kasir'),
+                'customer_nama'   => $customerNama,
+                'customer_desa'   => $customerDesa,
+                'customer_alamat' => $customerAlamat,
+                'metode'          => $request->input('metode'),
+                'subtotal'        => $request->filled('subtotal') ? (float) $request->input('subtotal') : null,
+                'discount_item'   => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
+                'discount_global' => $request->filled('discount_global') ? (float) $request->input('discount_global') : 0,
+                'voucher'         => $request->filled('voucher') ? (float) $request->input('voucher') : 0,
+                'ppn'             => $request->filled('ppn') ? (float) $request->input('ppn') : null,
+                'ppn_nominal'     => $request->filled('ppn_nominal') ? (float) $request->input('ppn_nominal') : 0,
+                'total'           => (float) $request->input('total'),
+                'dibayar'         => $request->filled('dibayar') ? (float) $request->input('dibayar') : null,
+                'kembalian'       => $request->filled('kembalian') ? (float) $request->input('kembalian') : null,
+                'items'           => $items,
             ];
 
             $rowsPerPage = 7;
             $pages = count($items) > 0 ? array_chunk($items, $rowsPerPage) : [[]];
             $customerRows = $this->resolveCustomerDisplay($customerNama, $customerDesa, $customerAlamat);
 
-            return view('POS.struk-print', compact('struk', 'pages', 'isTunai', 'customerRows', 'rowsPerPage'));
+            $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
+                ->setPaper([0, 0, 226.77, $tinggi], 'portrait');
+
+            $namaFile = 'struk-' . preg_replace('/[^A-Za-z0-9_-]/', '', $struk['ref_no']) . '.pdf';
+
+            return $pdf->stream($namaFile);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan struk');
         }
-    }
-
-    /**
-     * Deduplicate customer name/address when they simply repeat the village name.
-     */
-    private function resolveCustomerDisplay(string $nama, string $desa, string $alamat): array
-    {
-        $rawNama = trim($nama);
-        $rawDesa = trim($desa);
-        $rawAlamat = trim($alamat);
-
-        $norm = fn (?string $s): string => preg_replace(
-            '/[^a-z0-9]/',
-            '',
-            preg_replace('/^(ds\.|desa\s+|dusun\s+)/i', '', strtolower($s ?? ''))
-        );
-
-        $normDesa = $norm($rawDesa);
-        $normNama = $norm($rawNama);
-        $normAlamat = $norm($rawAlamat);
-
-        $isNamaLikeDesa = empty($normNama) || $normNama === '-' || (!empty($normDesa) && ($normNama === $normDesa || str_contains($normNama, $normDesa)));
-        $isAlamatLikeDesa = empty($normAlamat) || $normAlamat === '-' || (!empty($normDesa) && ($normAlamat === $normDesa || str_contains($normAlamat, $normDesa)));
-
-        if ($isNamaLikeDesa && $isAlamatLikeDesa) {
-            $showNama = false;
-            $showAlamat = false;
-            $showDesa = !empty($rawDesa) && $rawDesa !== '-';
-        } else {
-            $showNama = !$isNamaLikeDesa && !empty($rawNama) && $rawNama !== '-';
-            $showDesa = !empty($rawDesa) && $rawDesa !== '-';
-            $showAlamat = !$isAlamatLikeDesa && !empty($rawAlamat) && $rawAlamat !== '-';
-        }
-
-        $rows = [];
-        if ($showNama) {
-            $rows[] = ['label' => 'Pelanggan:', 'value' => $rawNama];
-        }
-        if ($showDesa) {
-            $rows[] = ['label' => 'Desa:', 'value' => $rawDesa];
-        }
-        if ($showAlamat) {
-            $rows[] = ['label' => 'Alamat:', 'value' => $rawAlamat];
-        }
-
-        return $rows;
     }
 
     /**
@@ -331,8 +280,8 @@ class ACRController extends Controller
      */
     public function edit(string $id)
     {
-        if (!auth()->user()?->isManagerOrAdmin()) {
-            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        if (!auth()->user()?->canEditTransaksi()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat mengedit transaksi.');
         }
 
         try {
@@ -404,8 +353,8 @@ class ACRController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        if (!auth()->user()?->isManagerOrAdmin()) {
-            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        if (!auth()->user()?->canEditTransaksi()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat mengedit transaksi.');
         }
 
         $refNo = urldecode($id);
@@ -600,8 +549,8 @@ class ACRController extends Controller
      */
     public function destroy(string $id)
     {
-        if (!auth()->user()?->isManagerOrAdmin()) {
-            abort(403, 'Hanya Admin dan Manager yang dapat menghapus transaksi.');
+        if (!auth()->user()?->canDelete()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat menghapus transaksi.');
         }
 
         $refNo = urldecode($id);
@@ -827,6 +776,8 @@ class ACRController extends Controller
                 $tanggalDisplay = 'Sampai ' . Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y');
             }
 
+            $canSeeMargin = auth()->user()?->canSeeMargin() ?? false;
+
             $pdf = Pdf::loadView('POS.transaksi-print', compact(
                 'reportData',
                 'grandTotalKeseluruhan',
@@ -836,7 +787,8 @@ class ACRController extends Controller
                 'lokasi',
                 'tanggalDisplay',
                 'dari',
-                'sampai'
+                'sampai',
+                'canSeeMargin'
             ))->setPaper('a4', 'portrait');
 
             return $pdf->stream('laporan-penjualan-' . date('YmdHis') . '.pdf');

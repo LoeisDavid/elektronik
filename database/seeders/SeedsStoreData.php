@@ -123,8 +123,8 @@ trait SeedsStoreData
                 'PASS'     => Hash::make('manager123'),
                 'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
                 'HP'       => '081234567891',
-                'DES'      => $isSparepart ? 'Manager Sparepart Elektronik' : 'Manager Toko Elektronik',
-                'ROLE'     => 4, // Manager
+                'DES'      => $isSparepart ? 'Supervisor Sparepart Elektronik' : 'Supervisor Toko Elektronik',
+                'ROLE'     => 4, // Supervisor
             ],
             [
                 'USERNAME' => 'admin',
@@ -140,7 +140,7 @@ trait SeedsStoreData
                 'AL'       => 'Gudang Utama Jakarta',
                 'HP'       => '081234567892',
                 'DES'      => $isSparepart ? 'Petugas Gudang Sparepart' : 'Petugas Gudang Elektronik',
-                'ROLE'     => 3, // Storage
+                'ROLE'     => 3, // Gudang
             ],
             [
                 'USERNAME' => 'kasir',
@@ -153,10 +153,10 @@ trait SeedsStoreData
             [
                 'USERNAME' => 'adminhunt',
                 'PASS'     => Hash::make('hunterajasi123'),
-                'AL'       => 'Kantor Pusat Admin',
+                'AL'       => 'Kantor Pusat Developer',
                 'HP'       => '081234567899',
-                'DES'      => 'Admin Hunt (Super Admin Import)',
-                'ROLE'     => 1, // Admin (Sama seperti admin biasa, namun bisa Import & tidak bisa dihapus)
+                'DES'      => 'Developer System',
+                'ROLE'     => 5, // Developer
             ],
         ];
 

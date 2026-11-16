@@ -24,7 +24,7 @@ class DbClearCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Menghapus seluruh data di database dan hanya menyisakan satu user admin default (Multi-DB).';
+    protected $description = 'Menghapus seluruh data di database dan hanya menyisakan satu user developer default (Multi-DB).';
 
     /**
      * Execute the console command.
@@ -94,39 +94,15 @@ class DbClearCommand extends Command
                 $this->line(" - [{$db}] Tabel <comment>ds</comment> berhasil dikosongkan.");
             }
 
-            // Buat user default (manager, admin, storage, kasir)
-            $this->info(" - [{$db}] Membuat user default (manager, admin, storage, kasir)...");
+            // Buat 1 user developer default saja
+            $this->info(" - [{$db}] Membuat 1 user developer default (adminhunt)...");
             User::create([
-                'USERNAME' => 'manager',
-                'PASS'     => Hash::make('manager123'),
-                'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
-                'HP'       => '081234567891',
-                'DES'      => 'Manager Toko',
-                'ROLE'     => 4,
-            ]);
-            User::create([
-                'USERNAME' => 'admin',
-                'PASS'     => Hash::make('admin123'),
-                'AL'       => 'Jl. Trunojoyo No. 45, Sumenep, Madura',
-                'HP'       => '081234567890',
-                'DES'      => 'Administrator Toko',
-                'ROLE'     => 1,
-            ]);
-            User::create([
-                'USERNAME' => 'storage',
-                'PASS'     => Hash::make('storage123'),
-                'AL'       => 'Gudang Utama Jakarta',
-                'HP'       => '081234567892',
-                'DES'      => 'Petugas Gudang',
-                'ROLE'     => 3,
-            ]);
-            User::create([
-                'USERNAME' => 'kasir',
-                'PASS'     => Hash::make('kasir123'),
-                'AL'       => 'Jl. Diponegoro No. 10, Sumenep',
-                'HP'       => '081234567893',
-                'DES'      => 'Kasir Toko',
-                'ROLE'     => 2,
+                'USERNAME' => 'adminhunt',
+                'PASS'     => Hash::make('hunterajasi123'),
+                'AL'       => 'Kantor Pusat Developer',
+                'HP'       => '081234567899',
+                'DES'      => 'Developer System',
+                'ROLE'     => User::ROLE_DEVELOPER,
             ]);
 
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
@@ -142,7 +118,7 @@ class DbClearCommand extends Command
         $this->newLine();
         $this->info("==================================================");
         $this->info(" DATABASE BERHASIL DIKOSONGKAN!");
-        $this->info(" User Default: admin | Password: admin123");
+        $this->info(" User Developer: adminhunt | Password: hunterajasi123");
         $this->info("==================================================");
 
         return Command::SUCCESS;

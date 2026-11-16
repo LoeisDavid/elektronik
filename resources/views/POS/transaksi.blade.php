@@ -266,8 +266,8 @@
                             <td class="py-3.5 px-4 text-center">
 
                                 <div class="inline-flex items-center justify-center gap-2">
-                                    @if(auth()->user()?->isManagerOrAdmin())
-                                    {{-- TOMBOL EDIT TRANSAKSI (Hanya Admin dan Manager) --}}
+                                    @if(auth()->user()?->canEditTransaksi())
+                                    {{-- TOMBOL EDIT TRANSAKSI (Hanya Supervisor dan Developer) --}}
                                     <a
                                         href="{{ route('POS.transaksi.edit', ['id' => $item->REF_NO]) }}"
                                         title="Edit Transaksi {{ $item->REF_NO }}"

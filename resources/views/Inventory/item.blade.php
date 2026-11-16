@@ -8,21 +8,25 @@
     // ---------- Helper PHP murni ----------
     $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.');
 
-    $halaman  = $pagination['page'];
-    $totalHal = $pagination['total_pages'];
-    $showZero = !empty($showZero);
+    $halaman   = $pagination['page'];
+    $totalHal  = $pagination['total_pages'];
+    $showZero  = !empty($showZero);
+    $filterKtg = $filterKtg ?? '';
+    $filterMrk = $filterMrk ?? '';
 
-    // URL dengan mempertahankan search, sort & filter stok 0
-    $buatUrl = function (array $ubah = []) use ($keyword, $sort, $halaman, $showZero) {
+    // URL dengan mempertahankan search, filter kategori/merk, sort & filter stok 0
+    $buatUrl = function (array $ubah = []) use ($keyword, $filterKtg, $filterMrk, $sort, $halaman, $showZero) {
         $q = array_merge([
             'keyword'   => $keyword,
+            'ktg'       => $filterKtg,
+            'mrk'       => $filterMrk,
             'sort'      => $sort,
             'show_zero' => $showZero ? '1' : null,
             'page'      => $halaman,
         ], $ubah);
-        if ($q['sort'] === 'nama_asc') unset($q['sort']);
-        if (empty($q['show_zero']))    unset($q['show_zero']);
-        if ((int) $q['page'] <= 1)     unset($q['page']);
+        if ($q['sort'] === 'tgl_terbaru') unset($q['sort']);
+        if (empty($q['show_zero']))       unset($q['show_zero']);
+        if ((int) $q['page'] <= 1)        unset($q['page']);
         $q = array_filter($q, fn ($v) => $v !== '' && $v !== null);
 
         return route('inventory.item') . (count($q) ? '?' . http_build_query($q) : '');
@@ -309,8 +313,8 @@
                                             </button>
                                             <?php endif; ?>
 
-                                            {{-- HAPUS (HANYA ADMIN) --}}
-                                            <?php if (auth()->user()?->isAdmin()): ?>
+                                            {{-- HAPUS (HANYA SUPERVISOR & DEVELOPER) --}}
+                                            <?php if (auth()->user()?->canDelete()): ?>
                                             <form method="POST" action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>">
                                                 <?= csrf_field() ?>
                                                 <?= method_field('DELETE') ?>

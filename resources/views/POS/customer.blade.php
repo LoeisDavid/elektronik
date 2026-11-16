@@ -273,7 +273,8 @@
                                             <span>Edit</span>
                                         </button>
 
-                                        {{-- DELETE --}}
+                                        {{-- DELETE (HANYA SUPERVISOR & DEVELOPER) --}}
+                                        @if(auth()->user()?->canDelete())
                                         <form
                                             method="POST"
                                             action="{{ route('POS.customer.destroy', ['id' => $customer->CST]) }}"
@@ -301,6 +302,7 @@
                                                 <span>Hapus</span>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
