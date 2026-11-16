@@ -4,14 +4,14 @@
         {{-- Previous --}}
         @if ($paginator->onFirstPage())
             <span class="flex items-center justify-center w-6 h-6 border border-gray-300 rounded text-gray-300 cursor-not-allowed">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
             </span>
         @else
             <a href="{{ $paginator->previousPageUrl() }}" rel="prev"
                class="flex items-center justify-center w-6 h-6 border border-gray-400 rounded text-black hover:bg-gray-100 transition-colors">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
             </a>
@@ -44,13 +44,13 @@
         @if ($paginator->hasMorePages())
             <a href="{{ $paginator->nextPageUrl() }}" rel="next"
                class="flex items-center justify-center w-6 h-6 border border-gray-400 rounded text-black hover:bg-gray-100 transition-colors">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </a>
         @else
             <span class="flex items-center justify-center w-6 h-6 border border-gray-300 rounded text-gray-300 cursor-not-allowed">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </span>

@@ -6,7 +6,7 @@
 @section('content')
 @php
     $badge = [
-        'Request'    => 'bg-blue-100 border-blue-400 text-blue-700',
+        'Request'    => 'bg-primary-db/10 border-primary-db/20 text-primary-db',
         'Pengiriman' => 'bg-amber-100 border-amber-400 text-amber-700',
         'Pending'    => 'bg-amber-100 border-amber-400 text-amber-700',
         'Diterima'   => 'bg-green-100 border-green-600 text-green-800',
@@ -98,7 +98,7 @@
                             $tujuan  = $rp->gudangTujuan?->DES ?? $rp->GD_TUJUAN;
                         @endphp
                         <tr class="perpindahan-row hover:bg-gray-50/80 transition-colors">
-                            <td class="py-3.5 px-4 font-mono text-gray-700">{{ $rp->RP }}</td>
+                            <td class="py-3.5 px-4 font-mono ">{{ $rp->RP }}</td>
                             <td class="py-3.5 px-4">{{ $tglRq }}</td>
                             <td class="py-3.5 px-4 text-black">{{ $asal }}</td>
                             <td class="py-3.5 px-4 text-black">{{ $tujuan }}</td>
@@ -261,10 +261,10 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 text-gray-600 sticky top-0 font-semibold">
                                 <tr>
-                                    <th class="py-2 px-3">Kode Barcode</th>
-                                    <th class="py-2 px-3">Nama Barang</th>
-                                    <th class="py-2 px-3">Gudang Asal</th>
-                                    <th class="py-2 px-3 text-center w-12">Hapus</th>
+                                    <th class="py-2 px-3 font-semibold">Kode Barcode</th>
+                                    <th class="py-2 px-3 font-semibold">Nama Barang</th>
+                                    <th class="py-2 px-3 font-semibold">Gudang Asal</th>
+                                    <th class="py-2 px-3 font-semibold text-center w-12">Hapus</th>
                                 </tr>
                             </thead>
                             <tbody id="scannedItemsBody" class="divide-y divide-gray-100 font-medium">
@@ -319,7 +319,7 @@
                 </div>
                 <div>
                     <span class="text-gray-500 block">Status:</span>
-                    <span id="dtlStatus" class="inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] border mt-0.5"></span>
+                    <span id="dtlStatus" class="inline-flex items-center px-2.5 py-0.5 rounded font-semibold text-xs border mt-0.5"></span>
                 </div>
                 <div>
                     <span class="text-gray-500 block">Gudang Asal:</span>
@@ -355,10 +355,10 @@
                     <table class="w-full text-left text-xs">
                         <thead class="bg-slate-100 text-gray-600 sticky top-0 font-semibold">
                             <tr>
-                                <th class="py-2 px-3">No</th>
-                                <th class="py-2 px-3">Kode Barcode</th>
-                                <th class="py-2 px-3">Nama Barang</th>
-                                <th class="py-2 px-3">Kategori</th>
+                                <th class="py-2 px-3 font-semibold">No</th>
+                                <th class="py-2 px-3 font-semibold">Kode Barcode</th>
+                                <th class="py-2 px-3 font-semibold">Nama Barang</th>
+                                <th class="py-2 px-3 font-semibold">Kategori</th>
                             </tr>
                         </thead>
                         <tbody id="dtlItemsBody" class="divide-y divide-gray-100 font-medium">
@@ -611,9 +611,10 @@
                     // Badge status
                     const stEl = document.getElementById('dtlStatus');
                     stEl.textContent = rp.SS;
-                    stEl.className = 'inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] border mt-0.5 ' + (
-                        rp.SS === 'Request' ? 'bg-blue-100 border-blue-400 text-blue-700' :
-                        rp.SS === 'Pending' ? 'bg-amber-100 border-amber-400 text-amber-600' :
+                    stEl.className = 'inline-flex items-center px-2.5 py-0.5 rounded font-semibold text-xs border mt-0.5 ' + (
+                        rp.SS === 'Request' ? 'bg-primary-db/10 border-primary-db/20 text-primary-db' :
+                        (rp.SS === 'Pending' || rp.SS === 'Pengiriman') ? 'bg-amber-100 border-amber-400 text-amber-700' :
+                        rp.SS === 'Ditolak' ? 'bg-red-100 border-red-400 text-red-700' :
                         'bg-green-100 border-green-600 text-green-800'
                     );
 

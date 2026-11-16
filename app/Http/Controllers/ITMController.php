@@ -35,15 +35,15 @@ public function index(Request $request)
         $sort     = (string) $request->query('sort', 'nama_asc');
         $showZero = $request->boolean('show_zero', false);
         if (!isset(self::OPSI_SORT[$sort])) {
-            $sort = 'nama_asc';
+            $sort = 'tgl_terbaru';
         }
         $page = max(1, (int) $request->query('page', 1));
 
         // ------------------------------------------------------------
         // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
         // ------------------------------------------------------------
-        $KTG = KTG::all();
-        $MRK = MRK::all();
+        $KTG = KTG::orderBy('DES')->get();
+        $MRK = MRK::orderBy('DES')->get();
         $SPP = SPP::all();
         $GD  = GD::all();
 
@@ -52,37 +52,44 @@ public function index(Request $request)
         $namaSPP = $SPP->pluck('DES', 'SPP')->all();
 
         // ------------------------------------------------------------
-        // 2. Ambil total aset (HRB dari ITMDT yang belum terjual / belum ada di STS)
+        // 2. Ambil total aset & tanggal ITMDT (hanya yang belum terjual / belum ada di STS)
         // ------------------------------------------------------------
-        $asetPerItm = DB::table('itmdt')
+        $itmdtStats = DB::table('itmdt')
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('sts')
                     ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
             })
-            ->select('ITM', DB::raw('SUM(HRB) as total_aset'))
+            ->select(
+                'ITM',
+                DB::raw('SUM(HRB) as total_aset'),
+                DB::raw('MAX(COALESCE(created_at, TM)) as tgl_terbaru'),
+                DB::raw('MIN(COALESCE(created_at, TM)) as tgl_terlama')
+            )
             ->groupBy('ITM')
-            ->pluck('total_aset', 'ITM')
-            ->all();
+            ->get()
+            ->keyBy('ITM');
 
         $semuaRow = [];
         $totalAsetKeseluruhan = 0;
 
-        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK', 'created_at']) as $itm) {
-            $totalAset = (float) ($asetPerItm[$itm->ITM] ?? 0);
+        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK']) as $itm) {
+            $statItmdt = $itmdtStats->get($itm->ITM);
+            $totalAset = (float) ($statItmdt->total_aset ?? 0);
             $totalAsetKeseluruhan += $totalAset;
 
             $semuaRow[] = (object) [
-                'itm'        => $itm->ITM,
-                'des'        => $itm->DES,
-                'ktg'        => $itm->KTG,
-                'ktg_nama'   => $namaKTG[$itm->KTG] ?? '-',
-                'mrk'        => $itm->MRK,
-                'mrk_nama'   => $namaMRK[$itm->MRK] ?? '-',
-                'hrg'        => $itm->HRG,
-                'stok'       => (int) $itm->STOK,
-                'total_aset' => $totalAset,
-                'created_at' => $itm->created_at ? (string) $itm->created_at : null,
+                'itm'         => $itm->ITM,
+                'des'         => $itm->DES,
+                'ktg'         => $itm->KTG,
+                'ktg_nama'    => $namaKTG[$itm->KTG] ?? '-',
+                'mrk'         => $itm->MRK,
+                'mrk_nama'    => $namaMRK[$itm->MRK] ?? '-',
+                'hrg'         => $itm->HRG,
+                'stok'        => (int) $itm->STOK,
+                'total_aset'  => $totalAset,
+                'tgl_terbaru' => $statItmdt->tgl_terbaru ?? null,
+                'tgl_terlama' => $statItmdt->tgl_terlama ?? null,
             ];
         }
 
@@ -128,6 +135,14 @@ public function index(Request $request)
             }));
         }
 
+        if ($filterKtg !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->ktg === $filterKtg));
+        }
+
+        if ($filterMrk !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->mrk === $filterMrk));
+        }
+
         // ------------------------------------------------------------
         // 5. Sort PHP murni
         // ------------------------------------------------------------
@@ -139,12 +154,16 @@ public function index(Request $request)
                     return -$nama;
 
                 case 'tgl_terbaru':
+                    if ($a->tgl_terbaru === $b->tgl_terbaru) return $nama;
+                    if ($a->tgl_terbaru === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terbaru === null) return -1;
+                    return strcmp($b->tgl_terbaru, $a->tgl_terbaru);
+
                 case 'tgl_terlama':
-                    if ($a->created_at === $b->created_at) return $nama;
-                    if ($a->created_at === null) return 1;   // tanpa tanggal selalu di bawah
-                    if ($b->created_at === null) return -1;
-                    $cmp = strcmp($a->created_at, $b->created_at);
-                    return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
+                    if ($a->tgl_terlama === $b->tgl_terlama) return $nama;
+                    if ($a->tgl_terlama === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terlama === null) return -1;
+                    return strcmp($a->tgl_terlama, $b->tgl_terlama);
 
                 case 'stok_terbanyak':
                     return ($b->stok <=> $a->stok) ?: $nama;
@@ -188,6 +207,8 @@ public function index(Request $request)
             'daftarITM'  => $daftarITM,
             'opsiSort'   => self::OPSI_SORT,
             'keyword'    => $keyword,
+            'filterKtg'  => $filterKtg,
+            'filterMrk'  => $filterMrk,
             'sort'       => $sort,
             'showZero'   => $showZero,
             'MRK'        => $MRK,
@@ -385,7 +406,7 @@ public function index(Request $request)
         }
 
         $data = $request->validateWithBag('editItem', [
-            'ITM' => 'required|string|max:10',
+            'ITM' => 'required|string|max:25',
             'DES' => 'required|string|max:150',
             'MRK' => 'required|string|max:10',
             'KTG' => 'required|string|max:10',
@@ -433,11 +454,11 @@ public function index(Request $request)
             }
 
             $data = $request->validateWithBag('stok', [
-                'stok_itm' => 'required|string|max:10',
+                'stok_itm' => 'required|string|max:25',
                 'stok_spp' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',
                 'stok_hrb' => 'required|numeric|min:0',
-                'stok_bc'  => 'required|string|max:20',
+                'stok_bc'  => 'required|string|max:40',
             ], [
                 'stok_itm.required' => 'Pilih nama barang.',
                 'stok_spp.required' => 'Pilih supplier.',
@@ -584,7 +605,7 @@ public function index(Request $request)
     }
 
     /**
-     * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit  => maks 20 karakter.
+     * BC_OUT = ITM (maks 25) + yymmdd (6) + urutan 4 digit => maks 35 karakter.
      */
     private function generateBcOut(string $itm): string
     {

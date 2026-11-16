@@ -56,8 +56,8 @@ class STSController extends Controller
             $validated = $request->validate([
                 'REC' => 'required|string|max:3',
                 'REF_NO' => 'required|string|max:10',
-                'BC_OUT' => 'required|string|max:20',
-                'ITM' => 'required|string|max:10',
+                'BC_OUT' => 'required|string|max:40',
+                'ITM' => 'required|string|max:25',
                 'HGJ' => 'required|decimal',
                 'ST' => 'required|string|max:3',
                 'POT_1' => 'nullable|integer',
@@ -92,8 +92,8 @@ class STSController extends Controller
             $validated = $request->validate([
                 'REC' => 'required|string|max:3',
                 'REF_NO' => 'required|string|max:10',
-                'BC_OUT' => 'required|string|max:20',
-                'ITM' => 'required|string|max:10',
+                'BC_OUT' => 'required|string|max:40',
+                'ITM' => 'required|string|max:25',
                 'HGJ' => 'required|decimal',
                 'ST' => 'required|string|max:3',
                 'POT_1' => 'nullable|integer',

@@ -27,110 +27,20 @@
             </div>
         @endif
 
-        {{-- Hasil Import Terakhir & Tombol Cetak Barcode --}}
-        @if (!empty($importedBarcodes) && count($importedBarcodes) > 0)
-            <div class="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900">Import Stok Barang Berhasil!</h2>
-                            <p class="text-xs text-gray-500">
-                                Total <span class="font-bold text-emerald-600">{{ $importSummary['total_barang'] ?? count(array_unique(array_column($importedBarcodes, 'itm'))) }}</span> barang &bull; 
-                                Total <span class="font-bold text-emerald-600">{{ count($importedBarcodes) }}</span> barcode unit siap dicetak.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <a 
-                            href="{{ route('import.xls.cetak') }}" 
-                            target="_blank"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md hover:shadow transition cursor-pointer"
-                        >
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                            </svg>
-                            Cetak Barcode ({{ count($importedBarcodes) }} Label)
-                        </a>
-
-                        <form action="{{ route('import.xls.reset') }}" method="POST" onsubmit="return confirm('Kosongkan daftar barcode ini?')">
-                            @csrf
-                            <button 
-                                type="submit" 
-                                class="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-red-600 transition cursor-pointer"
-                                title="Kosongkan Hasil Import"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                {{-- Preview Tabel Barcode --}}
-                <div class="mt-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Daftar Barcode Unit yang Dihasilkan
-                        </span>
-                        <span class="text-xs text-gray-400">
-                            Menampilkan {{ min(100, count($importedBarcodes)) }} dari {{ count($importedBarcodes) }} barcode
-                        </span>
-                    </div>
-
-                    <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl">
-                        <table class="w-full text-xs text-left">
-                            <thead class="bg-gray-100 text-gray-700 font-semibold sticky top-0">
-                                <tr>
-                                    <th class="py-2 px-3 text-center w-12">No</th>
-                                    <th class="py-2 px-3">Kode ITM</th>
-                                    <th class="py-2 px-3">Nama Barang</th>
-                                    <th class="py-2 px-3">Barcode (BC_OUT)</th>
-                                    <th class="py-2 px-3">Gudang</th>
-                                    <th class="py-2 px-3 text-center">Supplier</th>
-                                    <th class="py-2 px-3 text-right">Harga Beli</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white font-medium text-gray-800">
-                                @foreach (array_slice($importedBarcodes, 0, 100) as $idx => $bc)
-                                    <tr class="hover:bg-slate-50 transition">
-                                        <td class="py-2 px-3 text-center text-gray-400">{{ $idx + 1 }}</td>
-                                        <td class="py-2 px-3 font-mono font-bold text-primary-db">{{ $bc['itm'] }}</td>
-                                        <td class="py-2 px-3">{{ $bc['des'] }}</td>
-                                        <td class="py-2 px-3 font-mono font-semibold text-indigo-700">{{ $bc['bc_out'] }}</td>
-                                        <td class="py-2 px-3 text-gray-600">{{ $bc['gd'] }}</td>
-                                        <td class="py-2 px-3 text-center text-gray-500">{{ $bc['spp'] }}</td>
-                                        <td class="py-2 px-3 text-right font-mono">Rp {{ number_format($bc['hrb'] ?? 0, 0, ',', '.') }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        @endif
-
         {{-- Navigation Tabs: IMPORT vs EXPORT --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="flex border-b border-gray-200 bg-gray-50">
+            <div class="flex bg-primary-db divide-x divide-white/20">
                 @if($canImport)
                     <button
                         type="button"
                         id="tabBtnImport"
                         onclick="switchMainTab('import')"
-                        class="flex-1 py-4 px-6 text-sm font-bold flex items-center justify-center gap-2.5 border-b-2 border-primary-db text-primary-db bg-white transition cursor-pointer"
+                        class="flex-1 py-4 px-6 text-sm font-bold flex items-center justify-center gap-2.5 text-white bg-primary-db hover:bg-primary-sdb transition-all duration-200 cursor-pointer"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        <span>IMPORT DATA (XLS & SQL)</span>
-                        <span class="px-2 py-0.5 text-[10px] rounded-full bg-primary-db text-white uppercase">Khusus adminhunt</span>
+                        <span id="tabTextImport" class="pb-0.5 border-b-2 border-white">IMPORT DATA (XLS & SQL)</span>
                     </button>
                 @endif
 
@@ -138,13 +48,12 @@
                     type="button"
                     id="tabBtnExport"
                     onclick="switchMainTab('export')"
-                    class="flex-1 py-4 px-6 text-sm font-bold flex items-center justify-center gap-2.5 border-b-2 {{ $canImport ? 'border-transparent text-gray-500 hover:text-gray-800' : 'border-primary-db text-primary-db bg-white' }} transition cursor-pointer"
+                    class="flex-1 py-4 px-6 text-sm font-bold flex items-center justify-center gap-2.5 {{ $canImport ? 'text-white/75 hover:text-white' : 'text-white' }} bg-primary-db hover:bg-primary-sdb transition-all duration-200 cursor-pointer"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    <span>EXPORT DATA (XLS & SQL ZIP)</span>
-                    <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-100 text-emerald-800 uppercase">Admin & Manager</span>
+                    <span id="tabTextExport" class="pb-0.5 border-b-2 {{ $canImport ? 'border-transparent' : 'border-white' }}">EXPORT DATA (XLS & SQL ZIP)</span>
                 </button>
             </div>
 
@@ -165,7 +74,7 @@
                             <label class="relative flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition" id="lblImportJenisXls">
                                 <input type="radio" name="jenis" value="xls" checked onchange="updateImportUI()" class="w-4 h-4 text-primary-db focus:ring-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-primary-db">Jenis 1: Excel / Spreadsheet (.xlsx / .xls / .csv)</p>
+                                    <p class="text-sm font-bold text-primary-db">Excel / Spreadsheet (.xlsx / .xls / .csv)</p>
                                     <p class="text-xs text-gray-500">Membaca baris & sheet spreadsheet otomatis beserta konversi nama ke kode.</p>
                                 </div>
                             </label>
@@ -173,42 +82,42 @@
                             <label class="relative flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblImportJenisSql">
                                 <input type="radio" name="jenis" value="sql" onchange="updateImportUI()" class="w-4 h-4 text-primary-db focus:ring-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800">Jenis 2: Database SQL (.sql / .zip)</p>
+                                    <p class="text-sm font-bold text-gray-800">Database SQL (.sql / .zip)</p>
                                     <p class="text-xs text-gray-500">Import dari file dump .sql atau arsip .zip yang berisi file .sql per tabel.</p>
                                 </div>
                             </label>
                         </div>
                     </div>
 
-                    {{-- LANGKAH 2: PILIH TIPE IMPORT (3 TIPE) --}}
+                    {{-- LANGKAH 2: PILIH TIPE IMPORT --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
-                            2. Pilih Tipe Import (3 Tipe)
+                            2. Pilih Tipe Import
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {{-- Tipe 1: Per Tabel --}}
+                            {{-- Per Tabel --}}
                             <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblImportTipePertabel">
                                 <input type="radio" name="tipe" value="pertabel" onchange="updateImportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-900">Tipe 1: Per Tabel</p>
+                                    <p class="text-sm font-bold text-gray-900">Per Tabel</p>
                                     <p class="text-xs text-gray-500 mt-0.5">Pilih sendiri tabel apa saja yang ingin di-import (multi-sheet XLS atau ZIP SQL).</p>
                                 </div>
                             </label>
 
-                            {{-- Tipe 2: Paket Kategori (Penjualan / Stok Barang / Barang) --}}
+                            {{-- Paket Kategori (Penjualan / Stok Barang / Barang) --}}
                             <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition" id="lblImportTipePaket">
                                 <input type="radio" name="tipe" value="paket" checked onchange="updateImportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-primary-db">Tipe 2: Paket Kategori</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">1) Penjualan (acr & sts), 2) Stok Barang (itm & itmdt), 3) Master Barang (itm).</p>
+                                    <p class="text-sm font-bold text-primary-db">Paket Kategori</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Import praktis berdasarkan paket transaksi penjualan atau stok barang.</p>
                                 </div>
                             </label>
 
-                            {{-- Tipe 3: Backup Semuanya --}}
+                            {{-- Backup Semuanya --}}
                             <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblImportTipeBackup">
                                 <input type="radio" name="tipe" value="backup" onchange="updateImportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-900">Tipe 3: Backup Semuanya</p>
+                                    <p class="text-sm font-bold text-gray-900">Backup Semuanya</p>
                                     <p class="text-xs text-gray-500 mt-0.5">Pulihkan (Restore) seluruh data dari semua tabel database sekaligus.</p>
                                 </div>
                             </label>
@@ -236,30 +145,30 @@
                     </div>
 
                     {{-- SUB-OPSI TIPE 2: PILIH PAKET (PENJUALAN / STOK BARANG / BARANG) --}}
-                    <div id="importPaketBox" class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                        <span class="block text-xs font-bold text-gray-700 uppercase">Pilih Kategori Paket Import (3 Pilihan):</span>
+                    <div id="importPaketBox" class="space-y-2.5">
+                        <span class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Pilih Kategori Paket Import:</span>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer" id="lblImportSubStok">
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer transition" id="lblImportSubStok">
                                 <input type="radio" name="paket_sub" value="stok_barang" checked onchange="updateImportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-primary-db">1. Stok Barang (ITM & ITMDT)</p>
+                                    <p class="text-xs font-bold text-primary-db">Stok Barang (ITM & ITMDT)</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5">Sesuai <strong>template_data_barang.xlsx</strong> (2 Sheet: Data Barang Masuk & Data Barang) atau 1 Sheet.</p>
                                 </div>
                             </label>
 
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer" id="lblImportSubPenjualan">
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition" id="lblImportSubPenjualan">
                                 <input type="radio" name="paket_sub" value="penjualan" onchange="updateImportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-gray-800">2. Penjualan (ACR & STS)</p>
+                                    <p class="text-xs font-bold text-gray-800">Penjualan (ACR & STS)</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5">Sesuai <strong>template_penjualan.xlsx</strong> (2 Sheet: Penjualan & Detail Penjualan).</p>
                                 </div>
                             </label>
 
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer" id="lblImportSubBarang">
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition" id="lblImportSubBarang">
                                 <input type="radio" name="paket_sub" value="barang" onchange="updateImportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-gray-800">3. Data Barang Lengkap (ITM)</p>
-                                    <p class="text-[11px] text-gray-500 mt-0.5">Sesuai <strong>data_barang_lengkap (1).xlsx</strong> (Kode Barang, Nama Barang, Supplier, Merk, Kategori, Stok, Harga Beli, Tanggal Beli, Gudang).</p>
+                                    <p class="text-xs font-bold text-gray-800">Data Barang Lengkap (ITM)</p>
+                                    <p class="text-[11px] text-gray-500 mt-0.5">Sesuai <strong>data_barang_lengkap (1).xlsx</strong> (1 Sheet: Master Barang, Stok, Harga & Gudang).</p>
                                 </div>
                             </label>
                         </div>
@@ -296,7 +205,7 @@
                             </div>
 
                             <div id="dropContentSelected" class="hidden space-y-1.5">
-                                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-primary-db mx-auto flex items-center justify-center">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                     </svg>
@@ -315,7 +224,7 @@
                         <button 
                             type="submit" 
                             id="btnSubmitImport"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-db hover:bg-primary-sdb text-white font-bold text-sm shadow-md transition cursor-pointer shrink-0"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white font-bold text-sm shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer shrink-0"
                         >
                             <svg id="btnIcon" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -344,50 +253,50 @@
                             1. Pilih Jenis Format File Export
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50/30 cursor-pointer transition" id="lblExportJenisXls">
-                                <input type="radio" name="jenis" value="xls" checked onchange="updateExportUI()" class="w-4 h-4 text-emerald-600" />
+                            <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition" id="lblExportJenisXls">
+                                <input type="radio" name="jenis" value="xls" checked onchange="updateExportUI()" class="w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-emerald-800">Jenis 1: Excel Spreadsheet (.xlsx)</p>
+                                    <p class="text-sm font-bold text-primary-db">Excel Spreadsheet (.xlsx)</p>
                                     <p class="text-xs text-gray-500">Menghasilkan file spreadsheet .xlsx multi-sheet yang rapi dan siap diedit.</p>
                                 </div>
                             </label>
 
                             <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblExportJenisSql">
-                                <input type="radio" name="jenis" value="sql" onchange="updateExportUI()" class="w-4 h-4 text-emerald-600" />
+                                <input type="radio" name="jenis" value="sql" onchange="updateExportUI()" class="w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800">Jenis 2: SQL Archive (.zip berisi .sql)</p>
+                                    <p class="text-sm font-bold text-gray-800">SQL Archive (.zip berisi .sql)</p>
                                     <p class="text-xs text-gray-500">Menghasilkan bundel .zip yang berisi file dump .sql untuk setiap tabel.</p>
                                 </div>
                             </label>
                         </div>
                     </div>
 
-                    {{-- LANGKAH 2: PILIH TIPE EXPORT (3 TIPE) --}}
+                    {{-- LANGKAH 2: PILIH TIPE EXPORT --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
-                            2. Pilih Tipe Export (3 Tipe)
+                            2. Pilih Tipe Export
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblExportTipePertabel">
-                                <input type="radio" name="tipe" value="pertabel" onchange="updateExportUI()" class="mt-1 w-4 h-4 text-emerald-600" />
+                                <input type="radio" name="tipe" value="pertabel" onchange="updateExportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-900">Tipe 1: Per Tabel</p>
+                                    <p class="text-sm font-bold text-gray-900">Per Tabel</p>
                                     <p class="text-xs text-gray-500 mt-0.5">Pilih tabel tertentu yang akan di-export (menjadi sheet XLS atau .zip berisi .sql).</p>
                                 </div>
                             </label>
 
-                            <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50/30 cursor-pointer transition" id="lblExportTipePaket">
-                                <input type="radio" name="tipe" value="paket" checked onchange="updateExportUI()" class="mt-1 w-4 h-4 text-emerald-600" />
+                            <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition" id="lblExportTipePaket">
+                                <input type="radio" name="tipe" value="paket" checked onchange="updateExportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-emerald-800">Tipe 2: Paket Kategori</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">1) Penjualan (acr & sts), 2) Stok Barang (itm & itmdt), 3) Barang (itm).</p>
+                                    <p class="text-sm font-bold text-primary-db">Paket Kategori</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">Export praktis berdasarkan paket transaksi penjualan atau stok barang.</p>
                                 </div>
                             </label>
 
                             <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition" id="lblExportTipeBackup">
-                                <input type="radio" name="tipe" value="backup" onchange="updateExportUI()" class="mt-1 w-4 h-4 text-emerald-600" />
+                                <input type="radio" name="tipe" value="backup" onchange="updateExportUI()" class="mt-1 w-4 h-4 text-primary-db" />
                                 <div>
-                                    <p class="text-sm font-bold text-gray-900">Tipe 3: Backup Semuanya</p>
+                                    <p class="text-sm font-bold text-gray-900">Backup Semuanya</p>
                                     <p class="text-xs text-gray-500 mt-0.5">Unduh cadangan penuh seluruh tabel di database aktif sekaligus.</p>
                                 </div>
                             </label>
@@ -399,15 +308,15 @@
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-gray-700 uppercase">Pilih Tabel yang Akan Di-Export:</span>
                             <div class="flex gap-2">
-                                <button type="button" onclick="toggleCheckboxes('export-table-cb', true)" class="text-xs font-semibold text-emerald-700 hover:underline cursor-pointer">Pilih Semua</button>
+                                <button type="button" onclick="toggleCheckboxes('export-table-cb', true)" class="text-xs font-semibold text-primary-db hover:underline cursor-pointer">Pilih Semua</button>
                                 <span class="text-gray-300">|</span>
                                 <button type="button" onclick="toggleCheckboxes('export-table-cb', false)" class="text-xs font-semibold text-gray-500 hover:underline cursor-pointer">Kosongkan</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
                             @foreach ($availableTables as $tblKey => $tblLabel)
-                                <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-gray-200 hover:border-emerald-600 text-xs font-medium text-gray-800 cursor-pointer">
-                                    <input type="checkbox" name="tables[]" value="{{ $tblKey }}" checked class="export-table-cb rounded text-emerald-600" />
+                                <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-gray-200 hover:border-primary-db text-xs font-medium text-gray-800 cursor-pointer">
+                                    <input type="checkbox" name="tables[]" value="{{ $tblKey }}" checked class="export-table-cb rounded text-primary-db" />
                                     <span>{{ $tblLabel }}</span>
                                 </label>
                             @endforeach
@@ -415,30 +324,30 @@
                     </div>
 
                     {{-- SUB-OPSI EXPORT TIPE 2: PILIH PAKET --}}
-                    <div id="exportPaketBox" class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                        <span class="block text-xs font-bold text-gray-700 uppercase">Pilih Kategori Paket Export (3 Pilihan):</span>
+                    <div id="exportPaketBox" class="space-y-2.5">
+                        <span class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Pilih Kategori Paket Export:</span>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-emerald-600 cursor-pointer" id="lblExportSubStok">
-                                <input type="radio" name="paket_sub" value="stok_barang" checked onchange="updateExportUI()" class="mt-0.5 text-emerald-600" />
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer transition" id="lblExportSubStok">
+                                <input type="radio" name="paket_sub" value="stok_barang" checked onchange="updateExportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-emerald-800">1. Stok Barang (ITM & ITMDT)</p>
+                                    <p class="text-xs font-bold text-primary-db">Stok Barang (ITM & ITMDT)</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5">Format <strong>template_data_barang.xlsx</strong> (2 Sheet: Data Barang Masuk & Data Barang).</p>
                                 </div>
                             </label>
 
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer" id="lblExportSubPenjualan">
-                                <input type="radio" name="paket_sub" value="penjualan" onchange="updateExportUI()" class="mt-0.5 text-emerald-600" />
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition" id="lblExportSubPenjualan">
+                                <input type="radio" name="paket_sub" value="penjualan" onchange="updateExportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-gray-800">2. Penjualan (ACR & STS)</p>
+                                    <p class="text-xs font-bold text-gray-800">Penjualan (ACR & STS)</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5">Format <strong>template_penjualan.xlsx</strong> (2 Sheet: Penjualan & Detail Penjualan).</p>
                                 </div>
                             </label>
 
-                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer" id="lblExportSubBarang">
-                                <input type="radio" name="paket_sub" value="barang" onchange="updateExportUI()" class="mt-0.5 text-emerald-600" />
+                            <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition" id="lblExportSubBarang">
+                                <input type="radio" name="paket_sub" value="barang" onchange="updateExportUI()" class="mt-0.5 text-primary-db" />
                                 <div>
-                                    <p class="text-xs font-bold text-gray-800">3. Data Barang Lengkap (ITM)</p>
-                                    <p class="text-[11px] text-gray-500 mt-0.5">Format <strong>data_barang_lengkap (1).xlsx</strong> (1 Sheet: Kode Barang, Nama Barang, Supplier, Merk, Kategori, Stok, Harga Beli, Tanggal Beli, Gudang).</p>
+                                    <p class="text-xs font-bold text-gray-800">Data Barang Lengkap (ITM)</p>
+                                    <p class="text-[11px] text-gray-500 mt-0.5">Format <strong>data_barang_lengkap (1).xlsx</strong> (1 Sheet: Master Barang, Stok, Harga & Gudang).</p>
                                 </div>
                             </label>
                         </div>
@@ -447,7 +356,7 @@
                     <div class="flex items-center justify-end pt-2">
                         <button 
                             type="submit" 
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition cursor-pointer"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-db hover:bg-primary-sdb active:bg-dark-navy text-white font-bold text-sm shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
                         >
                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -458,6 +367,205 @@
                 </form>
             </div>
         </div>
+
+        {{-- Preview Import / Cetak Barcode (Between Import/Export and Template Download) --}}
+        @if (!empty($importedBarcodes) && count($importedBarcodes) > 0)
+            @php
+                $isPreviewPending = ($importStatus ?? 'confirmed') === 'preview';
+                $totalBarcodes    = count($importedBarcodes);
+                $uniqueItmCount   = count(array_unique(array_filter(array_column($importedBarcodes, 'itm'))));
+
+                $perPage       = 100;
+                $totalHal      = max(1, (int) ceil($totalBarcodes / $perPage));
+                $halaman       = max(1, min($totalHal, (int) request('page', 1)));
+                $offset        = ($halaman - 1) * $perPage;
+                $pagedBarcodes = array_slice($importedBarcodes, $offset, $perPage);
+                $firstItem     = $totalBarcodes > 0 ? $offset + 1 : 0;
+                $lastItem      = min($totalBarcodes, $offset + count($pagedBarcodes));
+
+                $buatUrl = fn (int $p) => route('import.xls', $p > 1 ? ['page' => $p] : []) . '#previewCard';
+
+                $btnBase   = 'h-7 w-7 border rounded-md flex items-center justify-center text-xs transition-all duration-200';
+                $btnNormal = $btnBase . ' border-[#A8B1C1] text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200';
+                $btnAktif  = $btnBase . ' font-semibold bg-[#142854] text-white border-[#142854] hover:bg-primary-sdb transition-all duration-200';
+                $btnOff    = $btnBase . ' border-[#A8B1C1] text-gray-300 pointer-events-none';
+
+                $nomor = fn ($i) => $i === $halaman
+                    ? '<span class="' . $btnAktif . '">' . $i . '</span>'
+                    : '<a href="' . e($buatUrl($i)) . '" class="' . $btnNormal . '">' . $i . '</a>';
+                $titik = '<span class="px-1">...</span>';
+            @endphp
+
+            <div id="previewCard" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">
+                            {{ $isPreviewPending ? 'Preview Data Import' : 'Data Import Barang' }}
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            Total <span class="font-bold text-primary-db">{{ $importSummary['total_barang'] ?? $uniqueItmCount }}</span> barang
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if ($isPreviewPending)
+                            <form action="{{ route('import.xls.confirm') }}" method="POST" id="formConfirmImport">
+                                @csrf
+                                <button
+                                    type="submit"
+                                    id="btnConfirmImport"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                                >
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Konfirmasi Import</span>
+                                </button>
+                            </form>
+                        @else
+                            <a 
+                                href="{{ route('import.xls.cetak') }}" 
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                            >
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Cetak Barcode ({{ $totalBarcodes }} Label)
+                            </a>
+
+                            <a
+                                href="{{ route('import.xls.cetak', ['mode' => 'itm']) }}"
+                                target="_blank"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                                title="Cetak Barcode Kode ITM ({{ $uniqueItmCount }} Label)"
+                                aria-label="Cetak Barcode Kode ITM"
+                            >
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Kode ITM ({{ $uniqueItmCount }} Label)
+                            </a>
+                        @endif
+
+                        <form
+                            action="{{ route('import.xls.reset') }}"
+                            method="POST"
+                            onsubmit="return confirm('{{ $isPreviewPending ? 'Batalkan proses import dan hapus preview ini?' : 'Hapus daftar preview dan barcode ini?' }}')"
+                        >
+                            @csrf
+                            <button 
+                                type="submit" 
+                                class="p-2.5 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-all duration-200 cursor-pointer"
+                                title="{{ $isPreviewPending ? 'Batalkan Import & Hapus Preview' : 'Hapus Daftar Barcode' }}"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Tabel Preview (Desain konsisten dengan halaman Supplier) --}}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col overflow-hidden">
+                    <div class="max-h-[1000px] overflow-y-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-primary-db text-white text-xs font-semibold">
+                                    <th class="py-2.5 px-4 font-semibold text-center w-14">No</th>
+                                    <th class="py-2.5 px-4 font-semibold">Kode ITM</th>
+                                    <th class="py-2.5 px-4 font-semibold">Nama Barang</th>
+                                    <th class="py-2.5 px-4 font-semibold">Barcode (BC_OUT)</th>
+                                    <th class="py-2.5 px-4 font-semibold">Gudang</th>
+                                    <th class="py-2.5 px-4 font-semibold text-center">Supplier</th>
+                                    <th class="py-2.5 px-4 font-semibold text-right">Harga Beli</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 text-sm text-black bg-white">
+                                @foreach ($pagedBarcodes as $idx => $bc)
+                                    <tr class="hover:bg-gray-50/80 transition-colors">
+                                        <td class="py-3.5 px-4 text-center text-gray-500 tabular-nums">{{ $offset + $idx + 1 }}</td>
+                                        <td class="py-3.5 px-4 font-medium">{{ $bc['itm'] }}</td>
+                                        <td class="py-3.5 px-4">{{ $bc['des'] }}</td>
+                                        <td class="py-3.5 px-4 font-mono font-medium text-primary-db">{{ $bc['bc_out'] }}</td>
+                                        <td class="py-3.5 px-4">{{ $bc['gd'] }}</td>
+                                        <td class="py-3.5 px-4 text-center">{{ $bc['spp'] }}</td>
+                                        <td class="py-3.5 px-4 text-right tabular-nums">Rp {{ number_format($bc['hrb'] ?? 0, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- FOOTER / PAGINATION --}}
+                    <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
+                        <div class="whitespace-nowrap">
+                            Menampilkan {{ $firstItem }}-{{ $lastItem }} dari {{ $totalBarcodes }} barcode
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            @if ($halaman > 1)
+                                <a href="{{ $buatUrl($halaman - 1) }}" class="{{ $btnNormal }}" aria-label="Halaman sebelumnya">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                    </svg>
+                                </a>
+                            @else
+                                <span class="{{ $btnOff }}" aria-hidden="true">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                    </svg>
+                                </span>
+                            @endif
+
+                            {!! $nomor(1) !!}
+
+                            @if ($totalHal > 3)
+                                @if ($halaman <= 2)
+                                    {!! $nomor(2) !!}
+                                    {!! $nomor(3) !!}
+                                @elseif ($halaman >= $totalHal - 1)
+                                    {!! $titik !!}
+                                    {!! $nomor($totalHal - 2) !!}
+                                    {!! $nomor($totalHal - 1) !!}
+                                @else
+                                    {!! $titik !!}
+                                    {!! $nomor($halaman - 1) !!}
+                                    {!! $nomor($halaman) !!}
+                                    {!! $nomor($halaman + 1) !!}
+                                @endif
+
+                                @if ($halaman <= $totalHal - 2)
+                                    {!! $titik !!}
+                                @endif
+
+                                {!! $nomor($totalHal) !!}
+                            @elseif ($totalHal == 3)
+                                {!! $nomor(2) !!}
+                                {!! $nomor(3) !!}
+                            @elseif ($totalHal == 2)
+                                {!! $nomor(2) !!}
+                            @endif
+
+                            @if ($halaman < $totalHal)
+                                <a href="{{ $buatUrl($halaman + 1) }}" class="{{ $btnNormal }}" aria-label="Halaman berikutnya">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </a>
+                            @else
+                                <span class="{{ $btnOff }}" aria-hidden="true">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- Unduh File Template XLS Resmi (database/tamplate) --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
@@ -470,7 +578,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <a href="{{ route('import.xls.template', 'data_barang') }}" class="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 hover:border-primary-db hover:bg-indigo-50/30 transition">
                     <div>
-                        <p class="text-xs font-bold text-primary-db">1. Template Stok Barang (2 Sheet)</p>
+                        <p class="text-xs font-bold text-primary-db">Template Stok Barang (2 Sheet)</p>
                         <p class="text-[11px] text-gray-500">template_data_barang.xlsx (ITMDT & ITM)</p>
                     </div>
                     <span class="text-xs font-bold text-indigo-600">Unduh &darr;</span>
@@ -478,7 +586,7 @@
 
                 <a href="{{ route('import.xls.template', 'penjualan') }}" class="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 hover:border-primary-db hover:bg-indigo-50/30 transition">
                     <div>
-                        <p class="text-xs font-bold text-primary-db">2. Template Penjualan (2 Sheet)</p>
+                        <p class="text-xs font-bold text-primary-db">Template Penjualan (2 Sheet)</p>
                         <p class="text-[11px] text-gray-500">template_penjualan.xlsx (ACR & STS)</p>
                     </div>
                     <span class="text-xs font-bold text-indigo-600">Unduh &darr;</span>
@@ -486,7 +594,7 @@
 
                 <a href="{{ route('import.xls.template', 'barang_lengkap') }}" class="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 hover:border-primary-db hover:bg-indigo-50/30 transition">
                     <div>
-                        <p class="text-xs font-bold text-primary-db">3. Template Data Barang Lengkap (1 Sheet)</p>
+                        <p class="text-xs font-bold text-primary-db">Template Data Barang Lengkap (1 Sheet)</p>
                         <p class="text-[11px] text-gray-500">data_barang_lengkap (1).xlsx (9 Kolom)</p>
                     </div>
                     <span class="text-xs font-bold text-indigo-600">Unduh &darr;</span>
@@ -505,22 +613,43 @@
         const panelExport = document.getElementById('panelExport');
         const btnImport   = document.getElementById('tabBtnImport');
         const btnExport   = document.getElementById('tabBtnExport');
+        const textImport  = document.getElementById('tabTextImport');
+        const textExport  = document.getElementById('tabTextExport');
+
+        const activeBtnCls   = ['text-white'];
+        const inactiveBtnCls = ['text-white/75', 'hover:text-white'];
 
         if (tab === 'import' && panelImport) {
             panelImport.classList.remove('hidden');
             panelExport.classList.add('hidden');
-            btnImport.classList.add('border-primary-db', 'text-primary-db', 'bg-white');
-            btnImport.classList.remove('border-transparent', 'text-gray-500');
-            btnExport.classList.remove('border-primary-db', 'text-primary-db', 'bg-white');
-            btnExport.classList.add('border-transparent', 'text-gray-500');
+            btnImport.classList.remove(...inactiveBtnCls);
+            btnImport.classList.add(...activeBtnCls);
+            btnExport.classList.remove(...activeBtnCls);
+            btnExport.classList.add(...inactiveBtnCls);
+            if (textImport) {
+                textImport.classList.remove('border-transparent');
+                textImport.classList.add('border-white');
+            }
+            if (textExport) {
+                textExport.classList.remove('border-white');
+                textExport.classList.add('border-transparent');
+            }
         } else {
             if (panelImport) panelImport.classList.add('hidden');
             panelExport.classList.remove('hidden');
-            btnExport.classList.add('border-primary-db', 'text-primary-db', 'bg-white');
-            btnExport.classList.remove('border-transparent', 'text-gray-500');
+            btnExport.classList.remove(...inactiveBtnCls);
+            btnExport.classList.add(...activeBtnCls);
             if (btnImport) {
-                btnImport.classList.remove('border-primary-db', 'text-primary-db', 'bg-white');
-                btnImport.classList.add('border-transparent', 'text-gray-500');
+                btnImport.classList.remove(...activeBtnCls);
+                btnImport.classList.add(...inactiveBtnCls);
+            }
+            if (textExport) {
+                textExport.classList.remove('border-transparent');
+                textExport.classList.add('border-white');
+            }
+            if (textImport) {
+                textImport.classList.remove('border-white');
+                textImport.classList.add('border-transparent');
             }
         }
     }
@@ -555,10 +684,10 @@
         // Highlight active cards
         document.getElementById('lblImportJenisXls').className = jenis === 'xls'
             ? 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
-            : 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+            : 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
         document.getElementById('lblImportJenisSql').className = jenis === 'sql'
             ? 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
-            : 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+            : 'relative flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
 
         ['Pertabel', 'Paket', 'Backup'].forEach(k => {
             const el = document.getElementById('lblImportTipe' + k);
@@ -566,7 +695,7 @@
             const active = tipe === k.toLowerCase();
             el.className = active
                 ? 'flex items-start gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
-                : 'flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+                : 'flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
         });
 
         const subMap = { 'stok_barang': 'Stok', 'penjualan': 'Penjualan', 'barang': 'Barang' };
@@ -574,8 +703,8 @@
             const el = document.getElementById('lblImportSub' + suffix);
             if (!el) return;
             el.className = (sub === val)
-                ? 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer'
-                : 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer';
+                ? 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer transition'
+                : 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition';
         });
     }
 
@@ -591,19 +720,19 @@
         document.getElementById('exportPaketBox').classList.toggle('hidden', tipe !== 'paket');
 
         document.getElementById('lblExportJenisXls').className = jenis === 'xls'
-            ? 'flex items-center gap-3 p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50/30 cursor-pointer transition'
-            : 'flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+            ? 'flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
+            : 'flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
         document.getElementById('lblExportJenisSql').className = jenis === 'sql'
-            ? 'flex items-center gap-3 p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50/30 cursor-pointer transition'
-            : 'flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+            ? 'flex items-center gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
+            : 'flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
 
         ['Pertabel', 'Paket', 'Backup'].forEach(k => {
             const el = document.getElementById('lblExportTipe' + k);
             if (!el) return;
             const active = tipe === k.toLowerCase();
             el.className = active
-                ? 'flex items-start gap-3 p-4 rounded-xl border-2 border-emerald-600 bg-emerald-50/30 cursor-pointer transition'
-                : 'flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer transition';
+                ? 'flex items-start gap-3 p-4 rounded-xl border-2 border-primary-db bg-indigo-50/30 cursor-pointer transition'
+                : 'flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white cursor-pointer transition';
         });
 
         const subMap = { 'stok_barang': 'Stok', 'penjualan': 'Penjualan', 'barang': 'Barang' };
@@ -611,8 +740,8 @@
             const el = document.getElementById('lblExportSub' + suffix);
             if (!el) return;
             el.className = (sub === val)
-                ? 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-emerald-600 cursor-pointer'
-                : 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 cursor-pointer';
+                ? 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-primary-db cursor-pointer transition'
+                : 'flex items-start gap-2.5 p-3.5 rounded-xl bg-white border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition';
         });
     }
 
@@ -623,6 +752,7 @@
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
         const formImport = document.getElementById('formhunterajasi123ata');
+        const formConfirm = document.getElementById('formConfirmImport');
 
         if (fileInput) {
             fileInput.addEventListener('change', () => {
@@ -648,7 +778,17 @@
                 if (btnSubmit) btnSubmit.disabled = true;
                 if (btnIcon) btnIcon.classList.add('hidden');
                 if (btnSpinner) btnSpinner.classList.remove('hidden');
-                if (btnText) btnText.textContent = 'Memproses & Menyimpan...';
+                if (btnText) btnText.textContent = 'Memproses Preview...';
+            });
+        }
+
+        if (formConfirm) {
+            formConfirm.addEventListener('submit', () => {
+                const btnConfirm = document.getElementById('btnConfirmImport');
+                if (btnConfirm) {
+                    btnConfirm.disabled = true;
+                    btnConfirm.classList.add('opacity-75', 'cursor-not-allowed');
+                }
             });
         }
     });

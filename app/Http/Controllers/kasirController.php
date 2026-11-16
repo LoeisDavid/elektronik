@@ -440,7 +440,7 @@ class kasirController extends Controller
             // Validasi: pastikan tidak ada barcode dalam keranjang yang sudah tercatat di tabel STS
             $incomingBcOuts = [];
             foreach ($cart as $key => $item) {
-                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 20);
+                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 40);
             }
             $alreadySold = STS::whereIn('BC_OUT', $incomingBcOuts)->pluck('BC_OUT')->toArray();
             if (!empty($alreadySold)) {
@@ -450,8 +450,8 @@ class kasirController extends Controller
             // 3. Simpan Rincian Barang ke Tabel STS (Setiap unit barang memiliki BC_OUT berbeda)
             $soldBcOuts = [];
             foreach ($cart as $key => $item) {
-                $bcOut = substr($item['code'] ?? $key, 0, 20);
-                $itmCode = substr($item['id'] ?? $bcOut, 0, 20);
+                $bcOut = substr($item['code'] ?? $key, 0, 40);
+                $itmCode = substr($item['id'] ?? $bcOut, 0, 25);
                 $hgj = (float) ($item['price'] ?? 0);
                 $pot1 = (int) ($item['discount'] ?? 0);
                 $potR = (float) ($item['discount_voucher'] ?? 0);

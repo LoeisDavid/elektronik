@@ -176,7 +176,7 @@
                 href="{{ url()->current() }}"
                 class="h-9.5 px-4 inline-flex items-center bg-white border border-gray-800 text-black hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
             >
-                Reset
+                Clear filters
             </a>
         @endif
 
@@ -198,19 +198,19 @@
 
                     <tr class="bg-primary-db text-white text-xs font-semibold">
 
-                        <th class="py-2.5 px-4 rounded-tl-lg">
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">
                             Kode Transaksi
                         </th>
 
-                        <th class="py-2.5 px-4">
+                        <th class="py-2.5 px-4 font-semibold">
                             Tanggal pembelian
                         </th>
 
-                        <th class="py-2.5 px-4">
+                        <th class="py-2.5 px-4 font-semibold">
                             Total
                         </th>
 
-                        <th class="py-2.5 px-4 text-center rounded-tr-lg">
+                        <th class="py-2.5 px-4 font-semibold text-center rounded-tr-lg">
                             Aksi
                         </th>
 
@@ -245,19 +245,19 @@
                         <tr class="hover:bg-gray-50/80 transition-colors">
 
                             {{-- KODE --}}
-                            <td class="py-3.5 px-4 font-medium">
+                            <td class="py-3.5 px-4 font-medium font-mono">
                                 {{ $item->REF_NO }}
                             </td>
 
 
                             {{-- TANGGAL --}}
-                            <td class="py-3.5 px-4">
+                            <td class="py-3.5 px-4 font-medium">
                                 {{ $tglFmt }}
                             </td>
 
 
                             {{-- TOTAL --}}
-                            <td class="py-3.5 px-4 font-semibold">
+                            <td class="py-3.5 px-4 font-medium">
                                 Rp {{ number_format($item->BRT ?? 0, 0, ',', '.') }}
                             </td>
 

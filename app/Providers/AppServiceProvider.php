@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
             'kota'            => config('perusahaan.kota', 'Sumenep'),
             'alamat'          => config('perusahaan.alamat', ''),
             'no_telp'         => config('perusahaan.no_telp', ''),
+            'npwp'            => config('perusahaan.npwp', ''),
             'nama'            => config('perusahaan.nama_perusahaan', 'Pomelo.'),
             'telepon'         => config('perusahaan.no_telp', ''),
         ];

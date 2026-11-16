@@ -33,3 +33,9 @@
 .font-number {
     font-family: var(--font-number);
 }
+
+@layer base {
+    th {
+        font-weight: 600;
+    }
+}

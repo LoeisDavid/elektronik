@@ -16,14 +16,16 @@
 
 $NAMA_PERUSAHAAN = 'Toko Bogor';
 $KOTA            = 'Sumenep';
-$ALAMAT          = 'Jl. Contoh Alamat No. 123';
-$NO_TELP         = '0812-3456-7890';
+$ALAMAT          = 'Jl. Diponegoro 20';
+$NO_TELP         = '(0328) 663663 - 081934949488';
+$NPWP            = '07.079.290.8.614.000';
 
 return [
     'nama_perusahaan' => $NAMA_PERUSAHAAN,
     'kota'            => $KOTA,
     'alamat'          => $ALAMAT,
     'no_telp'         => $NO_TELP,
+    'npwp'            => $NPWP,
 
     // Alias pendukung
     'nama'            => $NAMA_PERUSAHAAN,

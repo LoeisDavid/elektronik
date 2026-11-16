@@ -32,9 +32,9 @@ class ITMDTController extends Controller
     {
         try {
             $validated = $request->validate([
-                'BC_OUT' => 'required|string|max:20',
-                'ITM' => 'required|string|max:10',
-                'BC_IN' => 'required|string|max:20',
+                'BC_OUT' => 'required|string|max:40',
+                'ITM' => 'required|string|max:25',
+                'BC_IN' => 'required|string|max:40',
                 'TM' => 'required|date',
                 'GD' => 'required|string|max:10',
             ]);
@@ -62,9 +62,9 @@ class ITMDTController extends Controller
     {
         try {
             $validated = $request->validate([
-                'BC_OUT' => 'required|string|max:20',
-                'ITM' => 'required|string|max:10',
-                'BC_IN' => 'required|string|max:20',
+                'BC_OUT' => 'required|string|max:40',
+                'ITM' => 'required|string|max:25',
+                'BC_IN' => 'required|string|max:40',
                 'TM' => 'required|date',
                 'GD' => 'required|string|max:10',
             ]);

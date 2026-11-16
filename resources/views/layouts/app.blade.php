@@ -29,7 +29,7 @@
     @yield('css')
     @stack('styles')
 </head>
-<body class="h-screen w-screen bg-light-bg font-montserrat text-heading-dark antialiased relative">
+<body class="h-screen w-screen overflow-x-hidden bg-light-bg font-montserrat text-heading-dark antialiased relative">
 
     {{-- ========================================================= --}}
     {{-- TOAST CONTAINER (Melayang di Tengah Atas) --}}

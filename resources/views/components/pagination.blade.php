@@ -26,9 +26,17 @@
         {{-- TOMBOL PAGINATION --}}
         <div class="flex items-center gap-1">
             @if ($halaman > 1)
-                <a href="{{ $p->previousPageUrl() }}" class="{{ $btnNormal }}">‹</a>
+                <a href="{{ $p->previousPageUrl() }}" class="{{ $btnNormal }}" aria-label="Halaman sebelumnya">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </a>
             @else
-                <span class="{{ $btnOff }}">‹</span>
+                <span class="{{ $btnOff }}" aria-hidden="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </span>
             @endif
 
             {!! $nomor(1) !!}
@@ -61,9 +69,17 @@
             @endif
 
             @if ($halaman < $totalHal)
-                <a href="{{ $p->nextPageUrl() }}" class="{{ $btnNormal }}">›</a>
+                <a href="{{ $p->nextPageUrl() }}" class="{{ $btnNormal }}" aria-label="Halaman berikutnya">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </a>
             @else
-                <span class="{{ $btnOff }}">›</span>
+                <span class="{{ $btnOff }}" aria-hidden="true">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </span>
             @endif
         </div>
     </div>

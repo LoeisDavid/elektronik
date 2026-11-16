@@ -108,6 +108,7 @@
                 <colgroup>
                     <col class="w-48">
                     <col>
+                    <col class="w-48">
                     <col class="w-24">
                 </colgroup>
 
@@ -116,6 +117,7 @@
                     <tr class="bg-primary-db text-white text-xs font-semibold rounded-t-lg">
                         <th class="py-2.5 px-4 font-semibold text-center rounded-tl-lg">Kode Kategori</th>
                         <th class="py-2.5 px-4 font-semibold text-center">Nama Kategori</th>
+                        <th class="py-2.5 px-4 font-semibold text-center">Total Aset</th>
                         <th class="py-2.5 px-4 font-semibold text-center rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
@@ -134,6 +136,11 @@
                         {{-- Nama Kategori --}}
                         <td class="py-3.5 px-4 text-center truncate">
                             {{ $kategori->DES }}
+                        </td>
+
+                        {{-- Total Aset --}}
+                        <td class="py-3.5 px-4 text-center font-medium">
+                            Rp {{ number_format((float) ($asetPerKtg[$kategori->KTG] ?? 0), 0, ',', '.') }}
                         </td>
 
                         {{-- AKSI --}}
@@ -222,7 +229,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="py-8 text-center text-gray-500 text-sm">
+                        <td colspan="4" class="py-8 text-center text-gray-500 text-sm">
                             Tidak ada data kategori.
                         </td>
                     </tr>
@@ -270,11 +277,20 @@
 
                     {{-- PREVIOUS --}}
                     @if ($data->onFirstPage())
-                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">‹</span>
+                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </span>
                     @else
                     <a
                         href="{{ $data->previousPageUrl() }}"
-                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">‹</a>
+                        aria-label="Halaman sebelumnya"
+                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
                     @endif
 
                     {{-- NOMOR HALAMAN --}}
@@ -297,9 +313,18 @@
                     @if ($data->hasMorePages())
                     <a
                         href="{{ $data->nextPageUrl() }}"
-                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">›</a>
+                        aria-label="Halaman berikutnya"
+                        class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#142854] hover:bg-gray-100 hover:border-[#142854] active:bg-gray-200 transition-all duration-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                     @else
-                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]">›</span>
+                    <span class="h-7 w-7 border border-[#A8B1C1] rounded-md flex items-center justify-center text-[#A8B1C1]" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </span>
                     @endif
 
                 </div>

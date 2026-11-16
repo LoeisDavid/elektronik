@@ -247,6 +247,7 @@
     {{-- MODALS HALAMAN KASIR (BARCODE, DRAFT, SHIFT, DISKON, PEMBAYARAN) --}}
     @include('POS.modals.kasir-modal')
     @include('POS.modals.customer-modal')
+    @include('POS.modals.sales-modal')
 
 
     <!-- Modal Struk Pembayaran -->
@@ -270,6 +271,7 @@
         <input type="hidden" name="metode" id="printMetode">
         <input type="hidden" name="subtotal" id="printSubtotal">
         <input type="hidden" name="discount_item" id="printDiscountItem">
+        <input type="hidden" name="discount_percent" id="printDiscountPercent">
         <input type="hidden" name="discount_global" id="printDiscountGlobal">
         <input type="hidden" name="voucher" id="printVoucher">
         <input type="hidden" name="ppn" id="printPpn">
@@ -308,5 +310,5 @@
 @endsection
 
 @section('js')
-    @vite(['resources/js/pages/pos/kasir/index.js', 'resources/js/pages/pos/customer.js'])
+    @vite(['resources/js/pages/pos/kasir/index.js', 'resources/js/pages/pos/customer.js', 'resources/js/pages/pos/sales.js'])
 @endsection
