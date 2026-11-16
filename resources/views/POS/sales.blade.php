@@ -242,7 +242,8 @@
                                         </button>
 
 
-                                        {{-- HAPUS --}}
+                                        {{-- HAPUS (HANYA SUPERVISOR & DEVELOPER) --}}
+                                        @if(auth()->user()?->canDelete())
                                         <form
                                             method="POST"
                                             action="{{ route('POS.sales.destroy', ['id' => $sale->SLS]) }}"
@@ -276,6 +277,7 @@
                                             </button>
 
                                         </form>
+                                        @endif
 
                                     </div>
 

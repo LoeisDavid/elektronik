@@ -12,22 +12,36 @@ class UserController extends Controller
     public function index(Request $request)
     {
         try {
+            $authUser = auth()->user();
+            if (!$authUser || !$authUser->canManageUsers()) {
+                abort(403, 'Anda tidak memiliki hak akses untuk melihat data user.');
+            }
+
             $query = User::query();
+
+            // User Developer disembunyikan dan tidak terlihat ketika login sebagai user di bawahnya
+            if (!$authUser->isDeveloper()) {
+                $query->where('ROLE', '!=', User::ROLE_DEVELOPER)
+                      ->whereRaw('LOWER(USERNAME) != ?', ['adminhunt']);
+            }
+
             $sort = $request->sort;
 
             if ($request->filled('keyword')) {
                 $keyword = $request->keyword;
-                $query->where('USERNAME', 'LIKE', "%{$keyword}%")
-                    ->orWhere('DES', 'LIKE', "%{$keyword}%")
-                    ->orWhere('AL', 'LIKE', "%{$keyword}%")
-                    ->orWhere('HP', 'LIKE', "%{$keyword}%");
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('USERNAME', 'LIKE', "%{$keyword}%")
+                      ->orWhere('DES', 'LIKE', "%{$keyword}%")
+                      ->orWhere('AL', 'LIKE', "%{$keyword}%")
+                      ->orWhere('HP', 'LIKE', "%{$keyword}%");
+                });
             }
 
-            if($sort == 'a-z') {
+            if ($sort == 'a-z') {
                 $query->orderBy('DES', 'asc');
             } else if ($sort == 'z-a') {
                 $query->orderBy('DES', 'desc');
-            } else if($sort == 'new-old') {
+            } else if ($sort == 'new-old') {
                 $query->orderBy('created_at', 'desc');
             } else if ($sort == 'old-new') {
                 $query->orderBy('created_at', 'asc');
@@ -46,18 +60,20 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $authUser = auth()->user();
-        if (!$authUser || (!$authUser->isManager() && !$authUser->isAdmin())) {
+        if (!$authUser || !$authUser->canManageUsers()) {
             abort(403, 'Anda tidak memiliki hak akses untuk menambahkan user.');
         }
 
-        // Manager bisa buat Admin, Storage, Kasir (tidak bisa buat Manager).
-        // Admin tidak bisa membuat Manager atau Admin (hanya Storage & Kasir).
-        if ($authUser->isManager()) {
-            $allowedRoles = [User::ROLE_ADMIN, User::ROLE_KASIR, User::ROLE_STORAGE];
-            $roleMsg = 'Manager tidak dapat membuat user dengan role Manager.';
+        // Developer: bisa buat semua role (Developer, Supervisor, Admin, Gudang, Kasir).
+        // Supervisor: bisa buat Supervisor, Admin, Gudang, Kasir (kecuali Developer).
+        // Admin: bisa buat Admin, Gudang, Kasir.
+        $allowedRoles = $authUser->allowedRolesToAssign();
+        if ($authUser->isDeveloper()) {
+            $roleMsg = 'Role yang dipilih tidak valid.';
+        } elseif ($authUser->isSupervisor()) {
+            $roleMsg = 'Supervisor hanya dapat menambahkan user dengan role Supervisor, Admin, Gudang, atau Kasir.';
         } else {
-            $allowedRoles = [User::ROLE_KASIR, User::ROLE_STORAGE];
-            $roleMsg = 'Admin hanya dapat membuat user dengan role Kasir atau Storage.';
+            $roleMsg = 'Admin hanya dapat menambahkan user dengan role Admin, Gudang, atau Kasir.';
         }
 
         $validated = $request->validate([
@@ -102,7 +118,7 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $authUser = auth()->user();
-        if (!$authUser || (!$authUser->isManager() && !$authUser->isAdmin())) {
+        if (!$authUser || !$authUser->canManageUsers()) {
             abort(403, 'Anda tidak memiliki hak akses untuk mengupdate user.');
         }
 
@@ -110,23 +126,17 @@ class UserController extends Controller
         $decodedId = urldecode($id);
         $user = User::where('USERNAME', $decodedId)->firstOrFail();
 
-        // Validasi batasan hak akses edit user
-        if ($authUser->isAdmin()) {
-            if ($user->isManager() || $user->isAdmin()) {
-                return redirect()->back()->with('error', 'Admin tidak memiliki hak akses untuk mengubah user Admin atau Manager.');
-            }
-            $allowedRoles = [User::ROLE_KASIR, User::ROLE_STORAGE];
-            $roleMsg = 'Admin hanya dapat mengatur user ke role Kasir atau Storage.';
+        if (!$authUser->canEditUser($user)) {
+            return redirect()->back()->with('error', 'Anda hanya dapat mengubah akun Anda sendiri atau user dengan role setara/di bawah Anda.');
+        }
+
+        $allowedRoles = $authUser->allowedRolesToAssign();
+        if ($authUser->isDeveloper()) {
+            $roleMsg = 'Role yang dipilih tidak valid.';
+        } elseif ($authUser->isSupervisor()) {
+            $roleMsg = 'Supervisor hanya dapat mengatur user ke role Supervisor, Admin, Gudang, atau Kasir.';
         } else {
-            // Auth user adalah Manager
-            if ($user->isManager() && $user->USERNAME !== $authUser->USERNAME) {
-                return redirect()->back()->with('error', 'Manager tidak dapat mengubah data user Manager lainnya.');
-            }
-            $allowedRoles = [User::ROLE_ADMIN, User::ROLE_KASIR, User::ROLE_STORAGE];
-            if ($user->isManager() && $user->USERNAME === $authUser->USERNAME) {
-                $allowedRoles[] = User::ROLE_MANAGER;
-            }
-            $roleMsg = 'Manager tidak dapat membuat atau mengubah user lain ke role Manager.';
+            $roleMsg = 'Admin hanya dapat mengatur user ke role Admin, Gudang, atau Kasir.';
         }
 
         // Pastikan USERNAME terisi sesuai user yang diedit jika tidak terkirim dari readonly field
@@ -184,29 +194,24 @@ class UserController extends Controller
     public function destroy($id)
     {
         $authUser = auth()->user();
-        if (!$authUser || (!$authUser->isManager() && !$authUser->isAdmin())) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menghapus user.');
+        if (!$authUser || !$authUser->canDelete()) {
+            abort(403, 'Hanya Supervisor dan Developer yang memiliki hak akses untuk menghapus user.');
         }
 
         try {
-            $user = User::where('USERNAME', $id)->firstOrFail();
+            $decodedId = urldecode($id);
+            $user = User::where('USERNAME', $decodedId)->firstOrFail();
 
             if (strtolower($user->USERNAME) === 'adminhunt') {
-                return redirect()->back()->with('error', 'Akun khusus adminhunt tidak dapat dihapus.');
+                return redirect()->back()->with('error', 'Akun khusus Developer utama tidak dapat dihapus.');
             }
 
             if ($user->USERNAME === $authUser->USERNAME) {
                 return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
             }
 
-            if ($authUser->isAdmin()) {
-                if ($user->isManager() || $user->isAdmin()) {
-                    return redirect()->back()->with('error', 'Admin tidak memiliki hak akses untuk menghapus user Admin atau Manager.');
-                }
-            } elseif ($authUser->isManager()) {
-                if ($user->isManager()) {
-                    return redirect()->back()->with('error', 'Manager tidak dapat menghapus user Manager lainnya.');
-                }
+            if (!$authUser->canDeleteUser($user)) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki hak akses untuk menghapus user dengan role di atas Anda.');
             }
 
             $user->delete();

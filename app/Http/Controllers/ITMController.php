@@ -31,9 +31,11 @@ class ITMController extends Controller
 public function index(Request $request)
 {
     try {
-        $keyword  = trim((string) $request->query('keyword', ''));
-        $sort     = (string) $request->query('sort', 'nama_asc');
-        $showZero = $request->boolean('show_zero', false);
+        $keyword   = trim((string) $request->query('keyword', ''));
+        $filterKtg = trim((string) $request->query('ktg', ''));
+        $filterMrk = trim((string) $request->query('mrk', ''));
+        $sort      = (string) $request->query('sort', 'tgl_terbaru');
+        $showZero  = $request->boolean('show_zero', false);
         if (!isset(self::OPSI_SORT[$sort])) {
             $sort = 'tgl_terbaru';
         }
@@ -624,10 +626,16 @@ public function index(Request $request)
         }
     }
 
+    public function selesaiStok()
+    {
+        session()->forget('stok_list');
+        return redirect()->route('inventory.item')->with('success', 'Penambahan stok selesai.');
+    }
+
     public function destroy($id)
     {
-        if (!auth()->user()?->isAdmin()) {
-            return redirect()->back()->with('error', 'Hanya Admin yang memiliki hak akses untuk menghapus produk.');
+        if (!auth()->user()?->canDelete()) {
+            return redirect()->back()->with('error', 'Hanya Supervisor dan Developer yang memiliki hak akses untuk menghapus produk.');
         }
 
         try {

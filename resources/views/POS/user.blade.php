@@ -184,16 +184,18 @@
 
                             {{-- Role --}}
                             <td class="py-3.5 px-4">
-                                @if($user->ROLE == 4)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-db text-white border border-primary-db">Manager</span>
-                                @elseif($user->ROLE == 1 || $user->ROLE == 5 || strtolower($user->USERNAME) === 'adminhunt')
+                                @if($user->isDeveloper())
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-purple-700 text-white border border-purple-700">Developer</span>
+                                @elseif($user->isSupervisor())
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-db text-white border border-primary-db">Supervisor</span>
+                                @elseif($user->isAdminOnly())
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-primary-db/10 text-primary-db border border-primary-db/20">Admin</span>
-                                @elseif($user->ROLE == 3)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">Storage</span>
-                                @elseif($user->ROLE == 2)
+                                @elseif($user->isStorage())
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">Gudang</span>
+                                @elseif($user->isKasir())
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">Kasir</span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">{{ $user->ROLE }}</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">{{ $user->role_name }}</span>
                                 @endif
                             </td>
 
@@ -201,15 +203,11 @@
                             {{-- AKSI --}}
                             <td class="py-3.5 px-4 text-center">
                                 @php
-                                    $canManage = false;
                                     $authU = auth()->user();
-                                    if ($authU?->isManager()) {
-                                        // Manager bisa edit siapa saja kecuali Manager lain
-                                        $canManage = ($user->ROLE != 4 || $user->USERNAME === $authU->USERNAME);
-                                    } elseif ($authU?->isAdmin()) {
-                                        // Admin hanya bisa edit/hapus Kasir dan Storage (tidak bisa Admin/Manager)
-                                        $canManage = ($user->ROLE != 4 && $user->ROLE != 1);
-                                    }
+                                    $canEdit   = $authU ? $authU->canEditUser($user) : false;
+                                    $canDelete = $authU ? $authU->canDeleteUser($user) : false;
+                                    $canManage = $canEdit || $canDelete;
+                                    $effectiveRole = $user->isDeveloper() ? 5 : (int) $user->ROLE;
                                 @endphp
 
                                 @if($canManage)
@@ -245,6 +243,7 @@
                                         class="action-menu absolute right-0 top-full mt-1 w-28 bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50 text-left hidden"
                                     >
 
+                                        @if($canEdit)
                                         {{-- EDIT --}}
                                         <button
                                             type="button"
@@ -253,7 +252,7 @@
                                             data-al="{{ $user->AL }}"
                                             data-hp="{{ $user->HP }}"
                                             data-des="{{ $user->DES }}"
-                                            data-role="{{ $user->ROLE }}"
+                                            data-role="{{ $effectiveRole }}"
                                             data-action="{{ route('POS.user.update', ['id' => $user->USERNAME]) }}"
                                             onclick="openEditModal(this)"
                                             class="w-full px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-primary-db/5 hover:text-primary-db transition-all duration-200 flex items-center gap-2 cursor-pointer"
@@ -276,9 +275,10 @@
                                             <span>Edit</span>
 
                                         </button>
+                                        @endif
 
 
-                                        @if(strtolower($user->USERNAME) !== 'adminhunt' && $user->USERNAME !== $authU?->USERNAME && ($authU?->isManager() ? $user->ROLE != 4 : ($user->ROLE != 4 && $user->ROLE != 1)))
+                                        @if($canDelete)
                                         {{-- DELETE --}}
                                         <form
                                             method="POST"

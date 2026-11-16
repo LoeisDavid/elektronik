@@ -26,11 +26,14 @@ class RoleMiddleware
         }
 
         $roleMap = [
-            'admin'   => 1,
-            'kasir'   => 2,
-            'storage' => 3,
-            'manager' => 4,
-            'import'  => 5,
+            'admin'      => 1,
+            'kasir'      => 2,
+            'storage'    => 3,
+            'gudang'     => 3,
+            'manager'    => 4,
+            'supervisor' => 4,
+            'import'     => 5,
+            'developer'  => 5,
         ];
 
         $allowedRoleIds = [];
@@ -45,8 +48,9 @@ class RoleMiddleware
 
         if (
             in_array((int) $user->ROLE, $allowedRoleIds, true) ||
-            ($user->isAdmin() && in_array(1, $allowedRoleIds, true)) ||
-            ($user->isImport() && in_array(5, $allowedRoleIds, true))
+            ($user->isDeveloper() && (in_array(5, $allowedRoleIds, true) || in_array(4, $allowedRoleIds, true) || in_array(1, $allowedRoleIds, true))) ||
+            ($user->isSupervisor() && (in_array(4, $allowedRoleIds, true) || in_array(1, $allowedRoleIds, true))) ||
+            ($user->isAdminOnly() && in_array(1, $allowedRoleIds, true))
         ) {
             return $next($request);
         }
