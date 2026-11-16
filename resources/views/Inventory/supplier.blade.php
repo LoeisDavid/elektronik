@@ -200,7 +200,8 @@
                                         </button>
 
 
-                                        {{-- HAPUS --}}
+                                        {{-- HAPUS (HANYA SUPERVISOR & DEVELOPER) --}}
+                                        @if(auth()->user()?->canDelete())
                                         <form
                                             method="POST"
                                             action="{{ route('inventory.supplier.destroy', ['spp' => $supplier->SPP]) }}"
@@ -234,6 +235,7 @@
                                             </button>
 
                                         </form>
+                                        @endif
 
                                     </div>
 

@@ -324,24 +324,31 @@
     <!-- Section Title -->
     <div class="section-title">Rincian Penjualan</div>
 
+    @php
+        $showMargin = !empty($canSeeMargin);
+        $colCount = $showMargin ? 7 : 6;
+    @endphp
+
     <!-- Tabel Rincian Penjualan -->
     <table class="detail-table">
         <thead>
             <tr>
                 <th class="text-left" style="width: 15%;">Kode Barang</th>
-                <th class="text-left" style="width: 29%;">Nama Barang</th>
+                <th class="text-left" style="width: {{ $showMargin ? '29%' : '41%' }};">Nama Barang</th>
                 <th class="text-right" style="width: 12%;">Harga Satuan</th>
                 <th class="text-center" style="width: 9%;">Diskon</th>
                 <th class="text-right" style="width: 11%;">Voucher</th>
                 <th class="text-right" style="width: 12%;">Sub Total</th>
-                <th class="text-right" style="width: 12%;">Margin (%)</th>
+                @if($showMargin)
+                    <th class="text-right" style="width: 12%;">Margin (%)</th>
+                @endif
             </tr>
         </thead>
         <tbody>
             @forelse ($reportData as $inv)
                 <!-- Header Per Transaksi / Invoice -->
                 <tr class="invoice-header-row">
-                    <td colspan="7">
+                    <td colspan="{{ $colCount }}">
                         <table class="inv-head-table">
                             <tr>
                                 <td style="text-align: left;">
@@ -369,35 +376,37 @@
                         <td class="text-center">{{ $item['diskon_persen'] > 0 ? $item['diskon_persen'] . '%' : '-' }}</td>
                         <td class="text-right">{{ $item['voucher_satuan'] > 0 ? '-' . number_format($item['voucher_satuan'], 0, ',', '.') : '-' }}</td>
                         <td class="text-right" style="font-weight: 600;">{{ number_format($item['subtotal'], 0, ',', '.') }}</td>
-                        <td class="text-right" style="font-weight: 600; color: {{ $item['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }};">
-                            {{ number_format($item['margin_pct'], 1, ',', '.') }}%
-                        </td>
+                        @if($showMargin)
+                            <td class="text-right" style="font-weight: 600; color: {{ $item['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }};">
+                                {{ number_format($item['margin_pct'], 1, ',', '.') }}%
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
 
                 <!-- Breakdown Invoice -->
                 <tr class="summary-row">
-                    <td colspan="5"></td>
+                    <td colspan="{{ $colCount - 2 }}"></td>
                     <td class="sub-label">Sub Total</td>
                     <td class="sub-val">{{ number_format($inv['subtotal'], 0, ',', '.') }}</td>
                 </tr>
                 @if($inv['diskon_global'] > 0)
                 <tr class="summary-row">
-                    <td colspan="5"></td>
+                    <td colspan="{{ $colCount - 2 }}"></td>
                     <td class="sub-label">Diskon Global</td>
                     <td class="sub-val">-{{ number_format($inv['diskon_global'], 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($inv['voucher_global'] > 0)
                 <tr class="summary-row">
-                    <td colspan="5"></td>
+                    <td colspan="{{ $colCount - 2 }}"></td>
                     <td class="sub-label">Voucher Global</td>
                     <td class="sub-val">-{{ number_format($inv['voucher_global'], 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($inv['ppn_nominal'] > 0)
                 <tr class="summary-row">
-                    <td colspan="5"></td>
+                    <td colspan="{{ $colCount - 2 }}"></td>
                     <td class="sub-label">PPN ({{ $inv['ppn_pct'] }}%)</td>
                     <td class="sub-val">{{ number_format($inv['ppn_nominal'], 0, ',', '.') }}</td>
                 </tr>
@@ -405,15 +414,20 @@
 
                 <!-- Total Row -->
                 <tr class="invoice-total-row">
-                    <td colspan="3" style="text-align: left; font-size: 8.5px; color: #475569; padding-left: 8px;">
-                        Margin Transaksi: <strong style="color: {{ $inv['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }}; font-size: 9px;">{{ number_format($inv['margin_pct'], 1, ',', '.') }}%</strong>
-                    </td>
-                    <td colspan="3" class="tot-label">Total {{ $inv['ref_no'] }}</td>
-                    <td class="tot-val">Rp {{ number_format($inv['total'], 0, ',', '.') }}</td>
+                    @if($showMargin)
+                        <td colspan="3" style="text-align: left; font-size: 8.5px; color: #475569; padding-left: 8px;">
+                            Margin Transaksi: <strong style="color: {{ $inv['margin_pct'] >= 0 ? '#0D1C43' : '#dc2626' }}; font-size: 9px;">{{ number_format($inv['margin_pct'], 1, ',', '.') }}%</strong>
+                        </td>
+                        <td colspan="3" class="tot-label">Total {{ $inv['ref_no'] }}</td>
+                        <td class="tot-val">Rp {{ number_format($inv['total'], 0, ',', '.') }}</td>
+                    @else
+                        <td colspan="5" class="tot-label">Total {{ $inv['ref_no'] }}</td>
+                        <td class="tot-val">Rp {{ number_format($inv['total'], 0, ',', '.') }}</td>
+                    @endif
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 20px; color: #94a3b8;">
+                    <td colspan="{{ $colCount }}" class="text-center" style="padding: 20px; color: #94a3b8;">
                         Tidak ada data transaksi pada rentang tanggal yang dipilih.
                     </td>
                 </tr>
@@ -424,9 +438,11 @@
     <!-- Grand Total Keseluruhan -->
     <table class="grand-total-table">
         <tr>
-            <td class="grand-total-margin">
-                Margin Keseluruhan: <strong style="color: #ffffff; font-size: 10px;">{{ number_format($grandTotalMarginPct, 1, ',', '.') }}%</strong>
-            </td>
+            @if($showMargin)
+                <td class="grand-total-margin">
+                    Margin Keseluruhan: <strong style="color: #ffffff; font-size: 10px;">{{ number_format($grandTotalMarginPct, 1, ',', '.') }}%</strong>
+                </td>
+            @endif
             <td class="grand-total-label">
                 Grand Total Keseluruhan
             </td>

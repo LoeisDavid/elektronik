@@ -208,7 +208,8 @@
                                                 <span>Edit</span>
                                             </button>
 
-                                            <!-- HAPUS -->
+                                            <!-- HAPUS (HANYA SUPERVISOR & DEVELOPER) -->
+                                            <?php if (auth()->user()?->canDelete()): ?>
                                             <form method="POST" action="<?= e(route('inventory.gudang.destroy', ['gd' => $gudang->GD])) ?>">
                                                 <?= csrf_field() ?>
                                                 <?= method_field('DELETE') ?>
@@ -224,6 +225,7 @@
                                                     <span>Hapus</span>
                                                 </button>
                                             </form>
+                                            <?php endif; ?>
 
                                         </div>
                                     </div>

@@ -233,6 +233,47 @@ class GDController extends Controller
 
     }
 
+    public function daftarBarang(Request $request, $gd)
+    {
+        try {
+            $gd = GD::findOrFail($gd);
+
+            $query = ITMDT::query()
+                ->where('GD', $gd->GD)
+                ->whereNotIn('BC_OUT', STS::select('BC_OUT'));
+
+            if ($request->filled('keyword')) {
+                $keyword = $request->keyword;
+                $kodeItm = ITM::where('DES', 'LIKE', "%{$keyword}%")
+                    ->orWhere('ITM', 'LIKE', "%{$keyword}%")
+                    ->pluck('ITM');
+
+                $query->where(function ($q) use ($keyword, $kodeItm) {
+                    $q->where('BC_OUT', 'LIKE', "%{$keyword}%")
+                        ->orWhereIn('ITM', $kodeItm);
+                });
+            }
+
+            $rows = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+            $items = $rows->through(function ($row) {
+                $itm = ITM::where('ITM', $row->ITM)->first();
+                return (object) [
+                    'BC_OUT' => $row->BC_OUT,
+                    'DES'    => $itm->DES ?? '-',
+                    'KTG'    => $itm?->ktg()?->DES ?? '-',
+                    'SPP'    => $row->spp()?->DES ?? '-',
+                    'MRK'    => $itm?->mrk()?->DES ?? '-',
+                    'HRB'    => (float) ($row->HRB ?? 0),
+                ];
+            });
+
+            return view('inventory.daftarBarang', compact('gd', 'items'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan daftar barang gudang');
+        }
+    }
+
     public function update(Request $request, $gd)
     {
         try {

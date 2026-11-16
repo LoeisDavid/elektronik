@@ -193,7 +193,8 @@
                                         <span>Edit</span>
                                     </button>
 
-                                    {{-- DELETE --}}
+                                    {{-- DELETE (HANYA SUPERVISOR & DEVELOPER) --}}
+                                    @if(auth()->user()?->canDelete())
                                     <form
                                         method="POST"
                                         action="{{ route('inventory.kategori.destroy', ['ktg' => $kategori->KTG]) }}">
@@ -219,6 +220,7 @@
                                             <span>Hapus</span>
                                         </button>
                                     </form>
+                                    @endif
 
                                 </div>
 

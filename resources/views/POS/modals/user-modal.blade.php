@@ -93,12 +93,20 @@
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
-                        @if(auth()->user()?->isManager())
+                        @if(auth()->user()?->isDeveloper())
+                            <option value="5" {{ old('ROLE') == 5 ? 'selected' : '' }}>Developer</option>
+                            <option value="4" {{ old('ROLE') == 4 ? 'selected' : '' }}>Supervisor</option>
                             <option value="1" {{ old('ROLE') == 1 ? 'selected' : '' }}>Admin</option>
-                            <option value="3" {{ old('ROLE') == 3 ? 'selected' : '' }}>Storage</option>
+                            <option value="3" {{ old('ROLE') == 3 ? 'selected' : '' }}>Gudang</option>
+                            <option value="2" {{ old('ROLE', 2) == 2 ? 'selected' : '' }}>Kasir</option>
+                        @elseif(auth()->user()?->isSupervisor())
+                            <option value="4" {{ old('ROLE') == 4 ? 'selected' : '' }}>Supervisor</option>
+                            <option value="1" {{ old('ROLE') == 1 ? 'selected' : '' }}>Admin</option>
+                            <option value="3" {{ old('ROLE') == 3 ? 'selected' : '' }}>Gudang</option>
                             <option value="2" {{ old('ROLE', 2) == 2 ? 'selected' : '' }}>Kasir</option>
                         @else
-                            <option value="3" {{ old('ROLE') == 3 ? 'selected' : '' }}>Storage</option>
+                            <option value="1" {{ old('ROLE') == 1 ? 'selected' : '' }}>Admin</option>
+                            <option value="3" {{ old('ROLE') == 3 ? 'selected' : '' }}>Gudang</option>
                             <option value="2" {{ old('ROLE', 2) == 2 ? 'selected' : '' }}>Kasir</option>
                         @endif
                     </select>
@@ -247,12 +255,20 @@
                         required
                         class="w-full bg-white border border-black/80 rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db focus:border-primary-db"
                     >
-                        @if(auth()->user()?->isManager())
+                        @if(auth()->user()?->isDeveloper())
+                            <option value="5">Developer</option>
+                            <option value="4">Supervisor</option>
                             <option value="1">Admin</option>
-                            <option value="3">Storage</option>
+                            <option value="3">Gudang</option>
+                            <option value="2">Kasir</option>
+                        @elseif(auth()->user()?->isSupervisor())
+                            <option value="4">Supervisor</option>
+                            <option value="1">Admin</option>
+                            <option value="3">Gudang</option>
                             <option value="2">Kasir</option>
                         @else
-                            <option value="3">Storage</option>
+                            <option value="1">Admin</option>
+                            <option value="3">Gudang</option>
                             <option value="2">Kasir</option>
                         @endif
                     </select>
