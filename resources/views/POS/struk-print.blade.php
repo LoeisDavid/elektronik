@@ -1,254 +1,288 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <title>Struk {{ $struk['ref_no'] }}</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nota Penjualan - {{ $struk['ref_no'] }}</title>
+
+    @include('POS.partials.nota-styles')
 
     <style>
         @page {
-            margin: 14px 12px;
+            size: 215mm 110mm;
+            margin: 5mm;
         }
 
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 9px;
-            color: #1f2937;
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            color: #111111;
+            background-color: #eceff2;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        td {
-            vertical-align: top;
-            padding: 2px 0;
+        body {
+            padding: 0 16px 24px;
+            overflow-x: auto;
         }
 
-        .center { text-align: center; }
-        .right  { text-align: right; }
-        .bold   { font-weight: bold; }
-
-        .nama-toko {
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            color: #000;
-            margin: 0 0 2px 0;
+        .print-bar {
+            width: 215mm;
+            margin: 16px auto 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
         }
 
-        .info-toko {
-            font-size: 8px;
-            color: #4b5563;
-            margin: 1px 0;
-            line-height: 1.3;
+        .btn-toolbar {
+            appearance: none;
+            border: 1px solid #111111;
+            background: #ffffff;
+            color: #111111;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
-        .no-transaksi-label {
-            font-size: 8px;
-            color: #6b7280;
-            margin: 4px 0 1px 0;
+        .btn-toolbar:hover {
+            background: #111111;
+            color: #ffffff;
         }
 
-        .no-transaksi-val {
-            font-size: 10px;
-            font-weight: bold;
-            color: #111827;
-            margin: 0;
-        }
+        @media print {
+            html, body {
+                background: #ffffff;
+                padding: 0;
+                overflow: visible;
+            }
 
-        .garis {
-            border-top: 1px dashed #9ca3af;
-            margin: 6px 0;
-        }
+            .print-bar,
+            .nota-root .preprinted-guide {
+                display: none !important;
+            }
 
-        .label { color: #4b5563; }
-        .value { color: #111827; }
-        .text-discount { color: #dc2626; }
+            #receipt-root.nota-root {
+                display: block;
+                min-width: 0;
+                padding: 0;
+                gap: 0;
+            }
 
-        .total-row td {
-            font-size: 11px;
-            font-weight: bold;
-            color: #111827;
-            padding-top: 3px;
-            padding-bottom: 3px;
-            border-top: 1px solid #e5e7eb;
-        }
+            .nota-root .sheet {
+                width: 205mm;
+                height: 100mm;
+                padding: 0;
+                margin: 0;
+                box-shadow: none;
+                background: transparent;
+                overflow: hidden;
+            }
 
-        .footer {
-            text-align: center;
-            font-size: 8px;
-            color: #6b7280;
-            margin-top: 10px;
+            .nota-root .sheet-inner {
+                padding: 25mm 32mm 0 9mm;
+            }
+
+            .nota-root .sheet + .sheet {
+                break-before: page;
+                page-break-before: always;
+            }
         }
     </style>
 </head>
 <body>
+    @php
+        $shopName = strtoupper(config('perusahaan.nama_perusahaan', 'Toko Bogor'));
+        $shopAddress = strtoupper(trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(' ')));
+        $shopPhone = config('perusahaan.no_telp', '');
+        $shopNpwp = config('perusahaan.npwp', '');
 
-    {{-- HEADER TOKO --}}
-    <div class="center">
-        <p class="nama-toko">{{ config('perusahaan.nama_perusahaan', 'Pomelo.') }}</p>
-        @if(config('perusahaan.alamat') || config('perusahaan.kota'))
-            <p class="info-toko">{{ trim(collect([config('perusahaan.alamat'), config('perusahaan.kota')])->filter()->implode(', ')) }}</p>
-        @endif
-        @if(config('perusahaan.no_telp'))
-            <p class="info-toko">Telp: {{ config('perusahaan.no_telp') }}</p>
-        @endif
-        <p class="no-transaksi-label">No. Transaksi</p>
-        <p class="no-transaksi-val">{{ $struk['ref_no'] }}</p>
+        $totalPages = count($pages);
+        $fmtRp = fn ($val): string => ($val < 0 ? '-' : '') . 'Rp ' . number_format(abs(round((float) $val)), 0, ',', '.');
+    @endphp
+
+    <div class="print-bar">
+        <button class="btn-toolbar" type="button" onclick="window.close()">Tutup</button>
+        <button class="btn-toolbar" type="button" onclick="window.print()">Print</button>
     </div>
 
-    <div class="garis"></div>
+    <main id="receipt-root" class="nota-root" aria-label="Nota Penjualan">
+        @foreach ($pages as $pageIndex => $pageItems)
+            @php
+                $isLastPage = ($pageIndex === $totalPages - 1);
+                $startIndex = $pageIndex * $rowsPerPage;
+                $hasExtraTotals = $isLastPage && (
+                    ($struk['discount_item'] ?? 0) > 0 ||
+                    ($struk['discount_global'] ?? 0) > 0 ||
+                    ($struk['voucher'] ?? 0) > 0 ||
+                    ($struk['ppn_nominal'] ?? 0) > 0
+                );
+            @endphp
 
-    {{-- DETAIL TRANSAKSI --}}
-    <div style="font-size: 8px; color: #4b5563; line-height: 1.4;">
-        <div>{{ $struk['tanggal'] ?: date('d M Y') }}</div>
-        @if(!empty($struk['waktu']))
-            <div>{{ $struk['waktu'] }}</div>
-        @endif
-        <div>Dilayani oleh: <span class="bold value">{{ $struk['kasir'] ?: 'Kasir' }}</span></div>
-
-        @php
-            $cstNama = trim($struk['customer_nama'] ?? '');
-            $cstDesa = trim($struk['customer_desa'] ?? '');
-            $cstAlamat = trim($struk['customer_alamat'] ?? '');
-
-            $norm = fn($s) => preg_replace('/[^a-z0-9]/', '', preg_replace('/^(ds\.|desa\s+|dusun\s+)/i', '', strtolower($s ?? '')));
-            $normDesa = $norm($cstDesa);
-            $normNama = $norm($cstNama);
-            $normAlamat = $norm($cstAlamat);
-
-            $isNamaLikeDesa = empty($normNama) || $normNama === '-' || (!empty($normDesa) && ($normNama === $normDesa || str_contains($normNama, $normDesa)));
-            $isAlamatLikeDesa = empty($normAlamat) || $normAlamat === '-' || (!empty($normDesa) && ($normAlamat === $normDesa || str_contains($normAlamat, $normDesa)));
-
-            if ($isNamaLikeDesa && $isAlamatLikeDesa) {
-                // Jika nama pelanggan dan alamat memiliki nama seperti nama desa maka tidak usah ditampilkan cukup nama desanya saja
-                $showNama = false;
-                $showAlamat = false;
-                $showDesa = !empty($cstDesa) && $cstDesa !== '-';
-            } else {
-                $showNama = !$isNamaLikeDesa && !empty($cstNama) && $cstNama !== '-';
-                $showDesa = !empty($cstDesa) && $cstDesa !== '-';
-                $showAlamat = !$isAlamatLikeDesa && !empty($cstAlamat) && $cstAlamat !== '-';
-            }
-        @endphp
-
-        @if ($showNama || $showDesa || $showAlamat)
-            <div style="margin-top: 3px; padding-top: 3px; border-top: 1px dashed #d1d5db;">
-                @if ($showNama)
-                    <div>Pelanggan: <span class="bold value">{{ $cstNama }}</span></div>
-                @endif
-                @if ($showDesa)
-                    <div>Desa: <span class="bold value">{{ $cstDesa }}</span></div>
-                @endif
-                @if ($showAlamat)
-                    <div>Alamat: <span class="bold value">{{ $cstAlamat }}</span></div>
-                @endif
-            </div>
-        @endif
-    </div>
-
-    <div class="garis"></div>
-
-    {{-- ITEM / PRODUK --}}
-    @if (count($struk['items']) === 0)
-        <p class="center" style="color:#9ca3af;">Tidak ada detail produk</p>
-    @else
-        <table>
-            @foreach ($struk['items'] as $item)
-                <tr>
-                    <td class="bold value">
-                        {{ $item['nama'] }}
-                        <div style="font-size: 8px; font-weight: normal; color: #6b7280;">
-                            {{ $item['qty'] }}x Rp {{ number_format($item['price'] ?? ($item['subtotal'] / max(1, $item['qty'])), 0, ',', '.') }}
+            <article class="sheet">
+                <div class="preprinted-guide" aria-hidden="true">
+                    <div class="pp-header">
+                        <div class="pp-shop">{{ $shopName }}</div>
+                        @if ($shopAddress !== '')
+                            <div class="pp-meta">{{ $shopAddress }}</div>
+                        @endif
+                        @if ($shopPhone !== '')
+                            <div class="pp-meta">{{ $shopPhone }}</div>
+                        @endif
+                        @if ($shopNpwp !== '')
+                            <div class="pp-meta">NPWP: {{ $shopNpwp }}</div>
+                        @endif
+                    </div>
+                    <div class="pp-watermark">{{ $shopName }}</div>
+                    <div class="pp-tagline">TERPERCAYA SEJAK TAHUN 1975</div>
+                    <div class="pp-ppn">HARGA SUDAH TERMASUK PPN</div>
+                    <div class="pp-right-strip">
+                        <div class="pp-right-text">
+                            PERHATIAN!<br />
+                            PIHAK TOKO TIDAK BERTANGGUNG JAWAB JIKA ADA<br />
+                            KEKURANGAN PERLENGKAPAN (REMOTE, KARTU GARANSI, DLL)<br />
+                            SETELAH BARANG DIBAWA / KELUAR DARI TOKO<br />
+                            <strong>PERIKSALAH DENGAN TELITI</strong>
                         </div>
-                        @if (!empty($item['discount_info']))
-                            <div style="font-size: 7.5px; color: #dc2626;">
-                                {{ (str_starts_with(trim($item['discount_info']), 'Diskon:') || str_starts_with(trim($item['discount_info']), 'Voucher')) ? $item['discount_info'] : 'Diskon: -' . $item['discount_info'] }}
+                    </div>
+                </div>
+
+                <div class="sheet-inner{{ $hasExtraTotals ? ' has-extra-totals' : '' }}">
+                    <div class="trx-row">
+                        <span class="label">No. Transaksi: </span>
+                        <span class="doc-trx mono">{{ $struk['ref_no'] }}</span>
+                    </div>
+
+                    <section class="customer-block">
+                        <div class="customer-left">
+                            @foreach ($customerRows as $row)
+                                <div class="customer-row">
+                                    <span class="label">{{ $row['label'] }}</span>
+                                    <span class="value">{{ $row['value'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="customer-right">
+                            <div>
+                                <span class="value">
+                                    {{ $struk['tanggal'] }} &bull; {{ $struk['waktu'] }}@if ($totalPages > 1) &bull; Hal. {{ $pageIndex + 1 }}/{{ $totalPages }}@endif
+                                </span>
                             </div>
-                        @endif
-                    </td>
-                    <td class="right bold value" style="white-space: nowrap;">
-                        @if ($item['subtotal'] !== null)
-                            Rp {{ number_format($item['subtotal'], 0, ',', '.') }}
-                        @endif
-                    </td>
-                </tr>
-            @endforeach
-        </table>
-    @endif
+                            <div>
+                                <span class="label">Dilayani oleh: </span>
+                                <span class="value">{{ $struk['kasir'] }}</span>
+                            </div>
+                        </div>
+                    </section>
 
-    <div class="garis"></div>
+                    <section class="items-section">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-no center">No</th>
+                                    <th class="col-name">Nama Barang</th>
+                                    <th class="col-qty center">Qty</th>
+                                    <th class="col-price num">Harga</th>
+                                    <th class="col-total num">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for ($rowOffset = 0; $rowOffset < $rowsPerPage; $rowOffset++)
+                                    @php $item = $pageItems[$rowOffset] ?? null; @endphp
+                                    @if (!$item)
+                                        <tr>
+                                            <td class="center">&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td class="center">&nbsp;</td>
+                                            <td class="num">&nbsp;</td>
+                                            <td class="num">&nbsp;</td>
+                                        </tr>
+                                    @else
+                                        @php
+                                            $qty = (int) ($item['qty'] ?? 1);
+                                            $unitPrice = (float) ($item['price'] ?? 0);
+                                            $lineTotal = $item['subtotal'] !== null ? (float) $item['subtotal'] : ($qty * $unitPrice);
+                                        @endphp
+                                        <tr>
+                                            <td class="center">{{ $startIndex + $rowOffset + 1 }}</td>
+                                            <td title="{{ $item['nama'] }}">
+                                                {{ $item['nama'] }}@if (!empty($item['discount_info']))<span class="item-disc-inline">({{ $item['discount_info'] }})</span>@endif
+                                            </td>
+                                            <td class="center">{{ $qty }}</td>
+                                            <td class="num">{{ $fmtRp($unitPrice) }}</td>
+                                            <td class="num">{{ $fmtRp($lineTotal) }}</td>
+                                        </tr>
+                                    @endif
+                                @endfor
+                            </tbody>
+                        </table>
+                    </section>
 
-    {{-- RINCIAN TOTAL & PEMBAYARAN --}}
-    <table>
-        @if (!empty($struk['subtotal']))
-            <tr>
-                <td class="label">Subtotal</td>
-                <td class="right bold value">Rp {{ number_format($struk['subtotal'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
+                    @if ($isLastPage)
+                        <section class="bottom-section">
+                            <div class="payment-totals">
+                                <div class="payment-left">
+                                    <span class="label">Pembayaran</span>
+                                    <span class="value num">{{ $struk['metode'] }}</span>
+                                    @if ($isTunai)
+                                        <span class="label">Dibayar</span>
+                                        <span class="value num">{{ $fmtRp($struk['dibayar'] ?? 0) }}</span>
+                                        <span class="label">Kembali</span>
+                                        <span class="value num">{{ $fmtRp($struk['kembalian'] ?? 0) }}</span>
+                                    @endif
+                                </div>
 
-        @if (!empty($struk['discount_item']) && $struk['discount_item'] > 0)
-            <tr>
-                <td class="label">Diskon Per Item</td>
-                <td class="right bold text-discount">- Rp {{ number_format($struk['discount_item'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
+                                <div class="totals-right">
+                                    <span class="subtotal-label">Subtotal</span>
+                                    <span class="subtotal-val num">{{ $fmtRp($struk['subtotal'] ?? 0) }}</span>
 
-        @if (!empty($struk['discount_global']) && $struk['discount_global'] > 0)
-            <tr>
-                <td class="label">Diskon Global</td>
-                <td class="right bold text-discount">- Rp {{ number_format($struk['discount_global'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
+                                    @if (($struk['discount_item'] ?? 0) > 0)
+                                        <span class="extra-label">Diskon Per Item</span>
+                                        <span class="extra-val discount num">- {{ $fmtRp($struk['discount_item']) }}</span>
+                                    @endif
 
-        @if (!empty($struk['voucher']) && $struk['voucher'] > 0)
-            <tr>
-                <td class="label">Voucher</td>
-                <td class="right bold text-discount">- Rp {{ number_format($struk['voucher'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
+                                    @if (($struk['discount_global'] ?? 0) > 0)
+                                        <span class="extra-label">
+                                            Diskon Global{{ !empty($struk['discount_percent']) && $struk['discount_percent'] > 0 ? ' (' . $struk['discount_percent'] . '%)' : '' }}
+                                        </span>
+                                        <span class="extra-val discount num">- {{ $fmtRp($struk['discount_global']) }}</span>
+                                    @endif
 
-        @if (!empty($struk['ppn_nominal']) && $struk['ppn_nominal'] > 0)
-            <tr>
-                <td class="label">PPN {{ !empty($struk['ppn']) ? '(' . $struk['ppn'] . '%)' : '' }}</td>
-                <td class="right bold value">+ Rp {{ number_format($struk['ppn_nominal'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
+                                    @if (($struk['voucher'] ?? 0) > 0)
+                                        <span class="extra-label">Voucher</span>
+                                        <span class="extra-val discount num">- {{ $fmtRp($struk['voucher']) }}</span>
+                                    @endif
 
-        <tr class="total-row">
-            <td>Total</td>
-            <td class="right">Rp {{ number_format($struk['total'], 0, ',', '.') }}</td>
-        </tr>
+                                    @if (($struk['ppn_nominal'] ?? 0) > 0)
+                                        <span class="extra-label">
+                                            PPN{{ !empty($struk['ppn']) && $struk['ppn'] > 0 ? ' (' . $struk['ppn'] . '%)' : '' }}
+                                        </span>
+                                        <span class="extra-val num">+ {{ $fmtRp($struk['ppn_nominal']) }}</span>
+                                    @endif
 
-        @if (!empty($struk['metode']))
-            <tr>
-                <td class="label">Pembayaran</td>
-                <td class="right bold value">{{ strtoupper($struk['metode']) }}</td>
-            </tr>
-        @endif
+                                    <span class="grand-label">TOTAL</span>
+                                    <span class="grand-val num">{{ $fmtRp($struk['total'] ?? 0) }}</span>
+                                </div>
+                            </div>
+                        </section>
+                    @endif
+                </div>
+            </article>
+        @endforeach
+    </main>
 
-        @if ($struk['dibayar'] !== null && $struk['dibayar'] > 0)
-            <tr>
-                <td class="label">Dibayar</td>
-                <td class="right bold value">Rp {{ number_format($struk['dibayar'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
-
-        @if ($struk['kembalian'] !== null && $struk['kembalian'] > 0)
-            <tr>
-                <td class="label">Kembali</td>
-                <td class="right bold value">Rp {{ number_format($struk['kembalian'], 0, ',', '.') }}</td>
-            </tr>
-        @endif
-    </table>
-
-    <div class="footer">
-        Terima kasih atas kunjungan Anda
-    </div>
-
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => window.print(), 150);
+        });
+    </script>
 </body>
 </html>

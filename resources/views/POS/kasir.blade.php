@@ -271,6 +271,7 @@
         <input type="hidden" name="metode" id="printMetode">
         <input type="hidden" name="subtotal" id="printSubtotal">
         <input type="hidden" name="discount_item" id="printDiscountItem">
+        <input type="hidden" name="discount_percent" id="printDiscountPercent">
         <input type="hidden" name="discount_global" id="printDiscountGlobal">
         <input type="hidden" name="voucher" id="printVoucher">
         <input type="hidden" name="ppn" id="printPpn">
