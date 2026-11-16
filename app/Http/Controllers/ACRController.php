@@ -172,6 +172,8 @@ class ACRController extends Controller
 
     /**
      * [TAMBAHAN PRINT]
+     * Menampilkan view cetak nota 1/3 folio (215mm x 110mm) dengan pagination 7 item/lembar.
+     * Tidak ada query ulang ke database kecuali fallback data customer.
      * Membuat PDF struk dengan DomPDF dari data yang dikirim Blade (POST).
      * Tidak ada query ulang ke database.
      */
@@ -258,8 +260,9 @@ class ACRController extends Controller
                 'items'           => $items,
             ];
 
-            // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item + info customer
-            $tinggi = 460 + (count($items) * 36);
+            $rowsPerPage = 7;
+            $pages = count($items) > 0 ? array_chunk($items, $rowsPerPage) : [[]];
+            $customerRows = $this->resolveCustomerDisplay($customerNama, $customerDesa, $customerAlamat);
 
             $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
                 ->setPaper([0, 0, 226.77, $tinggi], 'portrait');
