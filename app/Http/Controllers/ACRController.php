@@ -172,7 +172,7 @@ class ACRController extends Controller
 
     /**
      * [TAMBAHAN PRINT]
-     * Menampilkan view cetak nota 1/3 folio (215mm x 110mm) dengan pagination 4 item/lembar.
+     * Menampilkan view cetak nota 1/3 folio (215mm x 110mm) dengan pagination 7 item/lembar.
      * Tidak ada query ulang ke database kecuali fallback data customer.
      */
     public function print(Request $request)
@@ -270,7 +270,7 @@ class ACRController extends Controller
                 'items'            => $items,
             ];
 
-            $rowsPerPage = 4;
+            $rowsPerPage = 7;
             $pages = count($items) > 0 ? array_chunk($items, $rowsPerPage) : [[]];
             $customerRows = $this->resolveCustomerDisplay($customerNama, $customerDesa, $customerAlamat);
 

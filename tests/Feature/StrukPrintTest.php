@@ -43,9 +43,9 @@ class StrukPrintTest extends TestCase
         return $items;
     }
 
-    public function test_four_or_fewer_items_render_single_receipt_sheet_without_page_number(): void
+    public function test_seven_or_fewer_items_render_single_receipt_sheet_without_page_number(): void
     {
-        $items = $this->sampleItems(4);
+        $items = $this->sampleItems(7);
 
         $response = $this->actingAs($this->user)->post(route('POS.struk.print'), [
             'ref_no'          => 'INV0000101',
@@ -56,10 +56,10 @@ class StrukPrintTest extends TestCase
             'customer_desa'   => 'Bangkal',
             'customer_alamat' => 'Jl. Diponegoro No. 48',
             'metode'          => 'Tunai',
-            'subtotal'        => 1000000,
-            'total'           => 1000000,
-            'dibayar'         => 1100000,
-            'kembalian'       => 100000,
+            'subtotal'        => 2800000,
+            'total'           => 2800000,
+            'dibayar'         => 3000000,
+            'kembalian'       => 200000,
             'items'           => json_encode($items),
         ]);
 
@@ -70,16 +70,25 @@ class StrukPrintTest extends TestCase
         $this->assertSame(1, substr_count($html, '<section class="bottom-section">'));
         $this->assertStringNotContainsString('Hal.', $html);
         $this->assertStringContainsString('size: 215mm 110mm;', $html);
+        $this->assertStringContainsString('Landscape paper position', $html);
+        $this->assertStringContainsString('Portrait paper position', $html);
+        $this->assertStringContainsString('Folio test (215x330)', $html);
+        $this->assertStringContainsString('110mm 215mm', $html);
+        $this->assertStringContainsString('215mm 330mm', $html);
+        $this->assertStringContainsString('togglePortraitFlip', $html);
+        $this->assertStringContainsString('Print pre-printed text', $html);
+        $this->assertStringContainsString('togglePrintPreprinted', $html);
+        $this->assertStringContainsString('data-print-preprinted="1"', $html);
         $this->assertStringContainsString('window.print()', $html);
-        $this->assertStringContainsString('Rp 1.000.000', $html);
-        $this->assertStringContainsString('Rp 1.100.000', $html);
-        $this->assertStringContainsString('Rp 100.000', $html);
+        $this->assertStringContainsString('Rp 2.800.000', $html);
+        $this->assertStringContainsString('Rp 3.000.000', $html);
+        $this->assertStringContainsString('Rp 200.000', $html);
         $this->assertStringContainsString('07.079.290.8.614.000', $html);
     }
 
-    public function test_more_than_four_items_paginate_across_multiple_sheets_with_totals_on_last_sheet(): void
+    public function test_more_than_seven_items_paginate_across_multiple_sheets_with_totals_on_last_sheet(): void
     {
-        $items = $this->sampleItems(6);
+        $items = $this->sampleItems(9);
 
         $response = $this->actingAs($this->user)->post(route('POS.struk.print'), [
             'ref_no'          => 'INV0000102',
@@ -90,9 +99,9 @@ class StrukPrintTest extends TestCase
             'customer_desa'   => 'Pamolokan',
             'customer_alamat' => 'Jl. Trunojoyo 12',
             'metode'          => 'Tunai',
-            'subtotal'        => 2100000,
-            'total'           => 2100000,
-            'dibayar'         => 2100000,
+            'subtotal'        => 4500000,
+            'total'           => 4500000,
+            'dibayar'         => 4500000,
             'kembalian'       => 0,
             'items'           => json_encode($items),
         ]);
@@ -104,8 +113,8 @@ class StrukPrintTest extends TestCase
         $this->assertSame(1, substr_count($html, '<section class="bottom-section">'));
         $this->assertStringContainsString('Hal. 1/2', $html);
         $this->assertStringContainsString('Hal. 2/2', $html);
-        // 4 fixed rows per sheet across 2 sheets = 8 tbody rows
-        $this->assertSame(8, substr_count($html, '<td class="center">') / 2);
+        // 7 fixed rows per sheet across 2 sheets = 14 tbody rows
+        $this->assertSame(14, substr_count($html, '<td class="center">') / 2);
 
         $secondSheetPos = strpos($html, 'Hal. 2/2');
         $bottomSectionPos = strpos($html, '<section class="bottom-section">');

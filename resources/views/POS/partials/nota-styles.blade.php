@@ -125,8 +125,8 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        font-size: 9pt;
-        line-height: 1.2;
+        font-size: 7.8pt;
+        line-height: 1.15;
         color: #111111;
     }
 
@@ -142,7 +142,7 @@
 
     .nota-root .mono {
         font-family: "Courier New", Courier, monospace;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.3px;
     }
 
     .nota-root .num {
@@ -153,15 +153,16 @@
 
     /* 1. No. Transaksi placed directly below pre-printed NPWP */
     .nota-root .trx-row {
-        padding-bottom: 1.1mm;
+        padding-bottom: 0.6mm;
         border-bottom: 1px dashed #666666;
         flex-shrink: 0;
-        font-size: 8.5pt;
-        line-height: 1.2;
+        font-size: 7.5pt;
+        line-height: 1.15;
+        text-align: right;
     }
 
     .nota-root .doc-trx {
-        font-size: 9.5pt;
+        font-size: 8pt;
         font-weight: 700;
         color: #000000;
     }
@@ -171,12 +172,12 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 4mm;
-        padding: 0.9mm 0;
+        gap: 3mm;
+        padding: 0.6mm 0;
         border-bottom: 1px dashed #666666;
         flex-shrink: 0;
-        font-size: 8.5pt;
-        line-height: 1.2;
+        font-size: 7.5pt;
+        line-height: 1.12;
     }
 
     .nota-root .customer-left {
@@ -190,7 +191,7 @@
     }
 
     .nota-root .customer-row .label {
-        flex: 0 0 17mm;
+        flex: 0 0 15mm;
     }
 
     .nota-root .customer-row .value {
@@ -204,12 +205,12 @@
         flex: 0 0 auto;
         text-align: right;
         white-space: nowrap;
-        line-height: 1.25;
+        line-height: 1.15;
     }
 
-    /* 3. Item table (fixed 4 rows per sheet, no signatures) */
+    /* 3. Item table (fixed 7 rows per sheet, no signatures) */
     .nota-root .items-section {
-        padding: 0.6mm 0 0.8mm;
+        padding: 0.4mm 0 0.5mm;
         border-bottom: 1px dashed #666666;
         flex-shrink: 0;
     }
@@ -218,14 +219,14 @@
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
-        font-size: 9pt;
+        font-size: 7.8pt;
     }
 
     .nota-root table.items-table th {
         font-weight: 600;
         color: #222222;
         text-align: left;
-        padding: 0.6mm 1.2mm 0.8mm;
+        padding: 0.4mm 1mm 0.5mm;
         border-bottom: 1px solid #111111;
     }
 
@@ -240,8 +241,9 @@
     }
 
     .nota-root table.items-table td {
-        height: 5.4mm;
-        padding: 0.4mm 1.2mm;
+        height: 3.9mm;
+        padding: 0.25mm 1mm;
+        line-height: 1.1;
         vertical-align: middle;
         border-bottom: 1px dotted #bbbbbb;
         color: #111111;
@@ -255,22 +257,22 @@
         border-bottom: none;
     }
 
-    .nota-root .col-no { width: 8mm; }
+    .nota-root .col-no { width: 7mm; }
     .nota-root .col-name { width: auto; }
-    .nota-root .col-qty { width: 13mm; }
-    .nota-root .col-price { width: 31mm; }
-    .nota-root .col-total { width: 33mm; }
+    .nota-root .col-qty { width: 11mm; }
+    .nota-root .col-price { width: 28mm; }
+    .nota-root .col-total { width: 30mm; }
 
     .nota-root .item-disc-inline {
-        font-size: 7.5pt;
+        font-size: 6.8pt;
         color: #dc2626;
         font-weight: 400;
-        margin-left: 1.5mm;
+        margin-left: 1mm;
     }
 
     /* 4. Payment & Totals only (clears bottom-right "HARGA SUDAH TERMASUK PPN") */
     .nota-root .bottom-section {
-        padding-top: 1.4mm;
+        padding-top: 0.9mm;
         flex-shrink: 0;
     }
 
@@ -278,48 +280,50 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 6mm;
+        gap: 5mm;
     }
 
     .nota-root .payment-left {
         display: grid;
-        grid-template-columns: 22mm minmax(26mm, auto);
-        row-gap: 0.5mm;
-        column-gap: 3mm;
-        font-size: 9pt;
+        grid-template-columns: 20mm minmax(24mm, auto);
+        row-gap: 0.3mm;
+        column-gap: 2.5mm;
+        font-size: 7.5pt;
     }
 
     .nota-root .totals-right {
         display: grid;
-        grid-template-columns: auto minmax(34mm, auto);
-        row-gap: 0.45mm;
-        column-gap: 4mm;
+        grid-template-columns: auto minmax(30mm, auto);
+        row-gap: 0.3mm;
+        column-gap: 3mm;
         align-items: baseline;
         text-align: right;
     }
 
     .nota-root .totals-right .subtotal-label {
-        font-size: 9pt;
+        font-size: 7.5pt;
         color: #555555;
         font-weight: 400;
         text-align: left;
     }
 
     .nota-root .totals-right .subtotal-val {
-        font-size: 9pt;
+        font-size: 7.5pt;
         color: #111111;
         font-weight: 500;
     }
 
     .nota-root .totals-right .extra-label {
-        font-size: 8pt;
+        font-size: 7pt;
+        line-height: 1.1;
         color: #555555;
         font-weight: 400;
         text-align: left;
     }
 
     .nota-root .totals-right .extra-val {
-        font-size: 8pt;
+        font-size: 7pt;
+        line-height: 1.1;
         color: #111111;
         font-weight: 500;
     }
@@ -329,14 +333,14 @@
     }
 
     .nota-root .totals-right .grand-label {
-        font-size: 11pt;
+        font-size: 8.5pt;
         font-weight: 700;
         color: #000000;
         text-align: left;
     }
 
     .nota-root .totals-right .grand-val {
-        font-size: 14pt;
+        font-size: 10.5pt;
         font-weight: 700;
         color: #000000;
         line-height: 1.1;
@@ -344,17 +348,17 @@
 
     /* Compact spacing when extra discount / voucher / PPN rows are present so totals clear pp-ppn */
     .nota-root .sheet-inner.has-extra-totals table.items-table td {
-        height: 4.7mm;
-        padding: 0.3mm 1.2mm;
+        height: 3.6mm;
+        padding: 0.2mm 1mm;
     }
 
     .nota-root .sheet-inner.has-extra-totals .totals-right {
-        row-gap: 0.2mm;
+        row-gap: 0.15mm;
     }
 
     .nota-root .sheet-inner.has-extra-totals .totals-right .extra-label,
     .nota-root .sheet-inner.has-extra-totals .totals-right .extra-val {
-        font-size: 7.5pt;
-        line-height: 1.1;
+        font-size: 6.8pt;
+        line-height: 1.08;
     }
 </style>

@@ -3,7 +3,7 @@
  * Used by both POS Riwayat Transaksi and POS Kasir modals.
  */
 
-export const ROWS_PER_PAGE = 4;
+export const ROWS_PER_PAGE = 7;
 
 export function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
