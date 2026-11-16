@@ -23,7 +23,6 @@ class RPController extends Controller
         'terlama'        => 'Terlama',
         'stok-banyak'    => 'Stok Terbanyak',
         'stok-sedikit'   => 'Stok Tersedikit',
-        'status'         => 'Status',
     ];
 
     /**
@@ -74,9 +73,6 @@ class RPController extends Controller
                     break;
                 case 'stok-sedikit':
                     $query->orderBy('rpd_count', 'asc')->orderBy('created_at', 'desc');
-                    break;
-                case 'status':
-                    $query->orderBy('SS', 'asc')->orderBy('created_at', 'desc');
                     break;
                 case 'terbaru':
                 default:
@@ -164,35 +160,22 @@ class RPController extends Controller
                             'items' => "Barang {$bcOut} sudah berstatus terjual."
                         ]);
                     }
-
-                    // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
-                    $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-                        ->whereHas('rp', function ($q) {
-                            $q->whereIn('SS', ['Request', 'Pengiriman', 'Pending']);
-                        })
-                        ->exists();
-
-                    if ($adaPerpindahanAktif) {
-                        throw ValidationException::withMessages([
-                            'items' => "Barang {$bcOut} sedang dalam proses perpindahan lain yang belum selesai."
-                        ]);
-                    }
                 }
 
                 $rpCode = $this->generateRpCode();
 
-                // Simpan header RP dengan GD_ASAL otomatis dari ITMDT.GD
+                // Simpan header RP dengan GD_ASAL otomatis dari ITMDT.GD (langsung pindah 100%)
                 RP::create([
                     'RP'        => $rpCode,
                     'DTRQ'      => $validated['DTRQ'],
-                    'DTCF1'     => null,
-                    'DTCF2'     => null,
+                    'DTCF1'     => $validated['DTRQ'],
+                    'DTCF2'     => $validated['DTRQ'],
                     'GD_ASAL'   => $gdAsal,
                     'GD_TUJUAN' => $validated['GD_TUJUAN'],
-                    'SS'        => 'Request',
+                    'SS'        => 'Diterima',
                     'RQ'        => $currentUser,
-                    'CF1'       => null,
-                    'CF2'       => null,
+                    'CF1'       => $currentUser,
+                    'CF2'       => $currentUser,
                 ]);
 
                 // Simpan baris detail RPD
@@ -204,18 +187,23 @@ class RPController extends Controller
                         'BC_OUT' => $bcOut,
                     ]);
                 }
+
+                // Langsung pindahkan lokasi seluruh barang ke gudang tujuan
+                ITMDT::whereIn('BC_OUT', $items)->update([
+                    'GD' => $validated['GD_TUJUAN'],
+                ]);
             });
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Request perpindahan berhasil disimpan dengan kode {$rpCode}.",
+                    'message' => "Perpindahan barang berhasil disimpan dengan kode {$rpCode}.",
                     'rp'      => $rpCode,
                 ]);
             }
 
             return redirect()->route('inventory.perpindahan')
-                ->with('success', "Request perpindahan barang {$rpCode} berhasil dibuat.");
+                ->with('success', "Perpindahan barang {$rpCode} berhasil dibuat dan stok langsung dipindahkan ke gudang tujuan.");
         } catch (ValidationException $e) {
             if ($request->wantsJson()) {
                 return response()->json([
@@ -294,20 +282,6 @@ class RPController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => "Barang {$bcOut} berada di gudang '{$namaGdItem}', sedangkan barang sebelumnya berada di '{$namaCurrent}'. Semua barang dalam satu dokumen harus dari gudang asal yang sama.",
-            ], 422);
-        }
-
-        // Cek apakah sedang dalam proses perpindahan lain yang belum selesai
-        $adaPerpindahanAktif = RPD::where('BC_OUT', $bcOut)
-            ->whereHas('rp', function ($q) {
-                $q->whereIn('SS', ['Request', 'Pengiriman', 'Pending']);
-            })
-            ->exists();
-
-        if ($adaPerpindahanAktif) {
-            return response()->json([
-                'success' => false,
-                'message' => "Barang {$bcOut} sedang dalam proses perpindahan lain.",
             ], 422);
         }
 
@@ -624,33 +598,8 @@ class RPController extends Controller
         $lokasi = config('perusahaan.kota', 'Sumenep');
         $countTotal = $items->count();
 
-        // Dokumen yang dicetak disesuaikan secara ketat dengan status perpindahan:
-        // - Status 'Request' -> Hanya Surat Permintaan (1 TTD Pemohon)
-        // - Status 'Pengiriman'/'Pending' -> Hanya Surat Jalan (Pengirim & Penerima manual)
-        // - Status 'Diterima' -> Hanya Surat Bukti Penerimaan (1 TTD Penerima yang mengkonfirmasi)
-        $tahapReq = strtolower(trim((string) $request->query('tahap', '')));
-
-        if ($rp->SS === 'Request') {
-            if ($tahapReq && !in_array($tahapReq, ['1', 'request', 'permintaan', 'rq'])) {
-                return redirect()->back()->with('error', 'Perpindahan berstatus Request, hanya dapat mencetak Surat Permintaan.');
-            }
-            $viewName = 'Inventory.perpindahan-print-request';
-            $fileName = 'surat-permintaan-' . $rp->RP . '.pdf';
-        } elseif (in_array($rp->SS, ['Pengiriman', 'Pending'])) {
-            if ($tahapReq && !in_array($tahapReq, ['2', 'pengiriman', 'surat-jalan', 'jalan', 'kirim'])) {
-                return redirect()->back()->with('error', 'Perpindahan berstatus Pengiriman, hanya dapat mencetak Surat Jalan.');
-            }
-            $viewName = 'Inventory.perpindahan-print-surat-jalan';
-            $fileName = 'surat-jalan-' . $rp->RP . '.pdf';
-        } elseif ($rp->SS === 'Diterima') {
-            if ($tahapReq && !in_array($tahapReq, ['3', 'konfirmasi', 'diterima', 'selesai', 'penerimaan'])) {
-                return redirect()->back()->with('error', 'Perpindahan sudah Diterima, hanya dapat mencetak Surat Bukti Penerimaan.');
-            }
-            $viewName = 'Inventory.perpindahan-print-penerimaan';
-            $fileName = 'bukti-penerimaan-' . $rp->RP . '.pdf';
-        } else {
-            return redirect()->back()->with('error', "Dokumen tidak dapat dicetak untuk perpindahan berstatus '{$rp->SS}'.");
-        }
+        $viewName = 'Inventory.perpindahan-print-penerimaan';
+        $fileName = 'bukti-perpindahan-' . $rp->RP . '.pdf';
 
         $pdf = Pdf::loadView($viewName, compact(
             'rp',

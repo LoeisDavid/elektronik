@@ -31,8 +31,9 @@ class ITMController extends Controller
 public function index(Request $request)
 {
     try {
-        $keyword = trim((string) $request->query('keyword', ''));
-        $sort    = (string) $request->query('sort', 'nama_asc');
+        $keyword  = trim((string) $request->query('keyword', ''));
+        $sort     = (string) $request->query('sort', 'nama_asc');
+        $showZero = $request->boolean('show_zero', false);
         if (!isset(self::OPSI_SORT[$sort])) {
             $sort = 'nama_asc';
         }
@@ -107,12 +108,16 @@ public function index(Request $request)
         }
 
         // ------------------------------------------------------------
-        // 4. Search PHP murni
+        // 4. Filter stok 0 (default hide) & Search PHP murni
         // ------------------------------------------------------------
         $hasil = $semuaRow;
 
+        if (!$showZero) {
+            $hasil = array_values(array_filter($hasil, fn ($r) => $r->stok > 0));
+        }
+
         if ($keyword !== '') {
-            $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
+            $hasil = array_values(array_filter($hasil, function ($r) use ($keyword) {
                 foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama] as $field) {
                     if (mb_stripos((string) $field, $keyword) !== false) {
                         return true;
@@ -184,6 +189,7 @@ public function index(Request $request)
             'opsiSort'   => self::OPSI_SORT,
             'keyword'    => $keyword,
             'sort'       => $sort,
+            'showZero'   => $showZero,
             'MRK'        => $MRK,
             'KTG'        => $KTG,
             'SPP'        => $SPP,

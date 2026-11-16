@@ -6,6 +6,103 @@
 
 import { state, formatRupiah, escapeHtml } from './config.js';
 
+function formatPersen(val) {
+    const rounded = Math.round((Number(val) || 0) * 100) / 100;
+    return String(rounded).replace('.', ',');
+}
+
+function groupStrukItemsPerBarang(rawItems) {
+    const groups = new Map();
+    let rawSubtotal = 0;
+    let totalItemDisc = 0;
+
+    (rawItems || []).forEach(item => {
+        const qty = parseInt(item.qty) || 1;
+        const nama = item.nama || item.nama_produk || item.name || 'Produk';
+        const groupKey = String(item.id || item.itm || nama).trim().toLowerCase();
+        const price = Math.max(0, parseFloat(item.price) || 0);
+        const discPct = Math.min(100, Math.max(0, parseFloat(item.discount) || 0));
+
+        const itemGross = price * qty;
+        const discPctNominalTotal = item.discount_pct_nominal !== undefined
+            ? Math.min(itemGross, Math.max(0, parseFloat(item.discount_pct_nominal) || 0))
+            : (price * (discPct / 100)) * qty;
+
+        const maxVchTotal = Math.max(0, itemGross - discPctNominalTotal);
+        const rawVchTotal = item.discount_voucher_total !== undefined
+            ? (parseFloat(item.discount_voucher_total) || 0)
+            : (parseFloat(item.discount_voucher) || 0) * qty;
+        const discVchTotal = Math.min(maxVchTotal, Math.max(0, rawVchTotal));
+
+        const itemDiscTotal = Math.min(itemGross, discPctNominalTotal + discVchTotal);
+        const itemSubtotal = item.subtotal !== undefined && item.discount_pct_nominal !== undefined
+            ? Math.max(0, parseFloat(item.subtotal) || 0)
+            : Math.max(0, itemGross - itemDiscTotal);
+
+        rawSubtotal += itemGross;
+        totalItemDisc += itemDiscTotal;
+
+        if (!groups.has(groupKey)) {
+            groups.set(groupKey, {
+                id: item.id || item.itm || nama,
+                nama: nama,
+                qty: 0,
+                sumGross: 0,
+                sumPctWeighted: 0,
+                sumDiscPctNominal: 0,
+                sumDiscVch: 0,
+                subtotal: 0
+            });
+        }
+
+        const g = groups.get(groupKey);
+        g.qty += qty;
+        g.sumGross += itemGross;
+        g.sumPctWeighted += (discPct * qty);
+        g.sumDiscPctNominal += discPctNominalTotal;
+        g.sumDiscVch += discVchTotal;
+        g.subtotal += itemSubtotal;
+    });
+
+    const groupedItems = [];
+    groups.forEach(g => {
+        const qty = Math.max(1, g.qty);
+        const unitPrice = g.sumGross / qty;
+        const avgPct = Math.round((g.sumPctWeighted / qty) * 100) / 100;
+        const avgPctFmt = formatPersen(avgPct);
+        const discPctNom = g.sumDiscPctNominal;
+        const discVch = g.sumDiscVch;
+
+        let discInfoText = '';
+        if (avgPct > 0 && discVch > 0) {
+            discInfoText = `Diskon: -${avgPctFmt}% (-${formatRupiah(discPctNom)}) + Voucher item: -${formatRupiah(discVch)}`;
+        } else if (avgPct > 0) {
+            discInfoText = `Diskon: -${avgPctFmt}% (-${formatRupiah(discPctNom)})`;
+        } else if (discVch > 0) {
+            discInfoText = `Voucher item: -${formatRupiah(discVch)}`;
+        }
+
+        groupedItems.push({
+            id: g.id,
+            nama: g.nama,
+            qty: qty,
+            price: unitPrice,
+            discount: avgPct,
+            discount_pct_nominal: discPctNom,
+            discount_voucher: discVch,
+            discount_voucher_total: discVch,
+            discount_info: discInfoText,
+            subtotal: g.subtotal
+        });
+    });
+
+    return {
+        items: groupedItems,
+        rawSubtotal: rawSubtotal,
+        totalItemDisc: totalItemDisc
+    };
+}
+
 export function tampilModalStruk(transaksiData) {
     if (!transaksiData) return;
 
@@ -99,49 +196,32 @@ export function tampilModalStruk(transaksiData) {
         }
     }
 
-    // Render daftar produk yang dibeli + breakdown diskon
+    // Render daftar produk yang dibeli (digabung per barang + akumulasi diskon)
     const listContainer = document.getElementById('strukListProduk');
-    let rawSubtotal = 0;
-    let totalItemDisc = 0;
 
-    const items = Array.isArray(transaksiData.items) ?
+    const rawItems = Array.isArray(transaksiData.items) ?
         transaksiData.items :
         Object.values(transaksiData.items || {});
+
+    const grouped = groupStrukItemsPerBarang(rawItems);
+    const items = grouped.items;
+    const rawSubtotal = grouped.rawSubtotal;
+    const totalItemDisc = grouped.totalItemDisc;
 
     if (listContainer) {
         listContainer.innerHTML = '';
 
         items.forEach(item => {
-            const qty = parseInt(item.qty) || 1;
-            const nama = item.nama || item.nama_produk || item.name || 'Produk';
-            const price = parseFloat(item.price) || 0;
-            const discPct = parseFloat(item.discount) || 0;
-            const discVch = parseFloat(item.discount_voucher) || 0;
-
-            const discPctNominal = price * (discPct / 100);
-            const itemDiscUnit = discPctNominal + discVch;
-            const itemSubtotal = Math.max(0, (price - itemDiscUnit) * qty);
-
-            rawSubtotal += (price * qty);
-            totalItemDisc += (itemDiscUnit * qty);
-
-            let discInfoText = '';
-            if (discPct > 0 && discVch > 0) {
-                discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)}) + Voucher item: -${formatRupiah(discVch)}`;
-            } else if (discPct > 0) {
-                discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)})`;
-            } else if (discVch > 0) {
-                discInfoText = `Voucher item: -${formatRupiah(discVch)}`;
-            }
+            const discInfoText = item.discount_info || '';
 
             listContainer.innerHTML += `
                 <div class="flex justify-between items-start text-xs pt-1">
                     <div class="min-w-0 pr-2">
-                        <p class="font-bold text-gray-900 truncate">${escapeHtml(nama)}</p>
-                        <p class="text-[11px] text-gray-500 font-medium">${qty}x ${formatRupiah(price)}</p>
+                        <p class="font-bold text-gray-900 truncate">${escapeHtml(item.nama)}</p>
+                        <p class="text-[11px] text-gray-500 font-medium">${item.qty}x ${formatRupiah(item.price)}</p>
                         ${discInfoText ? `<p class="text-[10.5px] text-red-600 font-medium mt-0.5">${escapeHtml(discInfoText)}</p>` : ''}
                     </div>
-                    <span class="font-bold text-gray-900 shrink-0 text-right">${formatRupiah(itemSubtotal)}</span>
+                    <span class="font-bold text-gray-900 shrink-0 text-right">${formatRupiah(item.subtotal)}</span>
                 </div>
             `;
         });
@@ -276,38 +356,17 @@ export function cetakStrukPdf() {
         state.strukTerakhir.items :
         Object.values(state.strukTerakhir.items || {});
 
-    let rawSubtotal = 0;
-    let totalItemDisc = 0;
+    const grouped = groupStrukItemsPerBarang(rawItems);
+    const rawSubtotal = grouped.rawSubtotal;
+    const totalItemDisc = grouped.totalItemDisc;
 
-    const items = rawItems.map(function(item) {
-        const qty = parseInt(item.qty) || 1;
-        const nama = item.nama || item.nama_produk || item.name || 'Produk';
-        const price = parseFloat(item.price) || 0;
-        const pct = parseFloat(item.discount) || 0;
-        const vch = parseFloat(item.discount_voucher) || 0;
-        const discPctNominal = price * (pct / 100);
-        const itemDiscUnit = discPctNominal + vch;
-        const hargaAkhir = Math.max(0, price - itemDiscUnit);
-        const subtotal = hargaAkhir * qty;
-
-        rawSubtotal += (price * qty);
-        totalItemDisc += (itemDiscUnit * qty);
-
-        let discInfo = '';
-        if (pct > 0 && vch > 0) {
-            discInfo = `Diskon: -${pct}% (-${formatRupiah(discPctNominal)}) + Voucher item: -${formatRupiah(vch)}`;
-        } else if (pct > 0) {
-            discInfo = `Diskon: -${pct}% (-${formatRupiah(discPctNominal)})`;
-        } else if (vch > 0) {
-            discInfo = `Voucher item: -${formatRupiah(vch)}`;
-        }
-
+    const items = grouped.items.map(function(item) {
         return {
-            nama: nama,
-            qty: qty,
-            price: price,
-            discount_info: discInfo,
-            subtotal: subtotal
+            nama: item.nama,
+            qty: item.qty,
+            price: item.price,
+            discount_info: item.discount_info,
+            subtotal: item.subtotal
         };
     });
 
