@@ -160,20 +160,20 @@
     {{-- ========================================================= --}}
     {{-- SECTION BAWAH: TABEL LAPORAN KASIR --}}
     {{-- ========================================================= --}}
-    <div class="border border-gray-300 rounded-2xl bg-white overflow-hidden shadow-xs">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-300 flex flex-col">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-3 px-4 font-semibold">Kasir</th>
-                        <th class="py-3 px-4 font-semibold">Waktu Buka</th>
-                        <th class="py-3 px-4 font-semibold">Waktu Tutup</th>
-                        <th class="py-3 px-4 font-semibold">Kas Awal</th>
-                        <th class="py-3 px-4 font-semibold">Total Penjualan</th>
-                        <th class="py-3 px-4 font-semibold">Total Tunai</th>
-                        <th class="py-3 px-4 font-semibold">Total Non Tunai</th>
-                        <th class="py-3 px-4 font-semibold">Uang Akhir Tunai</th>
-                        <th class="py-3 px-4 font-semibold">Selisih</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Kasir</th>
+                        <th class="py-2.5 px-4 font-semibold">Waktu Buka</th>
+                        <th class="py-2.5 px-4 font-semibold">Waktu Tutup</th>
+                        <th class="py-2.5 px-4 font-semibold">Kas Awal</th>
+                        <th class="py-2.5 px-4 font-semibold">Total Penjualan</th>
+                        <th class="py-2.5 px-4 font-semibold">Total Tunai</th>
+                        <th class="py-2.5 px-4 font-semibold">Total Non Tunai</th>
+                        <th class="py-2.5 px-4 font-semibold">Uang Akhir Tunai</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tr-lg">Selisih</th>
                     </tr>
                 </thead>
 
@@ -210,7 +210,7 @@
         </div>
 
         <!-- Footer / Pagination -->
-        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854]">
+        <div class="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between text-xs text-[#142854] rounded-b-lg">
             <span>
                 Menampilkan <?= (int) $pagination['dari'] ?>-<?= (int) $pagination['sampai'] ?>
                 dari <?= (int) $pagination['total_data'] ?> data

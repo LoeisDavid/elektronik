@@ -64,9 +64,10 @@ public function index(Request $request)
             })
             ->select(
                 'ITM',
+                DB::raw('COUNT(*) as stok_tersedia'),
                 DB::raw('SUM(HRB) as total_aset'),
-                DB::raw('MAX(COALESCE(created_at, TM)) as tgl_terbaru'),
-                DB::raw('MIN(COALESCE(created_at, TM)) as tgl_terlama')
+                DB::raw("MAX(CONCAT(COALESCE(TM, DATE(created_at)), ' ', COALESCE(TIME(created_at), '00:00:00'))) as tgl_terbaru"),
+                DB::raw("MIN(CONCAT(COALESCE(TM, DATE(created_at)), ' ', COALESCE(TIME(created_at), '00:00:00'))) as tgl_terlama")
             )
             ->groupBy('ITM')
             ->get()
@@ -88,7 +89,7 @@ public function index(Request $request)
                 'mrk'         => $itm->MRK,
                 'mrk_nama'    => $namaMRK[$itm->MRK] ?? '-',
                 'hrg'         => $itm->HRG,
-                'stok'        => (int) $itm->STOK,
+                'stok'        => (int) ($statItmdt->stok_tersedia ?? 0),
                 'total_aset'  => $totalAset,
                 'tgl_terbaru' => $statItmdt->tgl_terbaru ?? null,
                 'tgl_terlama' => $statItmdt->tgl_terlama ?? null,
@@ -298,10 +299,11 @@ public function index(Request $request)
 
             // Semua detail stok milik item ini (ITMDT) + hitung field turunan
             $all = Itmdt::where('ITM', $item->ITM)->get()->map(function ($d) use ($item) {
-                $masuk  = $d->TM ? Carbon::parse($d->TM) : null;
-                $sts    = $d->sts();
-                $keluar = $sts && $sts->created_at ? Carbon::parse($sts->created_at) : null;
-                $gudang = $d->GD();
+                $masuk   = $d->TM ? Carbon::parse($d->TM) : ($d->created_at ? Carbon::parse($d->created_at) : null);
+                $sts     = $d->sts();
+                $terjual = $sts !== null;
+                $keluar  = $sts ? ($sts->created_at ? Carbon::parse($sts->created_at) : ($sts->acr()?->DT ? Carbon::parse($sts->acr()->DT) : null)) : null;
+                $gudang  = $d->GD();
 
                 return (object) [
                     'kode_stok'   => $d->BC_OUT,
@@ -310,8 +312,8 @@ public function index(Request $request)
                     'ts_masuk'    => $masuk?->timestamp ?? 0,
                     'ts_keluar'   => $keluar?->timestamp,
                     'nama_gudang' => $gudang->DES ?? '-',
-                    'terjual'     => $keluar !== null,
-                    'status'      => $keluar === null ? 'IN STOK' : 'Terjual',
+                    'terjual'     => $terjual,
+                    'status'      => !$terjual ? 'IN STOK' : 'Terjual',
                     'HRB'         => $d->HRB,
                     'supplier'    => $d->spp()?->DES ?? '-',
                 ];
