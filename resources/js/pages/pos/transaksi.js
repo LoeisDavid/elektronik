@@ -4,7 +4,7 @@
  * =============================================================================
  */
 
-import { renderNotaSheets, submitNotaPrintForm } from '../../common/nota-receipt.js';
+import { groupReceiptItemsPerBarang, renderNotaSheets, submitNotaPrintForm } from '../../common/nota-receipt.js';
 
 let strukAktif = null;
 
@@ -53,21 +53,8 @@ export function openStrukModal(btn) {
         rawItems = [];
     }
 
-    const items = (Array.isArray(rawItems) ? rawItems : []).map((d) => {
-        const qty = Number(d.qty ?? d.QTY ?? 1);
-        const nama = d.nama ?? d.NAMA ?? '-';
-        const price = Number(d.price ?? d.harga ?? d.HARGA ?? 0);
-        const discInfo = d.discount_info || '';
-        const subtotalItem = d.subtotal != null ? Number(d.subtotal) : price * qty;
-
-        return {
-            nama,
-            qty,
-            price,
-            discount_info: discInfo,
-            subtotal: subtotalItem,
-        };
-    });
+    const grouped = groupReceiptItemsPerBarang(rawItems);
+    const items = grouped.items;
 
     strukAktif = {
         refNo: btn.dataset.ref || '-',

@@ -259,9 +259,11 @@
 
     .nota-root .col-no { width: 7mm; }
     .nota-root .col-name { width: auto; }
-    .nota-root .col-qty { width: 11mm; }
-    .nota-root .col-price { width: 28mm; }
-    .nota-root .col-total { width: 30mm; }
+    .nota-root .col-qty { width: 10mm; }
+    .nota-root .col-price { width: 24mm; }
+    .nota-root .col-disc { width: 15mm; }
+    .nota-root .col-voucher { width: 23mm; }
+    .nota-root .col-total { width: 25mm; }
 
     .nota-root .item-disc-inline {
         font-size: 6.8pt;
