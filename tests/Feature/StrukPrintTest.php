@@ -114,7 +114,9 @@ class StrukPrintTest extends TestCase
         $this->assertStringContainsString('Hal. 1/2', $html);
         $this->assertStringContainsString('Hal. 2/2', $html);
         // 7 fixed rows per sheet across 2 sheets = 14 tbody rows
-        $this->assertSame(14, substr_count($html, '<td class="center">') / 2);
+        preg_match_all('/<tbody>([\s\S]*?)<\/tbody>/', $html, $tbodies);
+        $tbodyRowCount = array_sum(array_map(fn (string $tbody) => substr_count($tbody, '<tr>'), $tbodies[1] ?? []));
+        $this->assertSame(14, $tbodyRowCount);
 
         $secondSheetPos = strpos($html, 'Hal. 2/2');
         $bottomSectionPos = strpos($html, '<section class="bottom-section">');
@@ -163,7 +165,9 @@ class StrukPrintTest extends TestCase
         $this->assertStringContainsString('Non-Tunai / QRIS', $html);
         $this->assertStringNotContainsString('<span class="label">Dibayar</span>', $html);
         $this->assertStringNotContainsString('<span class="label">Kembali</span>', $html);
-        $this->assertStringContainsString('Diskon Per Item', $html);
+        $this->assertStringNotContainsString('Diskon Per Item', $html);
+        $this->assertStringContainsString('Rp 180.000', $html);
+        $this->assertStringContainsString('padding: 20mm 32mm 0 9mm;', $html);
         $this->assertStringContainsString('Diskon Global (5%)', $html);
         $this->assertStringContainsString('Voucher', $html);
         $this->assertStringContainsString('PPN (11%)', $html);

@@ -291,7 +291,7 @@
             }
 
             #receipt-root.nota-root .sheet-inner {
-                padding: 25mm 32mm 0 9mm;
+                padding: 20mm 32mm 0 9mm;
             }
         }
     </style>
@@ -350,11 +350,11 @@
                 $isLastPage = ($pageIndex === $totalPages - 1);
                 $startIndex = $pageIndex * $rowsPerPage;
                 $hasExtraTotals = $isLastPage && (
-                    ($struk['discount_item'] ?? 0) > 0 ||
                     ($struk['discount_global'] ?? 0) > 0 ||
                     ($struk['voucher'] ?? 0) > 0 ||
                     ($struk['ppn_nominal'] ?? 0) > 0
                 );
+                $displaySubtotal = max(0, ($struk['subtotal'] ?? 0) - ($struk['discount_item'] ?? 0));
             @endphp
 
             <div class="sheet-slot">
@@ -481,12 +481,7 @@
 
                                     <div class="totals-right">
                                         <span class="subtotal-label">Subtotal</span>
-                                        <span class="subtotal-val num">{{ $fmtRp($struk['subtotal'] ?? 0) }}</span>
-
-                                        @if (($struk['discount_item'] ?? 0) > 0)
-                                            <span class="extra-label">Diskon Per Item</span>
-                                            <span class="extra-val discount num">- {{ $fmtRp($struk['discount_item']) }}</span>
-                                        @endif
+                                        <span class="subtotal-val num">{{ $fmtRp($displaySubtotal) }}</span>
 
                                         @if (($struk['discount_global'] ?? 0) > 0)
                                             <span class="extra-label">
