@@ -460,14 +460,19 @@ public function index(Request $request)
                 'stok_spp' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',
                 'stok_hrb' => 'required|numeric|min:0',
-                'stok_bc'  => 'required|string|max:40',
+                'stok_qty' => 'nullable|integer|min:1|max:500',
+                'stok_bc'  => 'nullable|string|max:40',
             ], [
                 'stok_itm.required' => 'Pilih nama barang.',
                 'stok_spp.required' => 'Pilih supplier.',
                 'stok_gd.required'  => 'Pilih gudang.',
                 'stok_hrb.required' => 'Harga beli wajib diisi.',
-                'stok_bc.required'  => 'Kode barcode wajib diisi.',
+                'stok_qty.integer'  => 'Qty harus berupa angka bulat.',
+                'stok_qty.min'      => 'Qty minimal 1.',
+                'stok_qty.max'      => 'Qty maksimal 500 sekali input.',
             ]);
+
+            $qty = max(1, (int) ($data['stok_qty'] ?? 1));
 
             // Kalau list belum di-generate, barang tidak boleh diganti
             $listAktif = session('stok_list', []);
@@ -495,37 +500,49 @@ public function index(Request $request)
                     ->errorBag('stok');
             }
 
-            $bcOut = null;
+            $generatedItems = [];
 
-            DB::transaction(function () use ($data, &$bcOut) {
-                $bcOut = $this->generateBcOut($data['stok_itm']);
+            DB::transaction(function () use ($data, $qty, &$generatedItems) {
+                $rawBcIn = isset($data['stok_bc']) ? trim((string) $data['stok_bc']) : '';
 
-                ITMDT::create([
-                    'ITM'    => $data['stok_itm'],
-                    'BC_IN'  => $data['stok_bc'],
-                    'BC_OUT' => $bcOut,
-                    'TM'     => date('Y-m-d'),
-                    'HRB'    => $data['stok_hrb'],
-                    'GD'     => $data['stok_gd'],
-                    'SPP'    => $data['stok_spp'],
-                ]);
+                for ($i = 0; $i < $qty; $i++) {
+                    $bcOut = $this->generateBcOut($data['stok_itm']);
+                    $bcIn  = $rawBcIn !== '' ? $rawBcIn : $bcOut;
 
-                ITM::where('ITM', $data['stok_itm'])->increment('STOK');
+                    ITMDT::create([
+                        'ITM'    => $data['stok_itm'],
+                        'BC_IN'  => $bcIn,
+                        'BC_OUT' => $bcOut,
+                        'TM'     => date('Y-m-d'),
+                        'HRB'    => $data['stok_hrb'],
+                        'GD'     => $data['stok_gd'],
+                        'SPP'    => $data['stok_spp'],
+                    ]);
+
+                    $generatedItems[] = [
+                        'bc_in'  => $bcIn,
+                        'bc_out' => $bcOut,
+                    ];
+                }
+
+                ITM::where('ITM', $data['stok_itm'])->increment('STOK', $qty);
             });
 
             $namaItem     = ITM::where('ITM', $data['stok_itm'])->value('DES');
             $namaGudang   = GD::where('GD', $data['stok_gd'])->value('DES');
             $namaSupplier = SPP::where('SPP', $data['stok_spp'])->value('DES');
 
-            // Tambah ke array session (bertahan sampai di-generate)
-            session()->push('stok_list', [
-                'itm'    => $data['stok_itm'],
-                'des'    => $namaItem,
-                'gd'     => $namaGudang,
-                'spp'    => $namaSupplier,
-                'bc_in'  => $data['stok_bc'],
-                'bc_out' => $bcOut,
-            ]);
+            // Tambah seluruh kode yang digenerate ke array session (bertahan sampai di-generate)
+            foreach ($generatedItems as $gen) {
+                session()->push('stok_list', [
+                    'itm'    => $data['stok_itm'],
+                    'des'    => $namaItem,
+                    'gd'     => $namaGudang,
+                    'spp'    => $namaSupplier,
+                    'bc_in'  => $gen['bc_in'],
+                    'bc_out' => $gen['bc_out'],
+                ]);
+            }
 
             // Pilihan barang, supplier, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
             return back()->withInput($request->only(['stok_itm', 'stok_spp', 'stok_gd', 'stok_hrb']));
@@ -644,7 +661,7 @@ public function index(Request $request)
 
             return redirect()->back()->with('success', 'Data berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menghapus data');
+            return redirect()-> back()->with('error', 'Terjadi kesalahan ketika menghapus data');
         }
     }
 }

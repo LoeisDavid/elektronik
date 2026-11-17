@@ -6,7 +6,7 @@
 
 import { state } from './config.js';
 import {
-    formatRupiah,
+    groupReceiptItemsPerBarang,
     isTunaiMethod,
     renderNotaSheets,
     submitNotaPrintForm,
@@ -17,40 +17,10 @@ function normalizeKasirReceiptData(transaksiData) {
         ? transaksiData.items
         : Object.values(transaksiData.items || {});
 
-    let rawSubtotal = 0;
-    let totalItemDisc = 0;
-
-    const items = rawItems.map((item) => {
-        const qty = parseInt(item.qty, 10) || 1;
-        const nama = item.nama || item.nama_produk || item.name || 'Produk';
-        const price = parseFloat(item.price) || 0;
-        const discPct = parseFloat(item.discount) || 0;
-        const discVch = parseFloat(item.discount_voucher) || 0;
-
-        const discPctNominal = price * (discPct / 100);
-        const itemDiscUnit = discPctNominal + discVch;
-        const itemSubtotal = Math.max(0, (price - itemDiscUnit) * qty);
-
-        rawSubtotal += price * qty;
-        totalItemDisc += itemDiscUnit * qty;
-
-        let discInfoText = '';
-        if (discPct > 0 && discVch > 0) {
-            discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)}) + Voucher item: -${formatRupiah(discVch)}`;
-        } else if (discPct > 0) {
-            discInfoText = `Diskon: -${discPct}% (-${formatRupiah(discPctNominal)})`;
-        } else if (discVch > 0) {
-            discInfoText = `Voucher item: -${formatRupiah(discVch)}`;
-        }
-
-        return {
-            nama,
-            qty,
-            price,
-            discount_info: discInfoText,
-            subtotal: itemSubtotal,
-        };
-    });
+    const grouped = groupReceiptItemsPerBarang(rawItems);
+    const items = grouped.items;
+    const rawSubtotal = grouped.rawSubtotal;
+    const totalItemDisc = grouped.totalItemDisc;
 
     const metode = transaksiData.metode || 'Tunai';
     const finalSubtotal = transaksiData.subtotal !== undefined ? parseFloat(transaksiData.subtotal) : rawSubtotal;

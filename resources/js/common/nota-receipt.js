@@ -24,6 +24,99 @@ export function formatRupiah(amount) {
     return `${sign}Rp ${formatted}`;
 }
 
+export function formatPersen(val) {
+    const num = Math.round((Number(val) || 0) * 100) / 100;
+    if (num <= 0) return '-';
+    return `${String(num).replace('.', ',')}%`;
+}
+
+/**
+ * Group receipt items per barang (by id/itm/nama), accumulating qty,
+ * averaging discount % across all units (total diskon % / total qty),
+ * and accumulating voucher nominal & subtotal.
+ */
+export function groupReceiptItemsPerBarang(rawItems) {
+    const groups = new Map();
+    let rawSubtotal = 0;
+    let totalItemDisc = 0;
+
+    (Array.isArray(rawItems) ? rawItems : Object.values(rawItems || {})).forEach((item) => {
+        if (!item) return;
+        const qty = Math.max(1, parseInt(item.qty ?? item.QTY ?? 1, 10) || 1);
+        const nama = String(item.nama ?? item.nama_produk ?? item.name ?? item.NAMA ?? 'Produk').trim() || 'Produk';
+        const groupKey = String(item.id || item.itm || nama).trim().toLowerCase();
+        const price = Math.max(0, parseFloat(item.price ?? item.harga ?? item.HARGA ?? 0) || 0);
+        const discPct = Math.min(100, Math.max(0, parseFloat(item.discount ?? 0) || 0));
+
+        const itemGross = price * qty;
+        const discPctNominalTotal = item.discount_pct_nominal !== undefined
+            ? Math.min(itemGross, Math.max(0, parseFloat(item.discount_pct_nominal) || 0))
+            : (price * (discPct / 100)) * qty;
+
+        const maxVchTotal = Math.max(0, itemGross - discPctNominalTotal);
+        const rawVchTotal = item.discount_voucher_total !== undefined
+            ? (parseFloat(item.discount_voucher_total) || 0)
+            : (parseFloat(item.discount_voucher ?? 0) || 0) * qty;
+        const discVchTotal = Math.min(maxVchTotal, Math.max(0, rawVchTotal));
+
+        const itemDiscTotal = Math.min(itemGross, discPctNominalTotal + discVchTotal);
+        const itemSubtotal = item.subtotal !== undefined && item.discount_pct_nominal !== undefined
+            ? Math.max(0, parseFloat(item.subtotal) || 0)
+            : Math.max(0, itemGross - itemDiscTotal);
+
+        rawSubtotal += itemGross;
+        totalItemDisc += itemDiscTotal;
+
+        if (!groups.has(groupKey)) {
+            groups.set(groupKey, {
+                id: item.id || item.itm || nama,
+                nama,
+                qty: 0,
+                sumGross: 0,
+                sumPctWeighted: 0,
+                sumDiscPctNominal: 0,
+                sumDiscVch: 0,
+                subtotal: 0,
+            });
+        }
+
+        const g = groups.get(groupKey);
+        g.qty += qty;
+        g.sumGross += itemGross;
+        g.sumPctWeighted += (discPct * qty);
+        g.sumDiscPctNominal += discPctNominalTotal;
+        g.sumDiscVch += discVchTotal;
+        g.subtotal += itemSubtotal;
+    });
+
+    const groupedItems = [];
+    groups.forEach((g) => {
+        const qty = Math.max(1, g.qty);
+        const unitPrice = g.sumGross / qty;
+        const avgPct = Math.round((g.sumPctWeighted / qty) * 100) / 100;
+        const discPctNom = g.sumDiscPctNominal;
+        const discVch = g.sumDiscVch;
+
+        groupedItems.push({
+            id: g.id,
+            nama: g.nama,
+            qty,
+            price: unitPrice,
+            discount: avgPct,
+            discount_pct_nominal: discPctNom,
+            discount_voucher: discVch,
+            discount_voucher_total: discVch,
+            subtotal: g.subtotal,
+        });
+    });
+
+    return {
+        items: groupedItems,
+        rawSubtotal,
+        totalItemDisc,
+    };
+}
+
 /**
  * Determine whether the payment method is cash (Tunai / Cash),
  * ensuring strings like "Non-Tunai / QRIS" return false.
@@ -187,6 +280,8 @@ function buildSheetHtml(data, shop, customerRows, pageItems, pageIndex, totalPag
                     <td>&nbsp;</td>
                     <td class="center">&nbsp;</td>
                     <td class="num">&nbsp;</td>
+                    <td class="center">&nbsp;</td>
+                    <td class="num">&nbsp;</td>
                     <td class="num">&nbsp;</td>
                 </tr>
             `;
@@ -194,17 +289,18 @@ function buildSheetHtml(data, shop, customerRows, pageItems, pageIndex, totalPag
 
         const qty = Number(item.qty) || 1;
         const unitPrice = Number(item.price) || 0;
+        const discPct = Number(item.discount) || 0;
+        const discVoucher = Number(item.discount_voucher_total ?? item.discount_voucher) || 0;
         const lineTotal = item.subtotal != null ? Number(item.subtotal) : qty * unitPrice;
-        const discBadge = item.discount_info
-            ? `<span class="item-disc-inline">(${escapeHtml(item.discount_info)})</span>`
-            : '';
 
         return `
             <tr>
                 <td class="center">${startIndex + rowOffset + 1}</td>
-                <td title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}${discBadge}</td>
+                <td title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</td>
                 <td class="center">${escapeHtml(qty)}</td>
                 <td class="num">${escapeHtml(formatRupiah(unitPrice))}</td>
+                <td class="center">${escapeHtml(formatPersen(discPct))}</td>
+                <td class="num">${discVoucher > 0 ? escapeHtml(formatRupiah(discVoucher)) : '-'}</td>
                 <td class="num">${escapeHtml(formatRupiah(lineTotal))}</td>
             </tr>
         `;
@@ -236,7 +332,9 @@ function buildSheetHtml(data, shop, customerRows, pageItems, pageIndex, totalPag
                                 <th class="col-no center">No</th>
                                 <th class="col-name">Nama Barang</th>
                                 <th class="col-qty center">Qty</th>
-                                <th class="col-price num">Harga</th>
+                                <th class="col-price num">Harga Satuan</th>
+                                <th class="col-disc center">Diskon</th>
+                                <th class="col-voucher num">Voucher</th>
                                 <th class="col-total num">Jumlah</th>
                             </tr>
                         </thead>

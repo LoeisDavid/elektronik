@@ -484,20 +484,37 @@
                     </div>
                 </div>
 
-                {{-- HARGA BELI --}}
-                <div>
-                    <label class="<?= $labelCls ?>">Harga Beli</label>
-                    <input
-                        type="text"
-                        inputmode="numeric"
-                        name="stok_hrb"
-                        required
-                        value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
-                        placeholder="Rp 0"
-                        oninput="formatInputRupiah(this)"
-                        class="input-rupiah <?= $inputCls ?>"
-                    >
-                    <?= $galat('stok', 'stok_hrb') ?>
+                {{-- HARGA BELI & QTY --}}
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="<?= $labelCls ?>">Harga Beli</label>
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            name="stok_hrb"
+                            required
+                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
+                            placeholder="Rp 0"
+                            oninput="formatInputRupiah(this)"
+                            class="input-rupiah <?= $inputCls ?>"
+                        >
+                        <?= $galat('stok', 'stok_hrb') ?>
+                    </div>
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Qty</label>
+                        <input
+                            type="number"
+                            name="stok_qty"
+                            min="1"
+                            max="500"
+                            required
+                            value="<?= e(old('stok_qty', 1)) ?>"
+                            placeholder="1"
+                            class="<?= $inputCls ?>"
+                        >
+                        <?= $galat('stok', 'stok_qty') ?>
+                    </div>
                 </div>
 
                 {{-- SCAN KAMERA (live bila HTTPS/localhost, foto bila HTTP) --}}
@@ -513,12 +530,11 @@
                             inputmode="text"
                             name="stok_bc"
                             maxlength="40"
-                            required
                             autocomplete="off"
                             autocapitalize="off"
                             spellcheck="false"
                             <?= $bukaStok ? 'autofocus' : '' ?>
-                            placeholder="Scan atau ketik kode manual..."
+                            placeholder="Scan/ketik kode barcode (atau kosongi untuk auto)..."
                             class="<?= $inputCls ?>"
                         >
                         <button

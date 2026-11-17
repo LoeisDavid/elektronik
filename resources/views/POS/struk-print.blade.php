@@ -305,6 +305,13 @@
 
         $totalPages = count($pages);
         $fmtRp = fn ($val): string => ($val < 0 ? '-' : '') . 'Rp ' . number_format(abs(round((float) $val)), 0, ',', '.');
+        $fmtPct = function ($val): string {
+            $num = round((float) $val, 2);
+            if ($num <= 0) {
+                return '-';
+            }
+            return rtrim(rtrim(number_format($num, 2, ',', '.'), '0'), ',') . '%';
+        };
     @endphp
 
     <div class="print-bar">
@@ -414,7 +421,9 @@
                                         <th class="col-no center">No</th>
                                         <th class="col-name">Nama Barang</th>
                                         <th class="col-qty center">Qty</th>
-                                        <th class="col-price num">Harga</th>
+                                        <th class="col-price num">Harga Satuan</th>
+                                        <th class="col-disc center">Diskon</th>
+                                        <th class="col-voucher num">Voucher</th>
                                         <th class="col-total num">Jumlah</th>
                                     </tr>
                                 </thead>
@@ -427,21 +436,27 @@
                                                 <td>&nbsp;</td>
                                                 <td class="center">&nbsp;</td>
                                                 <td class="num">&nbsp;</td>
+                                                <td class="center">&nbsp;</td>
+                                                <td class="num">&nbsp;</td>
                                                 <td class="num">&nbsp;</td>
                                             </tr>
                                         @else
                                             @php
                                                 $qty = (int) ($item['qty'] ?? 1);
                                                 $unitPrice = (float) ($item['price'] ?? 0);
+                                                $discPct = (float) ($item['discount'] ?? 0);
+                                                $discVoucher = (float) ($item['discount_voucher_total'] ?? $item['discount_voucher'] ?? 0);
                                                 $lineTotal = $item['subtotal'] !== null ? (float) $item['subtotal'] : ($qty * $unitPrice);
                                             @endphp
                                             <tr>
                                                 <td class="center">{{ $startIndex + $rowOffset + 1 }}</td>
                                                 <td title="{{ $item['nama'] }}">
-                                                    {{ $item['nama'] }}@if (!empty($item['discount_info']))<span class="item-disc-inline">({{ $item['discount_info'] }})</span>@endif
+                                                    {{ $item['nama'] }}
                                                 </td>
                                                 <td class="center">{{ $qty }}</td>
                                                 <td class="num">{{ $fmtRp($unitPrice) }}</td>
+                                                <td class="center">{{ $fmtPct($discPct) }}</td>
+                                                <td class="num">{{ $discVoucher > 0 ? $fmtRp($discVoucher) : '-' }}</td>
                                                 <td class="num">{{ $fmtRp($lineTotal) }}</td>
                                             </tr>
                                         @endif
