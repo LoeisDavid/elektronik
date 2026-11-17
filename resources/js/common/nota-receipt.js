@@ -202,7 +202,6 @@ function buildPreprintedGuideHtml(shop) {
 
 function buildBottomSectionHtml(data, totals) {
     const isTunai = isTunaiMethod(data.metode);
-    const diskonItem = Number(data.discountItem) || 0;
     const diskonGlobal = Number(data.discountGlobal) || 0;
     const diskonGlobalPct = Number(data.discountPercent) || 0;
     const voucher = Number(data.voucher) || 0;
@@ -221,9 +220,6 @@ function buildBottomSectionHtml(data, totals) {
     `;
 
     const extraTotalsHtml = [
-        diskonItem > 0
-            ? `<span class="extra-label">Diskon Per Item</span><span class="extra-val discount num">- ${escapeHtml(formatRupiah(diskonItem))}</span>`
-            : '',
         diskonGlobal > 0
             ? `<span class="extra-label">${escapeHtml(diskonGlobalPct > 0 ? `Diskon Global (${diskonGlobalPct}%)` : 'Diskon Global')}</span><span class="extra-val discount num">- ${escapeHtml(formatRupiah(diskonGlobal))}</span>`
             : '',
@@ -243,7 +239,7 @@ function buildBottomSectionHtml(data, totals) {
                 </div>
                 <div class="totals-right">
                     <span class="subtotal-label">Subtotal</span>
-                    <span class="subtotal-val num">${escapeHtml(formatRupiah(totals.subtotal))}</span>
+                    <span class="subtotal-val num">${escapeHtml(formatRupiah(totals.displaySubtotal))}</span>
                     ${extraTotalsHtml}
                     <span class="grand-label">TOTAL</span>
                     <span class="grand-val num">${escapeHtml(formatRupiah(totals.total))}</span>
@@ -258,7 +254,6 @@ function buildSheetHtml(data, shop, customerRows, pageItems, pageIndex, totalPag
     const startIndex = pageIndex * ROWS_PER_PAGE;
     const pageLabel = totalPages > 1 ? ` &bull; Hal. ${pageIndex + 1}/${totalPages}` : '';
     const hasExtraTotals = isLastPage && (
-        (Number(data.discountItem) || 0) > 0 ||
         (Number(data.discountGlobal) || 0) > 0 ||
         (Number(data.voucher) || 0) > 0 ||
         (Number(data.ppnNominal) || 0) > 0
@@ -373,11 +368,13 @@ export function renderNotaSheets(rootEl, data) {
     }
 
     const subtotal = Number(data.subtotal) || 0;
+    const discountItem = Number(data.discountItem) || 0;
+    const displaySubtotal = Math.max(0, subtotal - discountItem);
     const total = Number(data.total) || 0;
     const paid = Number(data.dibayar) || 0;
     const change = data.kembalian != null ? Number(data.kembalian) : Math.max(0, paid - total);
 
-    const totals = { subtotal, total, paid, change };
+    const totals = { subtotal, displaySubtotal, total, paid, change };
     const customerRows = normalizeCustomerRows({
         customerNama: data.customerNama,
         customerDesa: data.customerDesa,
