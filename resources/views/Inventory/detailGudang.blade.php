@@ -70,7 +70,7 @@
                                 type="text" 
                                 name="keyword"
                                 value="{{ request('keyword') }}"
-                                placeholder="Cari produk" 
+                                placeholder="Cari nama barang, kategori, atau merk..." 
                                 class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db"
                             >
                         </div>

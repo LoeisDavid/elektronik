@@ -152,13 +152,26 @@ class GDController extends Controller
                 ->where('GD', $gd->GD)
                 ->whereNotIn('BC_OUT', STS::select('BC_OUT'));
 
-            // SEARCH: barcode, nama barang, atau kode ITM
+            // SEARCH: barcode, nama barang, kode ITM, kategori, atau merk
             if ($request->filled('keyword')) {
-                $keyword = $request->keyword;
+                $keyword = trim((string) $request->keyword);
+                $words   = preg_split('/\s+/u', $keyword, -1, PREG_SPLIT_NO_EMPTY);
 
-                $kodeItm = ITM::where('DES', 'LIKE', "%{$keyword}%")
-                    ->orWhere('ITM', 'LIKE', "%{$keyword}%")
-                    ->pluck('ITM');
+                $kodeItm = ITM::query()
+                    ->leftJoin('ktg', 'ktg.KTG', '=', 'itm.KTG')
+                    ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
+                    ->where(function ($q) use ($words) {
+                        foreach ($words as $w) {
+                            $like = "%{$w}%";
+                            $q->where(function ($sub) use ($like) {
+                                $sub->where('itm.DES', 'LIKE', $like)
+                                    ->orWhere('itm.ITM', 'LIKE', $like)
+                                    ->orWhere('ktg.DES', 'LIKE', $like)
+                                    ->orWhere('mrk.DES', 'LIKE', $like);
+                            });
+                        }
+                    })
+                    ->pluck('itm.ITM');
 
                 $query->where(function ($q) use ($keyword, $kodeItm) {
                     $q->where('BC_OUT', 'LIKE', "%{$keyword}%")

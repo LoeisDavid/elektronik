@@ -20,13 +20,16 @@ class OpnameStokController extends Controller
             ->leftJoin('ktg as k', 'k.KTG', '=', 'i.KTG')
             ->leftJoin('mrk as m', 'm.MRK', '=', 'i.MRK')
             ->when($keyword !== '', function ($q) use ($keyword) {
-                $like = '%' . $keyword . '%';
-                $q->where(function ($sub) use ($like) {
-                    $sub->where('i.ITM', 'like', $like)
-                        ->orWhere('i.DES', 'like', $like)
-                        ->orWhere('k.DES', 'like', $like)
-                        ->orWhere('m.DES', 'like', $like);
-                });
+                $words = preg_split('/\s+/u', $keyword, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($words as $w) {
+                    $like = '%' . $w . '%';
+                    $q->where(function ($sub) use ($like) {
+                        $sub->where('i.ITM', 'like', $like)
+                            ->orWhere('i.DES', 'like', $like)
+                            ->orWhere('k.DES', 'like', $like)
+                            ->orWhere('m.DES', 'like', $like);
+                    });
+                }
             })
             ->orderBy('i.DES')
             ->select(

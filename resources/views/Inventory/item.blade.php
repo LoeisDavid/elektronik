@@ -97,7 +97,7 @@
 
         <div class="flex flex-wrap items-center gap-2">
 
-            {{-- SEARCH & FILTER KATEGORI / MERK --}}
+            {{-- SEARCH (Bisa cari Nama Barang, Kategori, atau Merk seperti di Tambah Stok) --}}
             <form action="<?= e(route('inventory.item')) ?>" method="GET" class="flex flex-wrap items-center gap-2">
                 <?php if ($sort !== 'tgl_terbaru'): ?>
                     <input type="hidden" name="sort" value="<?= e($sort) ?>">
@@ -106,7 +106,7 @@
                     <input type="hidden" name="show_zero" value="1">
                 <?php endif; ?>
 
-                <div class="relative w-56 md:w-64">
+                <div class="relative w-64 md:w-80">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
                         <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -117,52 +117,16 @@
                         type="text"
                         name="keyword"
                         value="<?= e($keyword) ?>"
-                        placeholder="Cari produk"
+                        placeholder="Cari nama barang, kategori, atau merk..."
                         class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
                     >
                 </div>
 
-                {{-- FILTER KATEGORI --}}
-                <div class="w-44">
-                    <select
-                        name="ktg"
-                        data-placeholder="Filter Kategori"
-                        data-allow-clear="true"
-                        onchange="this.form.submit()"
-                        class="searchable-select w-full bg-white border border-gray-400 rounded-lg px-3 py-2 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer"
-                    >
-                        <option value=""></option>
-                        <?php foreach ($KTG as $k): ?>
-                            <option value="<?= e($k->KTG) ?>" <?= (string) $filterKtg === (string) $k->KTG ? 'selected' : '' ?>>
-                                <?= e($k->DES) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                {{-- FILTER MERK --}}
-                <div class="w-44">
-                    <select
-                        name="mrk"
-                        data-placeholder="Filter Merk"
-                        data-allow-clear="true"
-                        onchange="this.form.submit()"
-                        class="searchable-select w-full bg-white border border-gray-400 rounded-lg px-3 py-2 text-sm text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:ring-1 focus:ring-primary-db cursor-pointer"
-                    >
-                        <option value=""></option>
-                        <?php foreach ($MRK as $m): ?>
-                            <option value="<?= e($m->MRK) ?>" <?= (string) $filterMrk === (string) $m->MRK ? 'selected' : '' ?>>
-                                <?= e($m->DES) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <?php if ($keyword !== '' || $filterKtg !== '' || $filterMrk !== ''): ?>
+                <?php if ($keyword !== ''): ?>
                     <a
-                        href="<?= e(route('inventory.item', $sort !== 'tgl_terbaru' ? ['sort' => $sort] : [])) ?>"
+                        href="<?= e($buatUrl(['keyword' => null, 'ktg' => null, 'mrk' => null, 'page' => 1])) ?>"
                         class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center gap-1.5 text-xs font-medium text-black hover:bg-gray-200 hover:border-gray-900 transition-all duration-200"
-                        title="Reset Filter"
+                        title="Reset Pencarian"
                     >
                         Reset
                     </a>
@@ -444,12 +408,22 @@
 
                 {{-- NAMA BARANG --}}
                 <div>
-                    <label class="<?= $labelCls ?>">Nama Barang</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-medium text-black">Nama Barang</label>
+                        <span class="text-[11px] text-gray-500">Bisa cari berdasarkan <b class="text-gray-700">Nama Barang</b>, <b class="text-gray-700">Kategori</b>, atau <b class="text-gray-700">Merk</b></span>
+                    </div>
                     <select name="stok_itm" required class="searchable-select <?= $inputCls ?>">
-                        <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Pilih barang</option>
+                        <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Cari nama barang, kategori, atau merk...</option>
                         <?php foreach ($daftarITM as $it): ?>
-                            <option value="<?= e($it->itm) ?>" <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>>
-                                <?= e($it->des) ?>
+                            <option
+                                value="<?= e($it->itm) ?>"
+                                data-des="<?= e($it->des) ?>"
+                                data-ktg="<?= e($it->ktg_nama) ?>"
+                                data-mrk="<?= e($it->mrk_nama) ?>"
+                                data-stok="<?= (int) $it->stok ?>"
+                                <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>
+                            >
+                                <?= e($it->des) ?> — Kategori: <?= e($it->ktg_nama) ?> | Merk: <?= e($it->mrk_nama) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -823,6 +797,65 @@
             };
 
             if (selectName === 'stok_itm') {
+                const escHtml = function (str) {
+                    return String(str ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                };
+
+                config.matcher = function (params, data) {
+                    const term = $.trim(params.term || '').toLowerCase();
+                    if (term === '') return data;
+                    if (!data.element) return null;
+
+                    const el  = data.element;
+                    const des = (el.getAttribute('data-des') || data.text || '').toLowerCase();
+                    const ktg = (el.getAttribute('data-ktg') || '').toLowerCase();
+                    const mrk = (el.getAttribute('data-mrk') || '').toLowerCase();
+                    const itm = (el.value || '').toLowerCase();
+                    const haystack = `${des} ${ktg} ${mrk} ${itm}`;
+
+                    const words = term.split(/\s+/).filter(Boolean);
+                    const isMatch = words.every(function (w) {
+                        return haystack.indexOf(w) !== -1;
+                    });
+
+                    return isMatch ? data : null;
+                };
+
+                config.templateResult = function (data) {
+                    if (!data.id || !data.element) return data.text;
+                    const el   = data.element;
+                    const des  = el.getAttribute('data-des') || data.text;
+                    const ktg  = el.getAttribute('data-ktg') || '-';
+                    const mrk  = el.getAttribute('data-mrk') || '-';
+                    const stok = el.getAttribute('data-stok');
+
+                    return $(`
+                        <div class="py-0.5 leading-snug" style="color: inherit;">
+                            <div class="font-bold text-xs" style="color: inherit;">${escHtml(des)}</div>
+                            <div class="text-[11px] flex flex-wrap items-center gap-1.5 mt-0.5" style="color: inherit; opacity: 0.85;">
+                                <span>Kategori: <b class="font-semibold">${escHtml(ktg)}</b></span>
+                                <span>&bull;</span>
+                                <span>Merk: <b class="font-semibold">${escHtml(mrk)}</b></span>
+                                ${stok !== null && stok !== '' ? `<span>&bull;</span><span>Stok: <b class="font-semibold">${escHtml(stok)}</b></span>` : ''}
+                            </div>
+                        </div>
+                    `);
+                };
+
+                config.templateSelection = function (data) {
+                    if (!data.id || !data.element) return data.text;
+                    const el  = data.element;
+                    const des = el.getAttribute('data-des') || data.text;
+                    const ktg = el.getAttribute('data-ktg') || '-';
+                    const mrk = el.getAttribute('data-mrk') || '-';
+                    return `${escHtml(des)} — Kategori: ${escHtml(ktg)} | Merk: ${escHtml(mrk)}`;
+                };
+
                 config.language = {
                     noResults: function () {
                         return $(`
@@ -865,6 +898,15 @@
             }
 
             $select.select2(config);
+
+            if (selectName === 'stok_itm') {
+                $select.off('select2:open.stokItmHint').on('select2:open.stokItmHint', function () {
+                    const searchField = document.querySelector('.select2-container--open .select2-search__field');
+                    if (searchField) {
+                        searchField.placeholder = 'Cari nama barang, kategori, atau merk...';
+                    }
+                });
+            }
         });
     }
 
@@ -1091,8 +1133,18 @@
                 const data = result.data;
                 if (result.status >= 200 && result.status < 300 && data.success && data.data) {
                     const selectItm = document.querySelector('#tambahStokModal select[name="stok_itm"]');
+                    const ktgSelect = form.querySelector('select[name="KTG"]');
+                    const mrkSelect = form.querySelector('select[name="MRK"]');
+                    const ktgNama   = ktgSelect && ktgSelect.selectedIndex >= 0 ? ktgSelect.options[ktgSelect.selectedIndex].text.trim() : '-';
+                    const mrkNama   = mrkSelect && mrkSelect.selectedIndex >= 0 ? mrkSelect.options[mrkSelect.selectedIndex].text.trim() : '-';
+
                     if (selectItm) {
-                        const newOpt = new Option(data.data.DES, data.data.ITM, true, true);
+                        const labelText = `${data.data.DES} — Kategori: ${ktgNama} | Merk: ${mrkNama}`;
+                        const newOpt = new Option(labelText, data.data.ITM, true, true);
+                        newOpt.setAttribute('data-des', data.data.DES);
+                        newOpt.setAttribute('data-ktg', ktgNama);
+                        newOpt.setAttribute('data-mrk', mrkNama);
+                        newOpt.setAttribute('data-stok', '0');
                         if (typeof jQuery !== 'undefined') {
                             $(selectItm).append(newOpt).val(data.data.ITM).trigger('change');
                         } else {

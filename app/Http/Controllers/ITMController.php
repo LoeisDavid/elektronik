@@ -127,14 +127,24 @@ public function index(Request $request)
         }
 
         if ($keyword !== '') {
-            $hasil = array_values(array_filter($hasil, function ($r) use ($keyword) {
-                foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama] as $field) {
-                    if (mb_stripos((string) $field, $keyword) !== false) {
-                        return true;
+            $words = preg_split('/\s+/u', mb_strtolower($keyword), -1, PREG_SPLIT_NO_EMPTY);
+            $hasil = array_values(array_filter($hasil, function ($r) use ($words) {
+                $haystack = mb_strtolower(implode(' ', [
+                    (string) $r->itm,
+                    (string) $r->des,
+                    (string) $r->ktg_nama,
+                    (string) $r->mrk_nama,
+                    (string) $r->ktg,
+                    (string) $r->mrk,
+                ]));
+
+                foreach ($words as $w) {
+                    if (mb_strpos($haystack, $w) === false) {
+                        return false;
                     }
                 }
 
-                return false;
+                return true;
             }));
         }
 
