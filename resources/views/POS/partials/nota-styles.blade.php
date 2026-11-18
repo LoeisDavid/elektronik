@@ -115,13 +115,13 @@
         font-weight: 700;
     }
 
-    /* Printable area: clears pre-printed top-left header (top 25mm), left margin (9mm), right PERHATIAN strip (32mm) */
+    /* Printable area: clears pre-printed top-left header (top 20mm), left margin (9mm), right PERHATIAN strip (32mm) */
     .nota-root .sheet-inner {
         position: relative;
         z-index: 1;
         width: 100%;
         height: 100mm;
-        padding: 25mm 32mm 0 9mm;
+        padding: 20mm 32mm 0 9mm;
         display: flex;
         flex-direction: column;
         overflow: hidden;
