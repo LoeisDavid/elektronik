@@ -736,6 +736,7 @@ class ACRController extends Controller
                 $items = [];
                 $rawSubtotal = 0;
                 $totalItemDiscount = 0;
+                $afterItemDisc = 0;
                 $ppnPercent = null;
                 $invTotalHrb = 0;
 
@@ -744,16 +745,18 @@ class ACRController extends Controller
                     $kodeBarang = $st->ITM ?? '-';
                     $namaBarang = $itmModel?->DES ?? $kodeBarang;
 
-                    $hgj = (float) ($st->HGJ ?? 0);
-                    $pot1 = (float) ($st->POT_1 ?? 0);
-                    $potR = (float) ($st->POT_R ?? 0);
-
+                    $hgj = max(0, (float) ($st->HGJ ?? 0));
+                    $pot1 = min(100, max(0, (float) ($st->POT_1 ?? 0)));
                     $discPctNominal = $hgj * ($pot1 / 100);
-                    $itemDiscount = $discPctNominal + $potR;
-                    $subtotalItem = (float) ($st->BRT ?? max(0, $hgj - $itemDiscount));
+                    $maxPotR = max(0, $hgj - $discPctNominal);
+                    $potR = min($maxPotR, max(0, (float) ($st->POT_R ?? 0)));
+
+                    $itemDiscount = min($hgj, $discPctNominal + $potR);
+                    $subtotalItem = max(0, $hgj - $itemDiscount);
 
                     $rawSubtotal += $hgj;
                     $totalItemDiscount += $itemDiscount;
+                    $afterItemDisc += $subtotalItem;
 
                     if ($st->PPN !== null && $ppnPercent === null) {
                         $ppnPercent = (int) $st->PPN;
@@ -777,9 +780,8 @@ class ACRController extends Controller
                     ];
                 }
 
-                // Diskon global, voucher global, PPN
+                // Diskon global, voucher global, PPN (samakan dengan perhitungan Struk)
                 $globalPct = (float) ($acr->POT_1 ?? 0);
-                $afterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
                 $globalDiscNominal = $afterItemDisc * ($globalPct / 100);
 
                 $totPot = (float) ($acr->TOT_POT ?? ($acr->POT_R ?? 0));
@@ -794,7 +796,7 @@ class ACRController extends Controller
 
                 // Margin per transaksi:
                 // Dihitung dari (total harga jual - total harga beli) / total harga beli * 100%
-                $invSelling = $invGrandTotal > 0 ? $invGrandTotal : ($totalSetelahDiskon > 0 ? $totalSetelahDiskon : $rawSubtotal);
+                $invSelling = $invGrandTotal > 0 ? $invGrandTotal : ($totalSetelahDiskon > 0 ? $totalSetelahDiskon : $afterItemDisc);
                 $invMarginPct = $invTotalHrb > 0 ? ((($invSelling - $invTotalHrb) / $invTotalHrb) * 100) : 0;
 
                 $reportData[] = [
@@ -804,7 +806,7 @@ class ACRController extends Controller
                     'desa'           => $cstDesa,
                     'kasir_metode'   => $kasirMetode,
                     'items'          => $items,
-                    'subtotal'       => $rawSubtotal,
+                    'subtotal'       => $afterItemDisc,
                     'diskon_global'  => $globalDiscNominal,
                     'voucher_global' => $voucherCalc,
                     'ppn_pct'        => $ppnPercent ?? 0,
