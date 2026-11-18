@@ -31,8 +31,8 @@ export function formatPersen(val) {
 }
 
 /**
- * Group receipt items per barang (by id/itm/nama), accumulating qty,
- * averaging discount % across all units (total diskon % / total qty),
+ * Group receipt items per barang AND unit price (by id/itm/nama + price),
+ * accumulating qty, averaging discount % across all units (total diskon % / total qty),
  * and accumulating voucher nominal & subtotal.
  */
 export function groupReceiptItemsPerBarang(rawItems) {
@@ -44,8 +44,10 @@ export function groupReceiptItemsPerBarang(rawItems) {
         if (!item) return;
         const qty = Math.max(1, parseInt(item.qty ?? item.QTY ?? 1, 10) || 1);
         const nama = String(item.nama ?? item.nama_produk ?? item.name ?? item.NAMA ?? 'Produk').trim() || 'Produk';
-        const groupKey = String(item.id || item.itm || nama).trim().toLowerCase();
         const price = Math.max(0, parseFloat(item.price ?? item.harga ?? item.HARGA ?? 0) || 0);
+        const priceKey = (Math.round(price * 100) / 100).toFixed(2);
+        const baseKey = String(item.id || item.itm || nama).trim().toLowerCase();
+        const groupKey = `${baseKey}|${priceKey}`;
         const discPct = Math.min(100, Math.max(0, parseFloat(item.discount ?? 0) || 0));
 
         const itemGross = price * qty;
