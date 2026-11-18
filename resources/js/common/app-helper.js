@@ -112,7 +112,7 @@ export function initSearchableSelects(context = document) {
                     dropdownParent: parentModal.length ? parentModal : jQuery(document.body)
                 });
 
-                $select.on('select2:select', function () {
+                $select.on('select2:select select2:clear', function () {
                     this.dispatchEvent(new Event('change', { bubbles: true }));
                 });
             }

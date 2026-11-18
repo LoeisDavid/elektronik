@@ -70,7 +70,7 @@
                                 type="text" 
                                 name="keyword"
                                 value="{{ request('keyword') }}"
-                                placeholder="Cari produk" 
+                                placeholder="Cari nama barang, kategori, atau merk..." 
                                 class="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-400 rounded-xl text-xs text-black transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:ring-1 focus:ring-primary-db"
                             >
                         </div>
@@ -133,11 +133,11 @@
                         <tbody class="divide-y divide-gray-300 text-xs text-black">
                             @forelse($items as $item)
                                 <tr class="h-10 hover:bg-gray-50/80 transition-colors">
-                                    <td class="px-4 font-mono text-center">{{ $item->ITM }}</td>
-                                    <td class="px-4 text-center">{{ $item->DES }}</td>
-                                    <td class="px-4 text-center">{{ $item->QTY }}</td>
-                                    <td class="px-4 text-center">{{ $item->KTG }}</td>
-                                    <td class="px-4 text-center">{{ $item->MRK }}</td>
+                                    <td class="px-4 font-mono text-center font-medium">{{ $item->ITM }}</td>
+                                    <td class="px-4 text-center font-medium">{{ $item->DES }}</td>
+                                    <td class="px-4 text-center font-medium">{{ $item->QTY }}</td>
+                                    <td class="px-4 text-center font-medium">{{ $item->KTG }}</td>
+                                    <td class="px-4 text-center font-medium">{{ $item->MRK }}</td>
                                     <td class="px-4 text-center">
                                         <a 
                                             href="{{ route('inventory.item.show', ['id' => $item->ITM, 'ref' => 'detail_gudang', 'gd' => $gd->GD, 'back_url' => request()->fullUrl()]) }}"

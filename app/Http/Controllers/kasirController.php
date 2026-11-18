@@ -344,20 +344,23 @@ class kasirController extends Controller
             ], 400);
         }
 
-        // Hitung Subtotal dan Total Transaksi (Termasuk Diskon & Voucher per Item)
+        // Hitung Subtotal dan Total Transaksi (Termasuk Diskon & Voucher per Item, dibatasi per detail)
         $subtotal = 0;
         $totalItemDiscountNominal = 0;
-        foreach ($cart as $item) {
+        foreach ($cart as $k => $item) {
             $itemPrice = max(0, (float) ($item['price'] ?? 0));
             $itemDiscountPct = min(100, max(0, (float) ($item['discount'] ?? 0)));
-            $itemDiscountVoucher = max(0, (float) ($item['discount_voucher'] ?? 0));
-            $qty = max(1, (int) ($item['qty'] ?? 1));
-
             $discFromPct = $itemPrice * ($itemDiscountPct / 100);
-            $priceAfterDiscount = max(0, $itemPrice - $discFromPct - $itemDiscountVoucher);
+            $maxVoucherUnit = max(0, $itemPrice - $discFromPct);
+            $itemDiscountVoucher = min($maxVoucherUnit, max(0, (float) ($item['discount_voucher'] ?? 0)));
+            $cart[$k]['discount_voucher'] = $itemDiscountVoucher;
+
+            $qty = max(1, (int) ($item['qty'] ?? 1));
+            $effectiveUnitDisc = min($itemPrice, $discFromPct + $itemDiscountVoucher);
+            $priceAfterDiscount = max(0, $itemPrice - $effectiveUnitDisc);
 
             $subtotal += ($priceAfterDiscount * $qty);
-            $totalItemDiscountNominal += (($discFromPct + $itemDiscountVoucher) * $qty);
+            $totalItemDiscountNominal += ($effectiveUnitDisc * $qty);
         }
 
         $diskonTransaksiNominal = $subtotal * ($discountPercent / 100);
@@ -437,7 +440,7 @@ class kasirController extends Controller
             // Validasi: pastikan tidak ada barcode dalam keranjang yang sudah tercatat di tabel STS
             $incomingBcOuts = [];
             foreach ($cart as $key => $item) {
-                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 20);
+                $incomingBcOuts[] = substr($item['code'] ?? $key, 0, 40);
             }
             $alreadySold = STS::whereIn('BC_OUT', $incomingBcOuts)->pluck('BC_OUT')->toArray();
             if (!empty($alreadySold)) {
@@ -447,8 +450,8 @@ class kasirController extends Controller
             // 3. Simpan Rincian Barang ke Tabel STS (Setiap unit barang memiliki BC_OUT berbeda)
             $soldBcOuts = [];
             foreach ($cart as $key => $item) {
-                $bcOut = substr($item['code'] ?? $key, 0, 20);
-                $itmCode = substr($item['id'] ?? $bcOut, 0, 20);
+                $bcOut = substr($item['code'] ?? $key, 0, 40);
+                $itmCode = substr($item['id'] ?? $bcOut, 0, 25);
                 $hgj = (float) ($item['price'] ?? 0);
                 $pot1 = (int) ($item['discount'] ?? 0);
                 $potR = (float) ($item['discount_voucher'] ?? 0);

@@ -31,18 +31,21 @@ class ITMController extends Controller
 public function index(Request $request)
 {
     try {
-        $keyword = trim((string) $request->query('keyword', ''));
-        $sort    = (string) $request->query('sort', 'nama_asc');
+        $keyword   = trim((string) $request->query('keyword', ''));
+        $filterKtg = trim((string) $request->query('ktg', ''));
+        $filterMrk = trim((string) $request->query('mrk', ''));
+        $sort      = (string) $request->query('sort', 'tgl_terbaru');
+        $showZero  = $request->boolean('show_zero', false);
         if (!isset(self::OPSI_SORT[$sort])) {
-            $sort = 'nama_asc';
+            $sort = 'tgl_terbaru';
         }
         $page = max(1, (int) $request->query('page', 1));
 
         // ------------------------------------------------------------
         // 1. Tabel kecil (KTG, MRK, SPP, GD) diambil SEKALI saja.
         // ------------------------------------------------------------
-        $KTG = KTG::all();
-        $MRK = MRK::all();
+        $KTG = KTG::orderBy('DES')->get();
+        $MRK = MRK::orderBy('DES')->get();
         $SPP = SPP::all();
         $GD  = GD::all();
 
@@ -51,37 +54,45 @@ public function index(Request $request)
         $namaSPP = $SPP->pluck('DES', 'SPP')->all();
 
         // ------------------------------------------------------------
-        // 2. Ambil total aset (HRB dari ITMDT yang belum terjual / belum ada di STS)
+        // 2. Ambil total aset & tanggal ITMDT (hanya yang belum terjual / belum ada di STS)
         // ------------------------------------------------------------
-        $asetPerItm = DB::table('itmdt')
+        $itmdtStats = DB::table('itmdt')
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('sts')
                     ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
             })
-            ->select('ITM', DB::raw('SUM(HRB) as total_aset'))
+            ->select(
+                'ITM',
+                DB::raw('COUNT(*) as stok_tersedia'),
+                DB::raw('SUM(HRB) as total_aset'),
+                DB::raw("MAX(CONCAT(COALESCE(TM, DATE(created_at)), ' ', COALESCE(TIME(created_at), '00:00:00'))) as tgl_terbaru"),
+                DB::raw("MIN(CONCAT(COALESCE(TM, DATE(created_at)), ' ', COALESCE(TIME(created_at), '00:00:00'))) as tgl_terlama")
+            )
             ->groupBy('ITM')
-            ->pluck('total_aset', 'ITM')
-            ->all();
+            ->get()
+            ->keyBy('ITM');
 
         $semuaRow = [];
         $totalAsetKeseluruhan = 0;
 
-        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK', 'created_at']) as $itm) {
-            $totalAset = (float) ($asetPerItm[$itm->ITM] ?? 0);
+        foreach (ITM::query()->toBase()->get(['ITM', 'DES', 'KTG', 'MRK', 'HRG', 'STOK']) as $itm) {
+            $statItmdt = $itmdtStats->get($itm->ITM);
+            $totalAset = (float) ($statItmdt->total_aset ?? 0);
             $totalAsetKeseluruhan += $totalAset;
 
             $semuaRow[] = (object) [
-                'itm'        => $itm->ITM,
-                'des'        => $itm->DES,
-                'ktg'        => $itm->KTG,
-                'ktg_nama'   => $namaKTG[$itm->KTG] ?? '-',
-                'mrk'        => $itm->MRK,
-                'mrk_nama'   => $namaMRK[$itm->MRK] ?? '-',
-                'hrg'        => $itm->HRG,
-                'stok'       => (int) $itm->STOK,
-                'total_aset' => $totalAset,
-                'created_at' => $itm->created_at ? (string) $itm->created_at : null,
+                'itm'         => $itm->ITM,
+                'des'         => $itm->DES,
+                'ktg'         => $itm->KTG,
+                'ktg_nama'    => $namaKTG[$itm->KTG] ?? '-',
+                'mrk'         => $itm->MRK,
+                'mrk_nama'    => $namaMRK[$itm->MRK] ?? '-',
+                'hrg'         => $itm->HRG,
+                'stok'        => (int) ($statItmdt->stok_tersedia ?? 0),
+                'total_aset'  => $totalAset,
+                'tgl_terbaru' => $statItmdt->tgl_terbaru ?? null,
+                'tgl_terlama' => $statItmdt->tgl_terlama ?? null,
             ];
         }
 
@@ -107,20 +118,42 @@ public function index(Request $request)
         }
 
         // ------------------------------------------------------------
-        // 4. Search PHP murni
+        // 4. Filter stok 0 (default hide) & Search PHP murni
         // ------------------------------------------------------------
         $hasil = $semuaRow;
 
+        if (!$showZero) {
+            $hasil = array_values(array_filter($hasil, fn ($r) => $r->stok > 0));
+        }
+
         if ($keyword !== '') {
-            $hasil = array_values(array_filter($semuaRow, function ($r) use ($keyword) {
-                foreach ([$r->itm, $r->des, $r->ktg_nama, $r->mrk_nama] as $field) {
-                    if (mb_stripos((string) $field, $keyword) !== false) {
-                        return true;
+            $words = preg_split('/\s+/u', mb_strtolower($keyword), -1, PREG_SPLIT_NO_EMPTY);
+            $hasil = array_values(array_filter($hasil, function ($r) use ($words) {
+                $haystack = mb_strtolower(implode(' ', [
+                    (string) $r->itm,
+                    (string) $r->des,
+                    (string) $r->ktg_nama,
+                    (string) $r->mrk_nama,
+                    (string) $r->ktg,
+                    (string) $r->mrk,
+                ]));
+
+                foreach ($words as $w) {
+                    if (mb_strpos($haystack, $w) === false) {
+                        return false;
                     }
                 }
 
-                return false;
+                return true;
             }));
+        }
+
+        if ($filterKtg !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->ktg === $filterKtg));
+        }
+
+        if ($filterMrk !== '') {
+            $hasil = array_values(array_filter($hasil, fn ($r) => (string) $r->mrk === $filterMrk));
         }
 
         // ------------------------------------------------------------
@@ -134,12 +167,16 @@ public function index(Request $request)
                     return -$nama;
 
                 case 'tgl_terbaru':
+                    if ($a->tgl_terbaru === $b->tgl_terbaru) return $nama;
+                    if ($a->tgl_terbaru === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terbaru === null) return -1;
+                    return strcmp($b->tgl_terbaru, $a->tgl_terbaru);
+
                 case 'tgl_terlama':
-                    if ($a->created_at === $b->created_at) return $nama;
-                    if ($a->created_at === null) return 1;   // tanpa tanggal selalu di bawah
-                    if ($b->created_at === null) return -1;
-                    $cmp = strcmp($a->created_at, $b->created_at);
-                    return $sort === 'tgl_terbaru' ? -$cmp : $cmp;
+                    if ($a->tgl_terlama === $b->tgl_terlama) return $nama;
+                    if ($a->tgl_terlama === null) return 1;   // tanpa detail belum terjual selalu di bawah
+                    if ($b->tgl_terlama === null) return -1;
+                    return strcmp($a->tgl_terlama, $b->tgl_terlama);
 
                 case 'stok_terbanyak':
                     return ($b->stok <=> $a->stok) ?: $nama;
@@ -183,7 +220,10 @@ public function index(Request $request)
             'daftarITM'  => $daftarITM,
             'opsiSort'   => self::OPSI_SORT,
             'keyword'    => $keyword,
+            'filterKtg'  => $filterKtg,
+            'filterMrk'  => $filterMrk,
             'sort'       => $sort,
+            'showZero'   => $showZero,
             'MRK'        => $MRK,
             'KTG'        => $KTG,
             'SPP'        => $SPP,
@@ -269,10 +309,11 @@ public function index(Request $request)
 
             // Semua detail stok milik item ini (ITMDT) + hitung field turunan
             $all = Itmdt::where('ITM', $item->ITM)->get()->map(function ($d) use ($item) {
-                $masuk  = $d->TM ? Carbon::parse($d->TM) : null;
-                $sts    = $d->sts();
-                $keluar = $sts && $sts->created_at ? Carbon::parse($sts->created_at) : null;
-                $gudang = $d->GD();
+                $masuk   = $d->TM ? Carbon::parse($d->TM) : ($d->created_at ? Carbon::parse($d->created_at) : null);
+                $sts     = $d->sts();
+                $terjual = $sts !== null;
+                $keluar  = $sts ? ($sts->created_at ? Carbon::parse($sts->created_at) : ($sts->acr()?->DT ? Carbon::parse($sts->acr()->DT) : null)) : null;
+                $gudang  = $d->GD();
 
                 return (object) [
                     'kode_stok'   => $d->BC_OUT,
@@ -281,8 +322,8 @@ public function index(Request $request)
                     'ts_masuk'    => $masuk?->timestamp ?? 0,
                     'ts_keluar'   => $keluar?->timestamp,
                     'nama_gudang' => $gudang->DES ?? '-',
-                    'terjual'     => $keluar !== null,
-                    'status'      => $keluar === null ? 'IN STOK' : 'Terjual',
+                    'terjual'     => $terjual,
+                    'status'      => !$terjual ? 'IN STOK' : 'Terjual',
                     'HRB'         => $d->HRB,
                     'supplier'    => $d->spp()?->DES ?? '-',
                 ];
@@ -379,7 +420,7 @@ public function index(Request $request)
         }
 
         $data = $request->validateWithBag('editItem', [
-            'ITM' => 'required|string|max:10',
+            'ITM' => 'required|string|max:25',
             'DES' => 'required|string|max:150',
             'MRK' => 'required|string|max:10',
             'KTG' => 'required|string|max:10',
@@ -427,18 +468,23 @@ public function index(Request $request)
             }
 
             $data = $request->validateWithBag('stok', [
-                'stok_itm' => 'required|string|max:10',
+                'stok_itm' => 'required|string|max:25',
                 'stok_spp' => 'required|string|max:10',
                 'stok_gd'  => 'required|string|max:10',
                 'stok_hrb' => 'required|numeric|min:0',
-                'stok_bc'  => 'required|string|max:20',
+                'stok_qty' => 'nullable|integer|min:1|max:500',
+                'stok_bc'  => 'nullable|string|max:40',
             ], [
                 'stok_itm.required' => 'Pilih nama barang.',
                 'stok_spp.required' => 'Pilih supplier.',
                 'stok_gd.required'  => 'Pilih gudang.',
                 'stok_hrb.required' => 'Harga beli wajib diisi.',
-                'stok_bc.required'  => 'Kode barcode wajib diisi.',
+                'stok_qty.integer'  => 'Qty harus berupa angka bulat.',
+                'stok_qty.min'      => 'Qty minimal 1.',
+                'stok_qty.max'      => 'Qty maksimal 500 sekali input.',
             ]);
+
+            $qty = max(1, (int) ($data['stok_qty'] ?? 1));
 
             // Kalau list belum di-generate, barang tidak boleh diganti
             $listAktif = session('stok_list', []);
@@ -466,37 +512,49 @@ public function index(Request $request)
                     ->errorBag('stok');
             }
 
-            $bcOut = null;
+            $generatedItems = [];
 
-            DB::transaction(function () use ($data, &$bcOut) {
-                $bcOut = $this->generateBcOut($data['stok_itm']);
+            DB::transaction(function () use ($data, $qty, &$generatedItems) {
+                $rawBcIn = isset($data['stok_bc']) ? trim((string) $data['stok_bc']) : '';
 
-                ITMDT::create([
-                    'ITM'    => $data['stok_itm'],
-                    'BC_IN'  => $data['stok_bc'],
-                    'BC_OUT' => $bcOut,
-                    'TM'     => date('Y-m-d'),
-                    'HRB'    => $data['stok_hrb'],
-                    'GD'     => $data['stok_gd'],
-                    'SPP'    => $data['stok_spp'],
-                ]);
+                for ($i = 0; $i < $qty; $i++) {
+                    $bcOut = $this->generateBcOut($data['stok_itm']);
+                    $bcIn  = $rawBcIn !== '' ? $rawBcIn : $bcOut;
 
-                ITM::where('ITM', $data['stok_itm'])->increment('STOK');
+                    ITMDT::create([
+                        'ITM'    => $data['stok_itm'],
+                        'BC_IN'  => $bcIn,
+                        'BC_OUT' => $bcOut,
+                        'TM'     => date('Y-m-d'),
+                        'HRB'    => $data['stok_hrb'],
+                        'GD'     => $data['stok_gd'],
+                        'SPP'    => $data['stok_spp'],
+                    ]);
+
+                    $generatedItems[] = [
+                        'bc_in'  => $bcIn,
+                        'bc_out' => $bcOut,
+                    ];
+                }
+
+                ITM::where('ITM', $data['stok_itm'])->increment('STOK', $qty);
             });
 
             $namaItem     = ITM::where('ITM', $data['stok_itm'])->value('DES');
             $namaGudang   = GD::where('GD', $data['stok_gd'])->value('DES');
             $namaSupplier = SPP::where('SPP', $data['stok_spp'])->value('DES');
 
-            // Tambah ke array session (bertahan sampai di-generate)
-            session()->push('stok_list', [
-                'itm'    => $data['stok_itm'],
-                'des'    => $namaItem,
-                'gd'     => $namaGudang,
-                'spp'    => $namaSupplier,
-                'bc_in'  => $data['stok_bc'],
-                'bc_out' => $bcOut,
-            ]);
+            // Tambah seluruh kode yang digenerate ke array session (bertahan sampai di-generate)
+            foreach ($generatedItems as $gen) {
+                session()->push('stok_list', [
+                    'itm'    => $data['stok_itm'],
+                    'des'    => $namaItem,
+                    'gd'     => $namaGudang,
+                    'spp'    => $namaSupplier,
+                    'bc_in'  => $gen['bc_in'],
+                    'bc_out' => $gen['bc_out'],
+                ]);
+            }
 
             // Pilihan barang, supplier, gudang & harga beli dipertahankan; hanya barcode yang dikosongkan
             return back()->withInput($request->only(['stok_itm', 'stok_spp', 'stok_gd', 'stok_hrb']));
@@ -578,7 +636,7 @@ public function index(Request $request)
     }
 
     /**
-     * BC_OUT = ITM (maks 10) + yymmdd (6) + urutan 4 digit  => maks 20 karakter.
+     * BC_OUT = ITM (maks 25) + yymmdd (6) + urutan 4 digit => maks 35 karakter.
      */
     private function generateBcOut(string $itm): string
     {
@@ -597,10 +655,16 @@ public function index(Request $request)
         }
     }
 
+    public function selesaiStok()
+    {
+        session()->forget('stok_list');
+        return redirect()->route('inventory.item')->with('success', 'Penambahan stok selesai.');
+    }
+
     public function destroy($id)
     {
-        if (!auth()->user()?->isAdmin()) {
-            return redirect()->back()->with('error', 'Hanya Admin yang memiliki hak akses untuk menghapus produk.');
+        if (!auth()->user()?->canDelete()) {
+            return redirect()->back()->with('error', 'Hanya Supervisor dan Developer yang memiliki hak akses untuk menghapus produk.');
         }
 
         try {
@@ -609,7 +673,7 @@ public function index(Request $request)
 
             return redirect()->back()->with('success', 'Data berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menghapus data');
+            return redirect()-> back()->with('error', 'Terjadi kesalahan ketika menghapus data');
         }
     }
 }

@@ -6,7 +6,9 @@ use App\Models\ACR;
 use App\Models\STS;
 use App\Models\KAS;
 use App\Models\CST;
+use App\Models\ITM;
 use App\Models\ITMDT;
+use App\Models\SLS;
 use App\Models\DS;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -65,42 +67,81 @@ class ACRController extends Controller
             $data = $query->paginate(10)->withQueryString();
 
             foreach ($data as $acr) {
-                $detail = [];
+                $groupedDetail = [];
                 $rawSubtotal = 0;
                 $totalItemDiscount = 0;
+                $afterItemDisc = 0;
 
                 foreach ($acr->sts() as $item) {
                     $itmObj = $item->itm();
                     $nama = $itmObj ? ($itmObj->DES ?? $item->ITM) : $item->ITM;
-                    $hgj = (float) ($item->HGJ ?? 0);
-                    $pot1 = (float) ($item->POT_1 ?? 0);
-                    $potR = (float) ($item->POT_R ?? 0);
+                    $groupKey = $item->ITM ?: $nama;
+
+                    $hgj = max(0, (float) ($item->HGJ ?? 0));
+                    $pot1 = min(100, max(0, (float) ($item->POT_1 ?? 0)));
                     $discPctNominal = $hgj * ($pot1 / 100);
-                    $itemDiscountUnit = $discPctNominal + $potR;
-                    $brtItem = (float) ($item->BRT ?? max(0, $hgj - $itemDiscountUnit));
+                    $maxPotR = max(0, $hgj - $discPctNominal);
+                    $potR = min($maxPotR, max(0, (float) ($item->POT_R ?? 0)));
+
+                    $itemDiscountUnit = min($hgj, $discPctNominal + $potR);
+                    $brtItem = max(0, $hgj - $itemDiscountUnit);
 
                     $rawSubtotal += $hgj;
                     $totalItemDiscount += $itemDiscountUnit;
+                    $afterItemDisc += $brtItem;
 
-                    $discInfo = '';
-                    if ($pot1 > 0 && $potR > 0) {
-                        $discInfo = "Diskon: -{$pot1}% (-Rp " . number_format($discPctNominal, 0, ',', '.') . ") + Voucher item: -Rp " . number_format($potR, 0, ',', '.');
-                    } elseif ($pot1 > 0) {
-                        $discInfo = "Diskon: -{$pot1}% (-Rp " . number_format($discPctNominal, 0, ',', '.') . ")";
-                    } elseif ($potR > 0) {
-                        $discInfo = "Voucher item: -Rp " . number_format($potR, 0, ',', '.');
+                    if (!isset($groupedDetail[$groupKey])) {
+                        $groupedDetail[$groupKey] = [
+                            'id'                     => $item->ITM,
+                            'nama'                   => $nama,
+                            'code'                   => $item->ITM ?? $item->BC_OUT,
+                            'qty'                    => 0,
+                            'sum_hgj'                => 0.0,
+                            'sum_pot1'               => 0.0,
+                            'sum_disc_pct_nominal'   => 0.0,
+                            'sum_pot_r'              => 0.0,
+                            'subtotal'               => 0.0,
+                        ];
                     }
 
-                    // Setiap baris/unit item ditampilkan terpisah (tidak dijadikan satu)
+                    $groupedDetail[$groupKey]['qty']                  += 1;
+                    $groupedDetail[$groupKey]['sum_hgj']              += $hgj;
+                    $groupedDetail[$groupKey]['sum_pot1']             += $pot1;
+                    $groupedDetail[$groupKey]['sum_disc_pct_nominal'] += $discPctNominal;
+                    $groupedDetail[$groupKey]['sum_pot_r']            += $potR;
+                    $groupedDetail[$groupKey]['subtotal']             += $brtItem;
+                }
+
+                $detail = [];
+                foreach ($groupedDetail as $grp) {
+                    $qty = max(1, (int) $grp['qty']);
+                    $avgPrice = $grp['sum_hgj'] / $qty;
+                    $avgPot1 = round($grp['sum_pot1'] / $qty, 2);
+                    $avgPot1Fmt = rtrim(rtrim(number_format($avgPot1, 2, ',', '.'), '0'), ',');
+                    $sumDiscPctNominal = $grp['sum_disc_pct_nominal'];
+                    $sumPotR = $grp['sum_pot_r'];
+
+                    $discInfo = '';
+                    if ($avgPot1 > 0 && $sumPotR > 0) {
+                        $discInfo = "Diskon: -{$avgPot1Fmt}% (-Rp " . number_format($sumDiscPctNominal, 0, ',', '.') . ") + Voucher item: -Rp " . number_format($sumPotR, 0, ',', '.');
+                    } elseif ($avgPot1 > 0) {
+                        $discInfo = "Diskon: -{$avgPot1Fmt}% (-Rp " . number_format($sumDiscPctNominal, 0, ',', '.') . ")";
+                    } elseif ($sumPotR > 0) {
+                        $discInfo = "Voucher item: -Rp " . number_format($sumPotR, 0, ',', '.');
+                    }
+
                     $detail[] = [
-                        'nama'             => $nama,
-                        'code'             => $item->BC_OUT ?? $item->ITM,
-                        'qty'              => 1,
-                        'price'            => $hgj,
-                        'discount'         => $pot1,
-                        'discount_voucher' => $potR,
-                        'discount_info'    => $discInfo,
-                        'subtotal'         => $brtItem,
+                        'id'                     => $grp['id'],
+                        'nama'                   => $grp['nama'],
+                        'code'                   => $grp['code'],
+                        'qty'                    => $qty,
+                        'price'                  => $avgPrice,
+                        'discount'               => $avgPot1,
+                        'discount_pct_nominal'   => $sumDiscPctNominal,
+                        'discount_voucher'       => $sumPotR,
+                        'discount_voucher_total' => $sumPotR,
+                        'discount_info'          => $discInfo,
+                        'subtotal'               => $grp['subtotal'],
                     ];
                 }
 
@@ -109,7 +150,6 @@ class ACRController extends Controller
                 $acr->item_discount_calc = $totalItemDiscount;
 
                 $globalPct = (float) ($acr->POT_1 ?? 0);
-                $afterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
                 $globalDiscNominal = $afterItemDisc * ($globalPct / 100);
                 $acr->global_discount_calc = $globalDiscNominal;
 
@@ -117,7 +157,7 @@ class ACRController extends Controller
                 $voucherCalc = max(0, $totPot - $totalItemDiscount - $globalDiscNominal);
                 $acr->voucher_calc = $voucherCalc;
 
-                $totalSetelahDiskon = max(0, $rawSubtotal - $totalItemDiscount - $globalDiscNominal - $voucherCalc);
+                $totalSetelahDiskon = max(0, $afterItemDisc - $globalDiscNominal - $voucherCalc);
                 $firstStsWithPpn = $acr->sts()->firstWhere(fn ($s) => $s->PPN !== null);
                 $ppnVal = $firstStsWithPpn ? (int) $firstStsWithPpn->PPN : null;
                 $acr->ppn = $ppnVal;
@@ -132,6 +172,8 @@ class ACRController extends Controller
 
     /**
      * [TAMBAHAN PRINT]
+     * Menampilkan view cetak nota 1/3 folio (215mm x 110mm) dengan pagination 7 item/lembar.
+     * Tidak ada query ulang ke database kecuali fallback data customer.
      * Membuat PDF struk dengan DomPDF dari data yang dikirim Blade (POST).
      * Tidak ada query ulang ke database.
      */
@@ -139,24 +181,25 @@ class ACRController extends Controller
     {
         try {
             $request->validate([
-                'ref_no'          => 'required|string|max:50',
-                'tanggal'         => 'nullable|string|max:50',
-                'waktu'           => 'nullable|string|max:20',
-                'kasir'           => 'nullable|string|max:50',
-                'customer_nama'   => 'nullable|string|max:100',
-                'customer_desa'   => 'nullable|string|max:100',
-                'customer_alamat' => 'nullable|string|max:255',
-                'metode'          => 'nullable|string|max:30',
-                'subtotal'        => 'nullable|numeric',
-                'discount_item'   => 'nullable|numeric',
-                'discount_global' => 'nullable|numeric',
-                'voucher'         => 'nullable|numeric',
-                'ppn'             => 'nullable|numeric',
-                'ppn_nominal'     => 'nullable|numeric',
-                'total'           => 'required|numeric',
-                'dibayar'         => 'nullable|numeric',
-                'kembalian'       => 'nullable|numeric',
-                'items'           => 'required|string',
+                'ref_no'           => 'required|string|max:50',
+                'tanggal'          => 'nullable|string|max:50',
+                'waktu'            => 'nullable|string|max:20',
+                'kasir'            => 'nullable|string|max:50',
+                'customer_nama'    => 'nullable|string|max:100',
+                'customer_desa'    => 'nullable|string|max:100',
+                'customer_alamat'  => 'nullable|string|max:255',
+                'metode'           => 'nullable|string|max:30',
+                'subtotal'         => 'nullable|numeric',
+                'discount_item'    => 'nullable|numeric',
+                'discount_percent' => 'nullable|numeric',
+                'discount_global'  => 'nullable|numeric',
+                'voucher'          => 'nullable|numeric',
+                'ppn'              => 'nullable|numeric',
+                'ppn_nominal'      => 'nullable|numeric',
+                'total'            => 'required|numeric',
+                'dibayar'          => 'nullable|numeric',
+                'kembalian'        => 'nullable|numeric',
+                'items'            => 'required|string',
             ]);
 
             $itemsRaw = json_decode($request->input('items'), true);
@@ -172,64 +215,118 @@ class ACRController extends Controller
                 }
 
                 $items[] = [
-                    'nama'          => (string) ($d['nama'] ?? '-'),
-                    'qty'           => (int) ($d['qty'] ?? 1),
-                    'price'         => isset($d['price']) ? (float) $d['price'] : null,
-                    'discount_info' => !empty($d['discount_info']) ? (string) $d['discount_info'] : null,
-                    'subtotal'      => isset($d['subtotal']) && $d['subtotal'] !== null
-                                        ? (float) $d['subtotal']
-                                        : null,
+                    'nama'                   => (string) ($d['nama'] ?? '-'),
+                    'qty'                    => (int) ($d['qty'] ?? 1),
+                    'price'                  => isset($d['price']) ? (float) $d['price'] : 0,
+                    'discount'               => isset($d['discount']) ? (float) $d['discount'] : 0,
+                    'discount_voucher'       => isset($d['discount_voucher_total'])
+                                                ? (float) $d['discount_voucher_total']
+                                                : (isset($d['discount_voucher']) ? (float) $d['discount_voucher'] : 0),
+                    'discount_voucher_total' => isset($d['discount_voucher_total'])
+                                                ? (float) $d['discount_voucher_total']
+                                                : (isset($d['discount_voucher']) ? (float) $d['discount_voucher'] : 0),
+                    'discount_info'          => !empty($d['discount_info']) ? (string) $d['discount_info'] : null,
+                    'subtotal'               => isset($d['subtotal']) && $d['subtotal'] !== null
+                                                ? (float) $d['subtotal']
+                                                : null,
                 ];
             }
 
             // Fallback cari data customer dari database jika tidak dikirim dari form
-            $customerNama = $request->input('customer_nama');
-            $customerDesa = $request->input('customer_desa');
-            $customerAlamat = $request->input('customer_alamat');
+            $customerNama = (string) ($request->input('customer_nama') ?? '');
+            $customerDesa = (string) ($request->input('customer_desa') ?? '');
+            $customerAlamat = (string) ($request->input('customer_alamat') ?? '');
 
             if (empty($customerNama) && empty($customerDesa)) {
                 $acrObj = ACR::where('REF_NO', $request->input('ref_no'))->first();
                 $cstObj = $acrObj?->cst();
                 $dsObj = ($cstObj && $cstObj->DS) ? \App\Models\CST::where('CST', $cstObj->DS)->first() : null;
 
-                $customerNama = $cstObj?->DES ?? '';
-                $customerAlamat = $cstObj?->AL ?? '';
-                $customerDesa = $dsObj?->DES ?? '';
+                $customerNama = (string) ($cstObj?->DES ?? '');
+                $customerAlamat = (string) ($cstObj?->AL ?? '');
+                $customerDesa = (string) ($dsObj?->DES ?? '');
             }
 
+            $metode = (string) ($request->input('metode') ?: 'Tunai');
+            $metodeNorm = strtolower(trim($metode));
+            $isTunai = !str_contains($metodeNorm, 'non') && ($metodeNorm === 'tunai' || $metodeNorm === 'cash');
+
             $struk = [
-                'ref_no'          => $request->input('ref_no'),
-                'tanggal'         => $request->input('tanggal'),
-                'waktu'           => $request->input('waktu'),
-                'kasir'           => $request->input('kasir'),
-                'customer_nama'   => $customerNama,
-                'customer_desa'   => $customerDesa,
-                'customer_alamat' => $customerAlamat,
-                'metode'          => $request->input('metode'),
-                'subtotal'        => $request->filled('subtotal') ? (float) $request->input('subtotal') : null,
-                'discount_item'   => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
-                'discount_global' => $request->filled('discount_global') ? (float) $request->input('discount_global') : 0,
-                'voucher'         => $request->filled('voucher') ? (float) $request->input('voucher') : 0,
-                'ppn'             => $request->filled('ppn') ? (float) $request->input('ppn') : null,
-                'ppn_nominal'     => $request->filled('ppn_nominal') ? (float) $request->input('ppn_nominal') : 0,
-                'total'           => (float) $request->input('total'),
-                'dibayar'         => $request->filled('dibayar') ? (float) $request->input('dibayar') : null,
-                'kembalian'       => $request->filled('kembalian') ? (float) $request->input('kembalian') : null,
-                'items'           => $items,
+                'ref_no'           => $request->input('ref_no'),
+                'tanggal'          => $request->input('tanggal') ?: date('d M Y'),
+                'waktu'            => $request->input('waktu') ?: '00.00',
+                'kasir'            => $request->input('kasir') ?: 'Kasir',
+                'customer_nama'    => $customerNama,
+                'customer_desa'    => $customerDesa,
+                'customer_alamat'  => $customerAlamat,
+                'metode'           => $metode,
+                'subtotal'         => $request->filled('subtotal') ? (float) $request->input('subtotal') : 0,
+                'discount_item'    => $request->filled('discount_item') ? (float) $request->input('discount_item') : 0,
+                'discount_percent' => $request->filled('discount_percent') ? (float) $request->input('discount_percent') : 0,
+                'discount_global'  => $request->filled('discount_global') ? (float) $request->input('discount_global') : 0,
+                'voucher'          => $request->filled('voucher') ? (float) $request->input('voucher') : 0,
+                'ppn'              => $request->filled('ppn') ? (float) $request->input('ppn') : null,
+                'ppn_nominal'      => $request->filled('ppn_nominal') ? (float) $request->input('ppn_nominal') : 0,
+                'total'            => (float) $request->input('total'),
+                'dibayar'          => $request->filled('dibayar') ? (float) $request->input('dibayar') : null,
+                'kembalian'        => $request->filled('kembalian') ? (float) $request->input('kembalian') : null,
+                'items'            => $items,
             ];
 
-            // Lebar 80mm (226.77pt), tinggi menyesuaikan jumlah item + info customer
-            $tinggi = 460 + (count($items) * 36);
+            $rowsPerPage = 7;
+            $pages = count($items) > 0 ? array_chunk($items, $rowsPerPage) : [[]];
+            $customerRows = $this->resolveCustomerDisplay($customerNama, $customerDesa, $customerAlamat);
 
-            $pdf = Pdf::loadView('POS.struk-print', ['struk' => $struk])
-                ->setPaper([0, 0, 226.77, $tinggi], 'portrait');
-
-            $namaFile = 'struk-' . preg_replace('/[^A-Za-z0-9_-]/', '', $struk['ref_no']) . '.pdf';
-
-            return $pdf->stream($namaFile);
+            return view('POS.struk-print', compact('struk', 'pages', 'isTunai', 'customerRows', 'rowsPerPage'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan struk');
         }
+    }
+
+    /**
+     * Deduplicate customer name/address when they simply repeat the village name.
+     */
+    private function resolveCustomerDisplay(string $nama, string $desa, string $alamat): array
+    {
+        $rawNama = trim($nama);
+        $rawDesa = trim($desa);
+        $rawAlamat = trim($alamat);
+
+        $norm = fn (?string $s): string => preg_replace(
+            '/[^a-z0-9]/',
+            '',
+            preg_replace('/^(ds\.|desa\s+|dusun\s+)/i', '', strtolower($s ?? ''))
+        );
+
+        $normDesa = $norm($rawDesa);
+        $normNama = $norm($rawNama);
+        $normAlamat = $norm($rawAlamat);
+
+        $isNamaLikeDesa = empty($normNama) || $normNama === '-' || (!empty($normDesa) && ($normNama === $normDesa || str_contains($normNama, $normDesa)));
+        $isAlamatLikeDesa = empty($normAlamat) || $normAlamat === '-' || (!empty($normDesa) && ($normAlamat === $normDesa || str_contains($normAlamat, $normDesa)));
+
+        if ($isNamaLikeDesa && $isAlamatLikeDesa) {
+            $showNama = false;
+            $showAlamat = false;
+            $showDesa = !empty($rawDesa) && $rawDesa !== '-';
+        } else {
+            $showNama = !$isNamaLikeDesa && !empty($rawNama) && $rawNama !== '-';
+            $showDesa = !empty($rawDesa) && $rawDesa !== '-';
+            $showAlamat = !$isAlamatLikeDesa && !empty($rawAlamat) && $rawAlamat !== '-';
+        }
+
+        $rows = [];
+        if ($showNama) {
+            $rows[] = ['label' => 'Pelanggan:', 'value' => $rawNama];
+        }
+        if ($showDesa) {
+            $rows[] = ['label' => 'Desa:', 'value' => $rawDesa];
+        }
+        if ($showAlamat) {
+            $rows[] = ['label' => 'Alamat:', 'value' => $rawAlamat];
+        }
+
+        return $rows;
     }
 
     /**
@@ -237,8 +334,8 @@ class ACRController extends Controller
      */
     public function edit(string $id)
     {
-        if (!auth()->user()?->isManagerOrAdmin()) {
-            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        if (!auth()->user()?->canEditTransaksi()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat mengedit transaksi.');
         }
 
         try {
@@ -248,26 +345,35 @@ class ACRController extends Controller
 
             $customer = $acr->cst();
             $sales = $acr->sls();
+            $customers = CST::select('CST', 'DES', 'TLP', 'DS')->orderBy('DES', 'asc')->get();
+            $salesList = SLS::select('SLS', 'DES', 'HP')->orderBy('DES', 'asc')->get();
 
-            // Hitung breakdown saat ini
+            // Hitung breakdown saat ini (per detail, diskon detail tidak mengurangi detail lain)
             $rawSubtotal = 0;
             $totalItemDiscount = 0;
+            $afterItemDisc = 0;
             $ppnPercent = null;
 
             foreach ($items as $item) {
-                $hgj = (float) ($item->HGJ ?? 0);
-                $pot1 = (float) ($item->POT_1 ?? 0);
-                $potR = (float) ($item->POT_R ?? 0);
-                $rawSubtotal += $hgj;
+                $hgj = max(0, (float) ($item->HGJ ?? 0));
+                $pot1 = min(100, max(0, (float) ($item->POT_1 ?? 0)));
                 $discPctNominal = $hgj * ($pot1 / 100);
-                $totalItemDiscount += ($discPctNominal + $potR);
+                $maxPotR = max(0, $hgj - $discPctNominal);
+                $potR = min($maxPotR, max(0, (float) ($item->POT_R ?? 0)));
+
+                $itemDisc = min($hgj, $discPctNominal + $potR);
+                $itemSub = max(0, $hgj - $itemDisc);
+
+                $rawSubtotal += $hgj;
+                $totalItemDiscount += $itemDisc;
+                $afterItemDisc += $itemSub;
+
                 if ($item->PPN !== null && $ppnPercent === null) {
                     $ppnPercent = (int) $item->PPN;
                 }
             }
 
             $globalPct = (float) ($acr->POT_1 ?? 0);
-            $afterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
             $globalDiscNominal = $afterItemDisc * ($globalPct / 100);
 
             $totPot = (float) ($acr->TOT_POT ?? ($acr->POT_R ?? 0));
@@ -281,6 +387,8 @@ class ACRController extends Controller
                 'items',
                 'customer',
                 'sales',
+                'customers',
+                'salesList',
                 'rawSubtotal',
                 'totalItemDiscount',
                 'globalPct',
@@ -299,8 +407,8 @@ class ACRController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        if (!auth()->user()?->isManagerOrAdmin()) {
-            abort(403, 'Hanya Admin dan Manager yang dapat mengedit transaksi.');
+        if (!auth()->user()?->canEditTransaksi()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat mengedit transaksi.');
         }
 
         $refNo = urldecode($id);
@@ -329,7 +437,9 @@ class ACRController extends Controller
         }
 
         $request->validate([
-            'items'            => 'required|array|min:1',
+            'cst'              => 'nullable|string|max:10',
+            'sls'              => 'nullable|string|max:10',
+            'items'            => 'nullable|array',
             'items.*.rec'      => 'required|string',
             'items.*.hgj'      => 'required|numeric|min:0',
             'items.*.pot_1'    => 'nullable|numeric|min:0|max:100',
@@ -353,7 +463,24 @@ class ACRController extends Controller
 
             $rawSubtotal = 0;
             $totalItemDiscount = 0;
+            $subtotalAfterItemDisc = 0;
             $itemsData = $request->input('items', []);
+            if (!is_array($itemsData)) {
+                $itemsData = [];
+            }
+
+            // Cek barang yang dihapus dari transaksi dan kembalikan stoknya ke ITM
+            $existingSts = STS::where('REF_NO', $acr->REF_NO)->get();
+            $submittedRecs = collect($itemsData)->pluck('rec')->filter()->all();
+
+            foreach ($existingSts as $oldSts) {
+                if (!in_array($oldSts->REC, $submittedRecs, true)) {
+                    if ($oldSts->ITM) {
+                        ITM::where('ITM', $oldSts->ITM)->increment('STOK');
+                    }
+                    STS::where('REF_NO', $acr->REF_NO)->where('REC', $oldSts->REC)->delete();
+                }
+            }
 
             foreach ($itemsData as $data) {
                 $rec = $data['rec'];
@@ -361,11 +488,15 @@ class ACRController extends Controller
 
                 $hgj = max(0, (float) ($data['hgj'] ?? 0));
                 $pot1 = isset($data['pot_1']) && $data['pot_1'] !== '' ? min(100, max(0, (float) $data['pot_1'])) : null;
-                $potR = isset($data['pot_r']) && $data['pot_r'] !== '' ? max(0, (float) $data['pot_r']) : null;
-
                 $discPctNominal = $pot1 ? ($hgj * ($pot1 / 100)) : 0;
+
+                // Batasi voucher item agar tidak melebihi sisa harga detail ini
+                $maxPotR = max(0, $hgj - $discPctNominal);
+                $potR = isset($data['pot_r']) && $data['pot_r'] !== '' ? min($maxPotR, max(0, (float) $data['pot_r'])) : null;
+
                 $discNominal = $potR ?? 0;
-                $brtItem = max(0, $hgj - $discPctNominal - $discNominal);
+                $effectiveItemDisc = min($hgj, $discPctNominal + $discNominal);
+                $brtItem = max(0, $hgj - $effectiveItemDisc);
 
                 // Update STS dengan harga jual, diskon item, dan PPN global
                 $sts->update([
@@ -377,15 +508,16 @@ class ACRController extends Controller
                 ]);
 
                 $rawSubtotal += $hgj;
-                $totalItemDiscount += ($discPctNominal + $discNominal);
+                $totalItemDiscount += $effectiveItemDisc;
+                $subtotalAfterItemDisc += $brtItem;
             }
 
             // Diskon transaksi global & Voucher transaksi
             $globalPct = $request->filled('discount_percent') ? min(100, max(0, (float) $request->input('discount_percent'))) : 0;
-            $voucherGlobal = $request->filled('voucher') ? max(0, (float) $request->input('voucher')) : 0;
-
-            $subtotalAfterItemDisc = max(0, $rawSubtotal - $totalItemDiscount);
             $globalDiscNominal = $subtotalAfterItemDisc * ($globalPct / 100);
+            $maxVoucherGlobal = max(0, $subtotalAfterItemDisc - $globalDiscNominal);
+            $voucherGlobal = $request->filled('voucher') ? min($maxVoucherGlobal, max(0, (float) $request->input('voucher'))) : 0;
+
             $totalSetelahDiskon = max(0, $subtotalAfterItemDisc - $voucherGlobal - $globalDiscNominal);
 
             // PPN dihitung setelah menjumlahkan total semua barang dan setelah mengurangi total barang dari diskon
@@ -398,9 +530,15 @@ class ACRController extends Controller
 
             $totalAllPotongan = $totalItemDiscount + $voucherGlobal + $globalDiscNominal;
 
+            $newCst = $request->filled('cst') ? substr(trim((string) $request->input('cst')), 0, 10) : $acr->CST;
+            $newSls = $request->filled('sls') ? substr(trim((string) $request->input('sls')), 0, 10) : $acr->SLS;
+            $newPay = count($itemsData) === 0 ? 0 : max($newGrandTotal, (float) $acr->PAY + $selisih);
+
             $acr->update([
+                'CST'     => $newCst,
+                'SLS'     => $newSls,
                 'BRT'     => $newGrandTotal,
-                'PAY'     => max($newGrandTotal, (float) $acr->PAY + $selisih),
+                'PAY'     => $newPay,
                 'TOT_POT' => $totalAllPotongan,
                 'POT_1'   => $globalPct > 0 ? (int) $globalPct : null,
                 'POT_R'   => ($voucherGlobal + $totalItemDiscount) > 0 ? ($voucherGlobal + $totalItemDiscount) : null,
@@ -457,6 +595,85 @@ class ACRController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan ketika memperbarui transaksi: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Menghapus transaksi beserta seluruh detail STS dan mengembalikan stok ke ITM.
+     */
+    public function destroy(string $id)
+    {
+        if (!auth()->user()?->canDelete()) {
+            abort(403, 'Hanya Supervisor dan Developer yang dapat menghapus transaksi.');
+        }
+
+        $refNo = urldecode($id);
+        $acr = ACR::where('REF_NO', $refNo)->firstOrFail();
+
+        try {
+            DB::beginTransaction();
+
+            $oldGrandTotal = (float) ($acr->BRT ?? 0);
+            $stsList = STS::where('REF_NO', $acr->REF_NO)->get();
+
+            foreach ($stsList as $sts) {
+                if ($sts->ITM) {
+                    ITM::where('ITM', $sts->ITM)->increment('STOK');
+                }
+            }
+
+            STS::where('REF_NO', $acr->REF_NO)->delete();
+
+            // Sinkronisasi saldo kas pada shift kasir terkait
+            $createdAt = $acr->created_at ?? ($acr->DT ? Carbon::parse($acr->DT) : now());
+
+            $kas = KAS::where('TGLM', '<=', $createdAt)
+                ->where(function ($q) use ($createdAt) {
+                    $q->where('TGLK', '>=', $createdAt)
+                      ->orWhereNull('TGLK');
+                })
+                ->when($acr->USER, function ($q) use ($acr) {
+                    $q->where('USER', $acr->USER);
+                })
+                ->orderBy('TGLM', 'desc')
+                ->first();
+
+            if (!$kas) {
+                $kas = KAS::where('TGLM', '<=', $createdAt)
+                    ->where(function ($q) use ($createdAt) {
+                        $q->where('TGLK', '>=', $createdAt)
+                          ->orWhereNull('TGLK');
+                    })
+                    ->orderBy('TGLM', 'desc')
+                    ->first();
+            }
+
+            if (!$kas) {
+                $kas = KAS::whereDate('TGL', $createdAt->toDateString())
+                    ->orderBy('TGLM', 'desc')
+                    ->first();
+            }
+
+            if ($kas && $oldGrandTotal > 0) {
+                $isTunai = ($acr->JNS == 1);
+                if ($isTunai) {
+                    $kas->DBT  = max(0, ($kas->DBT ?? 0) - $oldGrandTotal);
+                    $kas->AKHT = ($kas->AWLT ?? 0) + $kas->DBT - ($kas->CRT ?? 0);
+                } else {
+                    $kas->DBNT  = max(0, ($kas->DBNT ?? 0) - $oldGrandTotal);
+                    $kas->AKHNT = ($kas->AWLNT ?? 0) + $kas->DBNT - ($kas->CRNT ?? 0);
+                }
+                $kas->save();
+            }
+
+            $acr->delete();
+
+            DB::commit();
+
+            return redirect()->route('POS.transaksi')->with('success', "Transaksi {$refNo} berhasil dihapus dan seluruh stok barang telah dikembalikan.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
         }
     }
 
@@ -613,6 +830,8 @@ class ACRController extends Controller
                 $tanggalDisplay = 'Sampai ' . Carbon::parse($sampai)->locale('id')->translatedFormat('d M Y');
             }
 
+            $canSeeMargin = auth()->user()?->canSeeMargin() ?? false;
+
             $pdf = Pdf::loadView('POS.transaksi-print', compact(
                 'reportData',
                 'grandTotalKeseluruhan',
@@ -622,7 +841,8 @@ class ACRController extends Controller
                 'lokasi',
                 'tanggalDisplay',
                 'dari',
-                'sampai'
+                'sampai',
+                'canSeeMargin'
             ))->setPaper('a4', 'portrait');
 
             return $pdf->stream('laporan-penjualan-' . date('YmdHis') . '.pdf');

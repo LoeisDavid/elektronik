@@ -8,14 +8,25 @@
     // ---------- Helper PHP murni ----------
     $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.');
 
-    $halaman  = $pagination['page'];
-    $totalHal = $pagination['total_pages'];
+    $halaman   = $pagination['page'];
+    $totalHal  = $pagination['total_pages'];
+    $showZero  = !empty($showZero);
+    $filterKtg = $filterKtg ?? '';
+    $filterMrk = $filterMrk ?? '';
 
-    // URL dengan mempertahankan search & sort
-    $buatUrl = function (array $ubah = []) use ($keyword, $sort, $halaman) {
-        $q = array_merge(['keyword' => $keyword, 'sort' => $sort, 'page' => $halaman], $ubah);
-        if ($q['sort'] === 'nama_asc') unset($q['sort']);
-        if ((int) $q['page'] <= 1)     unset($q['page']);
+    // URL dengan mempertahankan search, filter kategori/merk, sort & filter stok 0
+    $buatUrl = function (array $ubah = []) use ($keyword, $filterKtg, $filterMrk, $sort, $halaman, $showZero) {
+        $q = array_merge([
+            'keyword'   => $keyword,
+            'ktg'       => $filterKtg,
+            'mrk'       => $filterMrk,
+            'sort'      => $sort,
+            'show_zero' => $showZero ? '1' : null,
+            'page'      => $halaman,
+        ], $ubah);
+        if ($q['sort'] === 'tgl_terbaru') unset($q['sort']);
+        if (empty($q['show_zero']))       unset($q['show_zero']);
+        if ((int) $q['page'] <= 1)        unset($q['page']);
         $q = array_filter($q, fn ($v) => $v !== '' && $v !== null);
 
         return route('inventory.item') . (count($q) ? '?' . http_build_query($q) : '');
@@ -82,29 +93,44 @@
     {{-- ========================================================= --}}
     {{-- TOOLBAR --}}
     {{-- ========================================================= --}}
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
 
-            {{-- SEARCH --}}
-            <form action="<?= e(route('inventory.item')) ?>" method="GET" class="relative w-64 md:w-80">
-                <?php if ($sort !== 'nama_asc'): ?>
+            {{-- SEARCH (Bisa cari Nama Barang, Kategori, atau Merk seperti di Tambah Stok) --}}
+            <form action="<?= e(route('inventory.item')) ?>" method="GET" class="flex flex-wrap items-center gap-2">
+                <?php if ($sort !== 'tgl_terbaru'): ?>
                     <input type="hidden" name="sort" value="<?= e($sort) ?>">
                 <?php endif; ?>
+                <?php if ($showZero): ?>
+                    <input type="hidden" name="show_zero" value="1">
+                <?php endif; ?>
 
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
-                    <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                    </svg>
-                </span>
+                <div class="relative w-64 md:w-80">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-black">
+                        <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                    </span>
 
-                <input
-                    type="text"
-                    name="keyword"
-                    value="<?= e($keyword) ?>"
-                    placeholder="Cari produk"
-                    class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
-                >
+                    <input
+                        type="text"
+                        name="keyword"
+                        value="<?= e($keyword) ?>"
+                        placeholder="Cari nama barang, kategori, atau merk..."
+                        class="w-full bg-white border border-gray-400 rounded-lg pl-10 pr-4 py-2 text-sm text-black placeholder-gray-500 transition-all duration-200 hover:border-primary-db hover:bg-primary-db/5 focus:outline-none focus:border-primary-db focus:bg-primary-db/5 focus:ring-1 focus:ring-primary-db"
+                    >
+                </div>
+
+                <?php if ($keyword !== ''): ?>
+                    <a
+                        href="<?= e($buatUrl(['keyword' => null, 'ktg' => null, 'mrk' => null, 'page' => 1])) ?>"
+                        class="h-9.5 px-3 bg-white border border-gray-400 rounded-lg flex items-center gap-1.5 text-xs font-medium text-black hover:bg-gray-200 hover:border-gray-900 transition-all duration-200"
+                        title="Reset Pencarian"
+                    >
+                        Reset
+                    </a>
+                <?php endif; ?>
             </form>
 
             {{-- SORT (HTML murni: <details> + link) --}}
@@ -132,6 +158,17 @@
                     <?php endforeach; ?>
                 </div>
             </details>
+
+            {{-- CHECKBOX TAMPILKAN STOK 0 --}}
+            <label class="h-9.5 px-3.5 bg-white border border-gray-400 rounded-lg flex items-center gap-2 text-sm font-medium text-black hover:bg-primary-db/5 hover:border-primary-db transition-all duration-200 cursor-pointer shadow-xs select-none">
+                <input
+                    type="checkbox"
+                    <?= $showZero ? 'checked' : '' ?>
+                    onchange="window.location.href = '<?= e($buatUrl(['show_zero' => $showZero ? null : '1', 'page' => 1])) ?>'"
+                    class="w-4 h-4 rounded border-gray-400 text-primary-db focus:ring-primary-db cursor-pointer accent-[#142854]"
+                >
+                <span>Tampilkan stok 0</span>
+            </label>
 
         </div>
 
@@ -168,13 +205,13 @@
 
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 rounded-tl-lg">Nama item</th>
-                        <th class="py-2.5 px-4">Kategori</th>
-                        <th class="py-2.5 px-4">Merk</th>
-                        <th class="py-2.5 px-4">Stok</th>
-                        <th class="py-2.5 px-4">Harga</th>
-                        <th class="py-2.5 px-4">Total aset</th>
-                        <th class="py-2.5 px-4 w-32 rounded-tr-lg">Aksi</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Nama item</th>
+                        <th class="py-2.5 px-4 font-semibold">Kategori</th>
+                        <th class="py-2.5 px-4 font-semibold">Merk</th>
+                        <th class="py-2.5 px-4 font-semibold">Stok</th>
+                        <th class="py-2.5 px-4 font-semibold">Harga</th>
+                        <th class="py-2.5 px-4 font-semibold">Total aset</th>
+                        <th class="py-2.5 px-4 font-semibold w-32 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
 
@@ -182,11 +219,11 @@
                     <?php if (count($produk) > 0): ?>
                         <?php foreach ($produk as $r): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4"><?= e($r->des) ?></td>
-                                <td class="py-3.5 px-4"><?= e($r->ktg_nama) ?></td>
-                                <td class="py-3.5 px-4"><?= e($r->mrk_nama) ?></td>
-                                <td class="py-3.5 px-4"><?= (int) $r->stok ?> Unit</td>
-                                <td class="py-3.5 px-4"><?= e($rp($r->hrg)) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->des) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->ktg_nama) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($r->mrk_nama) ?></td>
+                                <td class="py-3.5 px-4 font-medium"><?= (int) $r->stok ?> Unit</td>
+                                <td class="py-3.5 px-4 font-medium"><?= e($rp($r->hrg)) ?></td>
                                 <td class="py-3.5 px-4 font-medium text-black"><?= e($rp($r->total_aset)) ?></td>
                                 <td class="py-3.5 px-4 text-center">
 
@@ -240,8 +277,8 @@
                                             </button>
                                             <?php endif; ?>
 
-                                            {{-- HAPUS (HANYA ADMIN) --}}
-                                            <?php if (auth()->user()?->isAdmin()): ?>
+                                            {{-- HAPUS (HANYA SUPERVISOR & DEVELOPER) --}}
+                                            <?php if (auth()->user()?->canDelete()): ?>
                                             <form method="POST" action="<?= e(route('inventory.item.destroy', ['id' => $r->itm])) ?>">
                                                 <?= csrf_field() ?>
                                                 <?= method_field('DELETE') ?>
@@ -286,9 +323,17 @@
             <div class="flex items-center gap-1">
 
                 <?php if ($halaman > 1): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>">‹</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">‹</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
                 <?= $nomor(1) ?>
@@ -323,9 +368,17 @@
                 <?php endif; ?>
 
                 <?php if ($halaman < $totalHal): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>">›</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">›</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
             </div>
@@ -355,12 +408,22 @@
 
                 {{-- NAMA BARANG --}}
                 <div>
-                    <label class="<?= $labelCls ?>">Nama Barang</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-medium text-black">Nama Barang</label>
+                        <span class="text-[11px] text-gray-500">Bisa cari berdasarkan <b class="text-gray-700">Nama Barang</b>, <b class="text-gray-700">Kategori</b>, atau <b class="text-gray-700">Merk</b></span>
+                    </div>
                     <select name="stok_itm" required class="searchable-select <?= $inputCls ?>">
-                        <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Pilih barang</option>
+                        <option value="" disabled <?= old('stok_itm') ? '' : 'selected' ?>>Cari nama barang, kategori, atau merk...</option>
                         <?php foreach ($daftarITM as $it): ?>
-                            <option value="<?= e($it->itm) ?>" <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>>
-                                <?= e($it->des) ?>
+                            <option
+                                value="<?= e($it->itm) ?>"
+                                data-des="<?= e($it->des) ?>"
+                                data-ktg="<?= e($it->ktg_nama) ?>"
+                                data-mrk="<?= e($it->mrk_nama) ?>"
+                                data-stok="<?= (int) $it->stok ?>"
+                                <?= old('stok_itm') == $it->itm ? 'selected' : '' ?>
+                            >
+                                <?= e($it->des) ?> — Kategori: <?= e($it->ktg_nama) ?> | Merk: <?= e($it->mrk_nama) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -395,20 +458,37 @@
                     </div>
                 </div>
 
-                {{-- HARGA BELI --}}
-                <div>
-                    <label class="<?= $labelCls ?>">Harga Beli</label>
-                    <input
-                        type="text"
-                        inputmode="numeric"
-                        name="stok_hrb"
-                        required
-                        value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
-                        placeholder="Rp 0"
-                        oninput="formatInputRupiah(this)"
-                        class="input-rupiah <?= $inputCls ?>"
-                    >
-                    <?= $galat('stok', 'stok_hrb') ?>
+                {{-- HARGA BELI & QTY --}}
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="<?= $labelCls ?>">Harga Beli</label>
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            name="stok_hrb"
+                            required
+                            value="<?= e(old('stok_hrb') ? ('Rp ' . number_format((float) old('stok_hrb'), 0, ',', '.')) : '') ?>"
+                            placeholder="Rp 0"
+                            oninput="formatInputRupiah(this)"
+                            class="input-rupiah <?= $inputCls ?>"
+                        >
+                        <?= $galat('stok', 'stok_hrb') ?>
+                    </div>
+
+                    <div>
+                        <label class="<?= $labelCls ?>">Qty</label>
+                        <input
+                            type="number"
+                            name="stok_qty"
+                            min="1"
+                            max="500"
+                            required
+                            value="<?= e(old('stok_qty', 1)) ?>"
+                            placeholder="1"
+                            class="<?= $inputCls ?>"
+                        >
+                        <?= $galat('stok', 'stok_qty') ?>
+                    </div>
                 </div>
 
                 {{-- SCAN KAMERA (live bila HTTPS/localhost, foto bila HTTP) --}}
@@ -423,13 +503,12 @@
                             type="text"
                             inputmode="text"
                             name="stok_bc"
-                            maxlength="20"
-                            required
+                            maxlength="40"
                             autocomplete="off"
                             autocapitalize="off"
                             spellcheck="false"
                             <?= $bukaStok ? 'autofocus' : '' ?>
-                            placeholder="Scan atau ketik kode manual..."
+                            placeholder="Scan/ketik kode barcode (atau kosongi untuk auto)..."
                             class="<?= $inputCls ?>"
                         >
                         <button
@@ -718,6 +797,65 @@
             };
 
             if (selectName === 'stok_itm') {
+                const escHtml = function (str) {
+                    return String(str ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                };
+
+                config.matcher = function (params, data) {
+                    const term = $.trim(params.term || '').toLowerCase();
+                    if (term === '') return data;
+                    if (!data.element) return null;
+
+                    const el  = data.element;
+                    const des = (el.getAttribute('data-des') || data.text || '').toLowerCase();
+                    const ktg = (el.getAttribute('data-ktg') || '').toLowerCase();
+                    const mrk = (el.getAttribute('data-mrk') || '').toLowerCase();
+                    const itm = (el.value || '').toLowerCase();
+                    const haystack = `${des} ${ktg} ${mrk} ${itm}`;
+
+                    const words = term.split(/\s+/).filter(Boolean);
+                    const isMatch = words.every(function (w) {
+                        return haystack.indexOf(w) !== -1;
+                    });
+
+                    return isMatch ? data : null;
+                };
+
+                config.templateResult = function (data) {
+                    if (!data.id || !data.element) return data.text;
+                    const el   = data.element;
+                    const des  = el.getAttribute('data-des') || data.text;
+                    const ktg  = el.getAttribute('data-ktg') || '-';
+                    const mrk  = el.getAttribute('data-mrk') || '-';
+                    const stok = el.getAttribute('data-stok');
+
+                    return $(`
+                        <div class="py-0.5 leading-snug" style="color: inherit;">
+                            <div class="font-bold text-xs" style="color: inherit;">${escHtml(des)}</div>
+                            <div class="text-[11px] flex flex-wrap items-center gap-1.5 mt-0.5" style="color: inherit; opacity: 0.85;">
+                                <span>Kategori: <b class="font-semibold">${escHtml(ktg)}</b></span>
+                                <span>&bull;</span>
+                                <span>Merk: <b class="font-semibold">${escHtml(mrk)}</b></span>
+                                ${stok !== null && stok !== '' ? `<span>&bull;</span><span>Stok: <b class="font-semibold">${escHtml(stok)}</b></span>` : ''}
+                            </div>
+                        </div>
+                    `);
+                };
+
+                config.templateSelection = function (data) {
+                    if (!data.id || !data.element) return data.text;
+                    const el  = data.element;
+                    const des = el.getAttribute('data-des') || data.text;
+                    const ktg = el.getAttribute('data-ktg') || '-';
+                    const mrk = el.getAttribute('data-mrk') || '-';
+                    return `${escHtml(des)} — Kategori: ${escHtml(ktg)} | Merk: ${escHtml(mrk)}`;
+                };
+
                 config.language = {
                     noResults: function () {
                         return $(`
@@ -760,6 +898,15 @@
             }
 
             $select.select2(config);
+
+            if (selectName === 'stok_itm') {
+                $select.off('select2:open.stokItmHint').on('select2:open.stokItmHint', function () {
+                    const searchField = document.querySelector('.select2-container--open .select2-search__field');
+                    if (searchField) {
+                        searchField.placeholder = 'Cari nama barang, kategori, atau merk...';
+                    }
+                });
+            }
         });
     }
 
@@ -986,8 +1133,18 @@
                 const data = result.data;
                 if (result.status >= 200 && result.status < 300 && data.success && data.data) {
                     const selectItm = document.querySelector('#tambahStokModal select[name="stok_itm"]');
+                    const ktgSelect = form.querySelector('select[name="KTG"]');
+                    const mrkSelect = form.querySelector('select[name="MRK"]');
+                    const ktgNama   = ktgSelect && ktgSelect.selectedIndex >= 0 ? ktgSelect.options[ktgSelect.selectedIndex].text.trim() : '-';
+                    const mrkNama   = mrkSelect && mrkSelect.selectedIndex >= 0 ? mrkSelect.options[mrkSelect.selectedIndex].text.trim() : '-';
+
                     if (selectItm) {
-                        const newOpt = new Option(data.data.DES, data.data.ITM, true, true);
+                        const labelText = `${data.data.DES} — Kategori: ${ktgNama} | Merk: ${mrkNama}`;
+                        const newOpt = new Option(labelText, data.data.ITM, true, true);
+                        newOpt.setAttribute('data-des', data.data.DES);
+                        newOpt.setAttribute('data-ktg', ktgNama);
+                        newOpt.setAttribute('data-mrk', mrkNama);
+                        newOpt.setAttribute('data-stok', '0');
                         if (typeof jQuery !== 'undefined') {
                             $(selectItm).append(newOpt).val(data.data.ITM).trigger('change');
                         } else {

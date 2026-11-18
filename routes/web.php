@@ -53,36 +53,43 @@ Route::middleware('auth')->group(function () {
 
         // Customer
         Route::get('customer', [CSTController::class, 'index'])->name('customer');
-        // Cetak Laporan Desa: HANYA Manager dan Admin
+        // Cetak Laporan Desa: Supervisor, Developer, dan Admin
         Route::get('customer/desa/cetak', [CSTController::class, 'cetakLaporanDesa'])
-            ->middleware('role:manager,admin')
+            ->middleware('role:supervisor,developer,admin')
             ->name('customer.desa.cetak');
         Route::post('customer', [CSTController::class, 'store'])->name('customer.store');
         Route::put('customer/{id}', [CSTController::class, 'update'])->name('customer.update');
-        Route::delete('customer/{id}', [CSTController::class, 'destroy'])->name('customer.destroy');
+        Route::delete('customer/{id}', [CSTController::class, 'destroy'])
+            ->middleware('role:supervisor,developer')
+            ->name('customer.destroy');
 
         // Sales
         Route::get('sales', [SLSController::class, 'index'])->name('sales');
         Route::post('sales', [SLSController::class, 'store'])->name('sales.store');
         Route::put('sales/{id}', [SLSController::class, 'update'])->name('sales.update');
-        Route::delete('sales/{id}', [SLSController::class, 'destroy'])->name('sales.destroy');
+        Route::delete('sales/{id}', [SLSController::class, 'destroy'])
+            ->middleware('role:supervisor,developer')
+            ->name('sales.destroy');
 
-        // User Management: HANYA Manager dan Admin
-        Route::middleware('role:manager,admin')->group(function () {
+        // User Management: Supervisor, Developer, dan Admin (Hapus hanya Supervisor & Developer)
+        Route::middleware('role:supervisor,developer,admin')->group(function () {
             Route::get('user', [UserController::class, 'index'])->name('user');
             Route::post('user', [UserController::class, 'store'])->name('user.store');
             Route::put('user/{id}', [UserController::class, 'update'])->name('user.update');
-            Route::delete('user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+            Route::delete('user/{id}', [UserController::class, 'destroy'])
+                ->middleware('role:supervisor,developer')
+                ->name('user.destroy');
         });
 
         // Riwayat Transaksi View
         Route::get('transaksi', [ACRController::class, 'index'])->name('transaksi');
-        // Cetak Laporan Transaksi/Penjualan (Kasir, Admin, dan Manager)
+        // Cetak Laporan Transaksi/Penjualan (Kasir, Admin, Supervisor, Developer)
         Route::get('transaksi/cetak', [ACRController::class, 'cetakLaporan'])->name('transaksi.cetak');
-        // Edit Transaksi: HANYA Manager dan Admin
-        Route::middleware('role:manager,admin')->group(function () {
+        // Edit & Hapus Transaksi: HANYA Supervisor dan Developer
+        Route::middleware('role:supervisor,developer')->group(function () {
             Route::get('transaksi/{id}/edit', [ACRController::class, 'edit'])->name('transaksi.edit');
             Route::put('transaksi/{id}', [ACRController::class, 'update'])->name('transaksi.update');
+            Route::delete('transaksi/{id}', [ACRController::class, 'destroy'])->name('transaksi.destroy');
         });
 
         // Laporan View (Kasir, Admin, Manager bisa melihat & cetak laporan kas)
@@ -94,13 +101,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/item', [ITMController::class, 'index'])->name('item');
         Route::post('/item', [ITMController::class, 'store'])->name('item.store');
         Route::post('/item/stok', [ITMController::class, 'tambahStok'])->name('item.stok');
-        Route::get('item/create', [ITMController::class, 'create'])->name('item.create');
-        Route::post('item', [ITMController::class, 'store'])->name('item.store');
 
         // Edit Produk: HANYA Admin dan Manager (Storage TIDAK BISA edit)
         Route::middleware('role:manager,admin')->group(function () {
-            Route::get('item/{id}/edit', [ITMController::class, 'edit'])->name('item.edit');
-            Route::put('item/{id}', [ITMController::class, 'update'])->name('item.update');
             Route::put('/item/{id}', [ITMController::class, 'update'])->name('item.update');
         });
 
@@ -109,9 +112,9 @@ Route::middleware('auth')->group(function () {
         Route::match(['get', 'post'], 'item/cetak-satuan', [ITMController::class, 'cetakSatuan'])->name('item.cetak.satuan');
         Route::get('item/{id}/show', [ITMController::class, 'show'])->name('item.show');
 
-        // Hapus Produk: HANYA Admin
+        // Hapus Produk: HANYA Supervisor dan Developer
         Route::delete('item/{id}', [ITMController::class, 'destroy'])
-            ->middleware('role:admin')
+            ->middleware('role:supervisor,developer')
             ->name('item.destroy');
 
         Route::post('/item/stok-batch/selesai', [ITMController::class, 'selesaiStok'])
@@ -121,13 +124,13 @@ Route::middleware('auth')->group(function () {
         Route::get('merk', [MRKController::class, 'index'])->name('merk');
         Route::post('merk', [MRKController::class, 'store'])->name('merk.store');
         Route::put('merk/{mrk}', [MRKController::class, 'update'])->name('merk.update');
-        Route::delete('merk/{mrk}', [MRKController::class, 'destroy'])->middleware('role:manager,admin')->name('merk.destroy');
+        Route::delete('merk/{mrk}', [MRKController::class, 'destroy'])->middleware('role:supervisor,developer')->name('merk.destroy');
 
         // Kategori
         Route::get('kategori', [KTGController::class, 'index'])->name('kategori');
         Route::post('kategori', [KTGController::class, 'store'])->name('kategori.store');
         Route::put('kategori/{ktg}', [KTGController::class, 'update'])->name('kategori.update');
-        Route::delete('kategori/{ktg}', [KTGController::class, 'destroy'])->middleware('role:manager,admin')->name('kategori.destroy');
+        Route::delete('kategori/{ktg}', [KTGController::class, 'destroy'])->middleware('role:supervisor,developer')->name('kategori.destroy');
 
         // Gudang
         Route::get('gudang', [App\Http\Controllers\GDController::class, 'index'])->name('gudang');
@@ -136,7 +139,7 @@ Route::middleware('auth')->group(function () {
         Route::put('gudang/{gd}', [App\Http\Controllers\GDController::class, 'update'])->name('gudang.update');
         Route::get('gudang/{gd}/show', [App\Http\Controllers\GDController::class, 'show'])->name('gudang.show');
         Route::get('gudang/{gd}/barang', [App\Http\Controllers\GDController::class, 'daftarBarang'])->name('gudang.daftarBarang');
-        Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->middleware('role:manager,admin')->name('gudang.destroy');
+        Route::delete('gudang/{gd}', [App\Http\Controllers\GDController::class, 'destroy'])->middleware('role:supervisor,developer')->name('gudang.destroy');
 
         // Perpindahan Gudang
         Route::get('perpindahan', [RPController::class, 'index'])->name('perpindahan');
@@ -148,13 +151,13 @@ Route::middleware('auth')->group(function () {
         Route::post('perpindahan/{id}/konfirmasi1', [RPController::class, 'konfirmasi1'])->name('perpindahan.konfirmasi1');
         Route::post('perpindahan/{id}/konfirmasi2', [RPController::class, 'konfirmasi2'])->name('perpindahan.konfirmasi2');
         Route::post('perpindahan/{id}/tolak', [RPController::class, 'tolak'])->name('perpindahan.tolak');
-        Route::delete('perpindahan/{id}', [RPController::class, 'destroy'])->middleware('role:manager,admin')->name('perpindahan.destroy');
+        Route::delete('perpindahan/{id}', [RPController::class, 'destroy'])->middleware('role:supervisor,developer')->name('perpindahan.destroy');
 
         // SPP
         Route::get('supplier', [SPPController::class, 'index'])->name('supplier');
         Route::post('supplier', [SPPController::class, 'store'])->name('supplier.store');
         Route::put('supplier/{spp}', [SPPController::class, 'update'])->name('supplier.update');
-        Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->middleware('role:manager,admin')->name('supplier.destroy');
+        Route::delete('supplier/{spp}', [SPPController::class, 'destroy'])->middleware('role:supervisor,developer')->name('supplier.destroy');
 
         // Cek Stok
         Route::get('/cek-stok', [OpnameStokController::class, 'index'])->name('opname');
@@ -167,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('import-xls')->middleware('role:manager,admin,import')->name('import.')->group(function () {
         Route::get('/', [ImportXlsController::class, 'index'])->name('xls');
         Route::post('/', [ImportXlsController::class, 'import'])->name('xls.store');
+        Route::post('/confirm', [ImportXlsController::class, 'confirm'])->name('xls.confirm');
         Route::post('/export', [ImportXlsController::class, 'export'])->name('xls.export');
         Route::get('/template/{type}', [ImportXlsController::class, 'downloadTemplate'])->name('xls.template');
         Route::get('/cetak', [ImportXlsController::class, 'cetakBarcode'])->name('xls.cetak');

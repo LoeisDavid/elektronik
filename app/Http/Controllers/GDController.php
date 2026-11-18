@@ -25,9 +25,30 @@ class GDController extends Controller
                     ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
                 });
 
+            // Subquery tanggal stok masuk terlama & terbaru (itmdt yang tidak ada di sts)
+            $oldestStokSub = DB::table('itmdt')
+                ->selectRaw('MIN(COALESCE(itmdt.TM, DATE(itmdt.created_at)))')
+                ->whereColumn('itmdt.GD', 'gd.GD')
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('sts')
+                        ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+                });
+
+            $newestStokSub = DB::table('itmdt')
+                ->selectRaw('MAX(COALESCE(itmdt.TM, DATE(itmdt.created_at)))')
+                ->whereColumn('itmdt.GD', 'gd.GD')
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('sts')
+                        ->whereColumn('sts.BC_OUT', 'itmdt.BC_OUT');
+                });
+
             $query = GD::query()
                 ->select('gd.*')
-                ->selectSub($stokSub, 'stok');
+                ->selectSub($stokSub, 'stok')
+                ->selectSub($oldestStokSub, 'tgl_terlama')
+                ->selectSub($newestStokSub, 'tgl_terbaru');
 
             if ($request->filled('keyword')) {
                 $search = $request->keyword;
@@ -44,9 +65,15 @@ class GDController extends Controller
             } else if ($sort == 'z-a') {
                 $query->orderBy('DES', 'desc');
             } else if ($sort == 'new-old') {
-                $query->orderBy('created_at', 'desc');
+                $query->orderByRaw('tgl_terbaru IS NULL ASC')
+                    ->orderBy('tgl_terbaru', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->orderBy('DES', 'asc');
             } else if ($sort == 'old-new') {
-                $query->orderBy('created_at', 'asc');
+                $query->orderByRaw('tgl_terlama IS NULL ASC')
+                    ->orderBy('tgl_terlama', 'asc')
+                    ->orderBy('created_at', 'asc')
+                    ->orderBy('DES', 'asc');
             } else if ($sort == 'stok-sedikit') {
                 $query->orderBy('stok', 'asc')->orderBy('DES', 'asc');
             } else {
@@ -125,13 +152,26 @@ class GDController extends Controller
                 ->where('GD', $gd->GD)
                 ->whereNotIn('BC_OUT', STS::select('BC_OUT'));
 
-            // SEARCH: barcode, nama barang, atau kode ITM
+            // SEARCH: barcode, nama barang, kode ITM, kategori, atau merk
             if ($request->filled('keyword')) {
-                $keyword = $request->keyword;
+                $keyword = trim((string) $request->keyword);
+                $words   = preg_split('/\s+/u', $keyword, -1, PREG_SPLIT_NO_EMPTY);
 
-                $kodeItm = ITM::where('DES', 'LIKE', "%{$keyword}%")
-                    ->orWhere('ITM', 'LIKE', "%{$keyword}%")
-                    ->pluck('ITM');
+                $kodeItm = ITM::query()
+                    ->leftJoin('ktg', 'ktg.KTG', '=', 'itm.KTG')
+                    ->leftJoin('mrk', 'mrk.MRK', '=', 'itm.MRK')
+                    ->where(function ($q) use ($words) {
+                        foreach ($words as $w) {
+                            $like = "%{$w}%";
+                            $q->where(function ($sub) use ($like) {
+                                $sub->where('itm.DES', 'LIKE', $like)
+                                    ->orWhere('itm.ITM', 'LIKE', $like)
+                                    ->orWhere('ktg.DES', 'LIKE', $like)
+                                    ->orWhere('mrk.DES', 'LIKE', $like);
+                            });
+                        }
+                    })
+                    ->pluck('itm.ITM');
 
                 $query->where(function ($q) use ($keyword, $kodeItm) {
                     $q->where('BC_OUT', 'LIKE', "%{$keyword}%")
@@ -153,8 +193,8 @@ class GDController extends Controller
             // Satu kode ITM hanya menghasilkan satu baris
             $groupedQuery = (clone $query)
                 ->select("{$dtTable}.ITM")
-                ->selectRaw("MIN({$dtTable}.created_at) as first_date")
-                ->selectRaw("MAX({$dtTable}.created_at) as last_date")
+                ->selectRaw("MIN(CONCAT(COALESCE({$dtTable}.TM, DATE({$dtTable}.created_at)), ' ', COALESCE(TIME({$dtTable}.created_at), '00:00:00'))) as first_date")
+                ->selectRaw("MAX(CONCAT(COALESCE({$dtTable}.TM, DATE({$dtTable}.created_at)), ' ', COALESCE(TIME({$dtTable}.created_at), '00:00:00'))) as last_date")
                 ->groupBy("{$dtTable}.ITM");
 
             // Subquery untuk nama barang
@@ -231,6 +271,51 @@ class GDController extends Controller
             );
         }
 
+    }
+
+    public function daftarBarang(Request $request, $gd)
+    {
+        try {
+            $gd = GD::findOrFail($gd);
+
+            $query = ITMDT::query()
+                ->where('GD', $gd->GD)
+                ->whereNotIn('BC_OUT', STS::select('BC_OUT'));
+
+            if ($request->filled('keyword')) {
+                $keyword = $request->keyword;
+                $kodeItm = ITM::where('DES', 'LIKE', "%{$keyword}%")
+                    ->orWhere('ITM', 'LIKE', "%{$keyword}%")
+                    ->pluck('ITM');
+
+                $query->where(function ($q) use ($keyword, $kodeItm) {
+                    $q->where('BC_OUT', 'LIKE', "%{$keyword}%")
+                        ->orWhereIn('ITM', $kodeItm);
+                });
+            }
+
+            $rows = $query
+                ->orderByRaw("COALESCE(TM, DATE(created_at)) DESC")
+                ->orderBy('created_at', 'desc')
+                ->paginate(10)
+                ->withQueryString();
+
+            $items = $rows->through(function ($row) {
+                $itm = ITM::where('ITM', $row->ITM)->first();
+                return (object) [
+                    'BC_OUT' => $row->BC_OUT,
+                    'DES'    => $itm->DES ?? '-',
+                    'KTG'    => $itm?->ktg()?->DES ?? '-',
+                    'SPP'    => $row->spp()?->DES ?? '-',
+                    'MRK'    => $itm?->mrk()?->DES ?? '-',
+                    'HRB'    => (float) ($row->HRB ?? 0),
+                ];
+            });
+
+            return view('inventory.daftarBarang', compact('gd', 'items'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan ketika menampilkan daftar barang gudang');
+        }
     }
 
     public function update(Request $request, $gd)

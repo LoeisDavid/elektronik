@@ -21,7 +21,7 @@
         </a>
     </div>
 
-    <div class="flex flex-wrap items-center gap-3 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-heading-dark flex items-center gap-2">
                 Edit Transaksi
@@ -30,10 +30,32 @@
                 </span>
             </h1>
             <p class="text-xs text-body-text">
-                Ubah harga jual, diskon item, diskon transaksi global, serta PPN secara global untuk transaksi ini.
+                Ubah pelanggan, sales, harga jual, diskon item, hapus barang, atau hapus transaksi ini.
             </p>
         </div>
+
+        <button
+            type="button"
+            id="btnHapusTransaksi"
+            data-ref="{{ $acr->REF_NO }}"
+            class="h-10 px-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-xl flex items-center gap-2 text-xs font-bold transition-colors cursor-pointer shadow-xs"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+            <span>Hapus Transaksi</span>
+        </button>
     </div>
+
+    <form
+        id="formDeleteTransaksi"
+        action="{{ route('POS.transaksi.destroy', $acr->REF_NO) }}"
+        method="POST"
+        class="hidden"
+    >
+        @csrf
+        @method('DELETE')
+    </form>
 
     {{-- ========================================================= --}}
     {{-- ERROR VALIDATION ALERT                                    --}}
@@ -90,24 +112,41 @@
                         </div>
 
                         <div class="p-3 bg-secondary-bw/60 rounded-xl border border-gray-200">
-                            <div class="text-body-text mb-0.5">Pelanggan</div>
-                            <div class="font-bold text-gray-800 truncate">
-                                {{ $customer ? $customer->DES : ($acr->CST ?: 'Umum / Non-Member') }}
-                            </div>
+                            <label for="selectEditCustomer" class="block text-body-text mb-1">Pelanggan</label>
+                            <select
+                                name="cst"
+                                id="selectEditCustomer"
+                                class="searchable-select w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-800 focus:outline-none focus:border-primary-db"
+                                data-placeholder="Pilih Pelanggan"
+                            >
+                                @foreach ($customers as $c)
+                                    <option value="{{ $c->CST }}" {{ $acr->CST === $c->CST ? 'selected' : '' }}>
+                                        {{ $c->DES }} ({{ $c->CST }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="p-3 bg-secondary-bw/60 rounded-xl border border-gray-200">
-                            <div class="text-body-text mb-0.5">Sales / Kasir</div>
-                            <div class="font-bold text-gray-800 truncate">
-                                {{ $sales ? $sales->DES : ($acr->USER ?: '-') }}
-                            </div>
+                            <label for="selectEditSales" class="block text-body-text mb-1">Sales</label>
+                            <select
+                                name="sls"
+                                id="selectEditSales"
+                                class="searchable-select w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-800 focus:outline-none focus:border-primary-db"
+                                data-placeholder="Pilih Sales"
+                            >
+                                @foreach ($salesList as $s)
+                                    <option value="{{ $s->SLS }}" {{ $acr->SLS === $s->SLS ? 'selected' : '' }}>
+                                        {{ $s->DES }} ({{ $s->SLS }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="p-3 bg-secondary-bw/60 rounded-xl border border-gray-200">
                             <div class="text-body-text mb-0.5">Metode Pembayaran</div>
                             <div class="font-bold text-gray-800 flex items-center gap-1.5">
-                              
-                                {{ $acr->JNS == 2 ? 'Non-Tunai / QRIS' : 'Tunai' }}
+                                {{ $acr->JNS == 2 ? 'Non Tunai' : 'Tunai' }}
                             </div>
                         </div>
                     </div>
@@ -127,9 +166,10 @@
                                     <th class="py-3 px-3 w-28 font-semibold">Diskon (%)</th>
                                     <th class="py-3 px-3 w-40 font-semibold">Voucher Item (Rp)</th>
                                     <th class="py-3 px-4 text-right w-40 font-semibold">Subtotal Item</th>
+                                    <th class="py-3 px-4 text-center w-20 font-semibold">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 text-xs text-black">
+                            <tbody id="tbodyEditTransaksiItems" class="divide-y divide-gray-200 text-xs text-black">
                                 @foreach ($items as $idx => $item)
                                     @php
                                         $itemModel = $item->itm();
@@ -216,8 +256,28 @@
                                                 Rp 0
                                             </div>
                                         </td>
+
+                                        {{-- HAPUS BARANG --}}
+                                        <td class="py-3.5 px-4 text-center align-top">
+                                            <button
+                                                type="button"
+                                                data-nama="{{ $namaBarang }}"
+                                                data-barcode="{{ $barcode }}"
+                                                title="Hapus Barang dari Transaksi"
+                                                class="btn-hapus-item-transaksi mx-auto w-8 h-8 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-md flex items-center justify-center cursor-pointer transition-colors"
+                                            >
+                                                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                            </button>
+                                        </td>
                                     </tr>
                                 @endforeach
+                                <tr id="emptyItemRow" class="{{ count($items) > 0 ? 'hidden' : '' }}">
+                                    <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
+                                        Tidak ada barang dalam transaksi ini (0 barang).
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

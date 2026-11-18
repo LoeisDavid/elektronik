@@ -147,9 +147,9 @@
 
                 <thead>
                     <tr class="bg-primary-db text-white text-xs font-semibold">
-                        <th class="py-2.5 px-4 rounded-tl-lg">Kode Gudang</th>
-                        <th class="py-2.5 px-4">Nama Gudang</th>
-                        <th class="py-2.5 px-4">Jumlah Barang</th>
+                        <th class="py-2.5 px-4 font-semibold rounded-tl-lg">Kode Gudang</th>
+                        <th class="py-2.5 px-4 font-semibold">Nama Gudang</th>
+                        <th class="py-2.5 px-4 font-semibold">Jumlah Barang</th>
                         <th class="py-2.5 px-4 font-semibold text-center w-20 rounded-tr-lg">Aksi</th>
                     </tr>
                 </thead>
@@ -158,7 +158,7 @@
                     <?php if (count($data) > 0): ?>
                         <?php foreach ($data as $gudang): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4 font-medium"><?= e($gudang->GD) ?></td>
+                                <td class="py-3.5 px-4 font-medium font-mono"><?= e($gudang->GD) ?></td>
                                 <td class="py-3.5 px-4"><?= e($gudang->DES) ?></td>
                                 <td class="py-3.5 px-4"><?= number_format((int) ($gudang->stok ?? 0)) ?></td>
 
@@ -208,7 +208,8 @@
                                                 <span>Edit</span>
                                             </button>
 
-                                            <!-- HAPUS -->
+                                            <!-- HAPUS (HANYA SUPERVISOR & DEVELOPER) -->
+                                            <?php if (auth()->user()?->canDelete()): ?>
                                             <form method="POST" action="<?= e(route('inventory.gudang.destroy', ['gd' => $gudang->GD])) ?>">
                                                 <?= csrf_field() ?>
                                                 <?= method_field('DELETE') ?>
@@ -224,6 +225,7 @@
                                                     <span>Hapus</span>
                                                 </button>
                                             </form>
+                                            <?php endif; ?>
 
                                         </div>
                                     </div>
@@ -253,9 +255,17 @@
             <div class="flex items-center gap-1">
 
                 <?php if ($halaman > 1): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>">‹</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">‹</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
                 <?= $nomor(1) ?>
@@ -290,9 +300,17 @@
                 <?php endif; ?>
 
                 <?php if ($halaman < $totalHal): ?>
-                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>">›</a>
+                    <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
                 <?php else: ?>
-                    <span class="<?= $btnOff ?>">›</span>
+                    <span class="<?= $btnOff ?>" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </span>
                 <?php endif; ?>
 
             </div>

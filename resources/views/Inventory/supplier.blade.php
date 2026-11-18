@@ -134,7 +134,7 @@
                     <?php if (count($data) > 0): ?>
                         <?php foreach ($data as $supplier): ?>
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-3.5 px-4 font-medium"><?= e($supplier->SPP) ?></td>
+                                <td class="py-3.5 px-4 font-medium font-mono"><?= e($supplier->SPP) ?></td>
                                 <td class="py-3.5 px-4"><?= e($supplier->DES) ?></td>
                                 <td class="py-3.5 px-4"><?= e($supplier->TLP) ?></td>
 
@@ -200,7 +200,8 @@
                                         </button>
 
 
-                                        {{-- HAPUS --}}
+                                        {{-- HAPUS (HANYA SUPERVISOR & DEVELOPER) --}}
+                                        @if(auth()->user()?->canDelete())
                                         <form
                                             method="POST"
                                             action="{{ route('inventory.supplier.destroy', ['spp' => $supplier->SPP]) }}"
@@ -234,6 +235,7 @@
                                             </button>
 
                                         </form>
+                                        @endif
 
                                     </div>
 
@@ -263,9 +265,17 @@
                 <div class="flex items-center gap-1">
 
                     <?php if ($halaman > 1): ?>
-                        <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>">‹</a>
+                        <a href="<?= e($buatUrl(['page' => $halaman - 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman sebelumnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </a>
                     <?php else: ?>
-                        <span class="<?= $btnOff ?>">‹</span>
+                        <span class="<?= $btnOff ?>" aria-hidden="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </span>
                     <?php endif; ?>
 
                     <?= $nomor(1) ?>
@@ -300,9 +310,17 @@
                 <?php endif; ?>
 
                     <?php if ($halaman < $totalHal): ?>
-                        <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>">›</a>
+                        <a href="<?= e($buatUrl(['page' => $halaman + 1])) ?>" class="<?= $btnNormal ?>" aria-label="Halaman berikutnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </a>
                     <?php else: ?>
-                        <span class="<?= $btnOff ?>">›</span>
+                        <span class="<?= $btnOff ?>" aria-hidden="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </span>
                     <?php endif; ?>
 
                 </div>
