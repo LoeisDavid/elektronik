@@ -75,9 +75,10 @@ class ACRController extends Controller
                 foreach ($acr->sts() as $item) {
                     $itmObj = $item->itm();
                     $nama = $itmObj ? ($itmObj->DES ?? $item->ITM) : $item->ITM;
-                    $groupKey = $item->ITM ?: $nama;
 
                     $hgj = max(0, (float) ($item->HGJ ?? 0));
+                    $priceKey = number_format($hgj, 2, '.', '');
+                    $groupKey = ($item->ITM ?: $nama) . '|' . $priceKey;
                     $pot1 = min(100, max(0, (float) ($item->POT_1 ?? 0)));
                     $discPctNominal = $hgj * ($pot1 / 100);
                     $maxPotR = max(0, $hgj - $discPctNominal);
